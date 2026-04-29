@@ -1,9 +1,11 @@
-# Frontend - Proyecto
+# Green Acress - Frontend
 
-Este repositorio contiene el frontend del proyecto.  
-Aquí se desarrollará la interfaz web del sistema, incluyendo las pantallas, componentes visuales y la interacción con el usuario.
+Frontend del sistema de gestión para un club cannábico en Uruguay.
 
-El objetivo es construir una aplicación web clara, moderna y responsive, permitiendo la comunicación con el backend mediante APIs.
+## Tecnologías
+Next.js - React - TypeScript - Tailwind CSS
 
-# green-acress-frontend
-Frontend    
+## Desarrollo
+npm run dev
+
+http://localhost:3000
