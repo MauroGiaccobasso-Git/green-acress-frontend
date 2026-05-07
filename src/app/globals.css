@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  html,
+  body {
+    font-family: "Poppins", Arial, sans-serif !important;
+    background-color: #ffffff !important;
+    margin: 0;
+    padding: 0;
+  }
+
+.MuiInputBase-root,
+.MuiInputLabel-root,
+.MuiButton-root,
+.MuiTypography-root {
+  font-family: "Poppins", Arial, sans-serif !important;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
