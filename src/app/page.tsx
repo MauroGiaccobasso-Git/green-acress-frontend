@@ -1,18 +1,13 @@
-// Componente principal de la aplicación.
-// Representa la pantalla inicial (ruta "/").
-// Importa y renderiza el componente Header junto a un título,
-// demostrando el uso de componentes reutilizables en la interfaz.
-import Header from "@/components/Header";
+// Página principal de la aplicación.
+// En Next.js, este archivo representa la ruta raíz "/".
+//
+// Su responsabilidad es únicamente renderizar
+// el container correspondiente a esta pantalla,
+// manteniendo separada la lógica visual de la capa de rutas.
 
-// Componente principal de la aplicación (ruta "/")
-// Renderiza el Header y un título en pantalla,
-// demostrando el uso de componentes reutilizables dentro de una página
-export default function Home() {
-  return (
-    <>
-      <Header />
-      <h1>Green Acress</h1>
-    </>
-  );
+import LoginContainer from "@/containers/auth/LoginContainer";
+
+// Renderiza la pantalla inicial de autenticación.
+export default function HomePage() {
+  return <LoginContainer />;
 }
-
