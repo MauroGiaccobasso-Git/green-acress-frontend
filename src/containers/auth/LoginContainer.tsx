@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLogin } from "@/hooks/auth/useLogin";
 
 // Container de la pantalla de login.
 // Este archivo contiene la interfaz principal del flujo de autenticación.
@@ -12,6 +14,7 @@ import { useState } from "react";
 // - LoginContainer.tsx define la pantalla de login.
 
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
@@ -30,15 +33,26 @@ export default function LoginContainer() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Hook encargado del flujo real de autenticación.
+  const { handleLogin, isLoading, error } = useLogin();
+  // Permite navegar programáticamente entre rutas
+  const router = useRouter();
+
   // Maneja el envío del formulario de login.
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    // Evita el comportamiento por defecto del navegador
-    // al enviar formularios HTML.
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    // Evita que el navegador recargue la página al enviar el formulario.
     event.preventDefault();
-  };
+
+    // Ejecuta el login real utilizando las credenciales ingresadas.
+    const response = await handleLogin(email, password);
+
+      
+      if (response) {
+        router.push("/admin");
+      }
+    };
+
   return (
-    // Contenedor principal de la pantalla.
-    // Ocupa todo el alto del navegador y centra la tarjeta del login.
     <Box
       component="main"
       sx={{
@@ -55,9 +69,6 @@ export default function LoginContainer() {
         py: 3,
       }}
     >
-      {/* Contenedor responsive.
-          maxWidth="xs" mantiene un ancho similar a mobile,
-          alineado con el enfoque mobile first del proyecto. */}
       <Container
         maxWidth="xs"
         sx={{
@@ -67,16 +78,7 @@ export default function LoginContainer() {
           gap: 2.5,
         }}
       >
-        {/* Encabezado visual del sistema */}
-        <Stack
-          spacing={1.5}
-          mb={3}
-          sx={{
-            alignItems: "center",
-          }}
-        >
-          {/* Logo temporal del sistema.
-                Más adelante puede reemplazarse por un logo real. */}
+        <Stack spacing={1.5} mb={3} sx={{ alignItems: "center" }}>
           <Box
             sx={{
               width: 48,
@@ -94,43 +96,29 @@ export default function LoginContainer() {
             G
           </Box>
 
-          {/* Nombre y descripción breve del sistema */}
-          <Box
-            sx={{
-              textAlign: "center",
-            }}
-          >
+          <Box sx={{ textAlign: "center" }}>
             <Typography
               variant="h4"
               fontWeight={900}
-              sx={{
-                color: "#123d2a",
-                letterSpacing: "-0.04em",
-              }}
+              sx={{ color: "#123d2a", letterSpacing: "-0.04em" }}
             >
               Green Acres
             </Typography>
 
             <Typography
               variant="body2"
-              sx={{
-                color: "#4f6f5d",
-                fontWeight: 500,
-              }}
+              sx={{ color: "#4f6f5d", fontWeight: 500 }}
             >
               Gestión inteligente para clubes
             </Typography>
           </Box>
         </Stack>
-        {/* Tarjeta principal del formulario de login */}
+
         <Paper
           elevation={0}
           sx={{
             width: "100%",
-            p: {
-              xs: 2.5,
-              sm: 3,
-            },
+            p: { xs: 2.5, sm: 3 },
             borderRadius: 5,
             bgcolor: "rgba(255, 255, 255, 0.88)",
             backdropFilter: "blur(14px)",
@@ -138,40 +126,28 @@ export default function LoginContainer() {
             boxShadow: "0 24px 60px rgba(18, 61, 42, 0.22)",
           }}
         >
-          {/* Contenido principal del formulario */}
           <Stack component="form" spacing={1.7} onSubmit={handleSubmit}>
-            {/* Título de la sección */}
             <Box>
               <Typography
                 variant="h5"
                 fontWeight={800}
-                sx={{
-                  color: "#123d2a",
-                  letterSpacing: "-0.03em",
-                }}
+                sx={{ color: "#123d2a", letterSpacing: "-0.03em" }}
               >
                 Inicio de sesión
               </Typography>
 
               <Typography
                 variant="body2"
-                sx={{
-                  color: "#4f6f5d",
-                  fontWeight: 500,
-                }}
+                sx={{ color: "#4f6f5d", fontWeight: 500 }}
               >
                 Accedé con tus credenciales para continuar.
               </Typography>
             </Box>
 
-            {/* Campo de correo electrónico */}
             <Stack spacing={0.7}>
               <Typography
                 variant="body2"
-                sx={{
-                  color: "#123d2a",
-                  fontWeight: 700,
-                }}
+                sx={{ color: "#123d2a", fontWeight: 700 }}
               >
                 Correo electrónico
               </Typography>
@@ -185,6 +161,7 @@ export default function LoginContainer() {
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                disabled={isLoading}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 3,
@@ -194,14 +171,10 @@ export default function LoginContainer() {
               />
             </Stack>
 
-            {/* Campo de contraseña */}
             <Stack spacing={0.7}>
               <Typography
                 variant="body2"
-                sx={{
-                  color: "#123d2a",
-                  fontWeight: 700,
-                }}
+                sx={{ color: "#123d2a", fontWeight: 700 }}
               >
                 Contraseña
               </Typography>
@@ -215,6 +188,7 @@ export default function LoginContainer() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                disabled={isLoading}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 3,
@@ -224,12 +198,11 @@ export default function LoginContainer() {
               />
             </Stack>
 
-            {/* Opción visual de recordar sesión.
-                La lógica real se implementará más adelante. */}
             <FormControlLabel
               control={
                 <Checkbox
                   size="small"
+                  disabled={isLoading}
                   sx={{
                     color: "#6b7d70",
                     "&.Mui-checked": {
@@ -245,21 +218,14 @@ export default function LoginContainer() {
               }}
             />
 
-            {/* 
-              Mensaje de error representativo.
-              Se activará más adelante cuando el formulario se conecte
-              con la lógica real de autenticación del backend.
+            {error && <Alert severity="error">{error}</Alert>}
 
-              <Alert severity="error">
-                Credenciales inválidas. Intente nuevamente.
-              </Alert>
-            */}
-
-            {/* Botón principal del formulario */}
             <Button
+              type="submit"
               variant="contained"
               size="large"
               fullWidth
+              disabled={isLoading}
               sx={{
                 bgcolor: "#2f6f46",
                 textTransform: "none",
@@ -270,10 +236,9 @@ export default function LoginContainer() {
                 },
               }}
             >
-              Iniciar sesión
+              {isLoading ? "Ingresando..." : "Iniciar sesión"}
             </Button>
 
-            {/* Enlace preparado para futura recuperación de contraseña */}
             <Link
               href="#"
               underline="none"
@@ -291,9 +256,6 @@ export default function LoginContainer() {
               ¿Olvidaste tu contraseña?
             </Link>
 
-            {/* Bloque informativo sobre MFA.
-                Refleja el flujo definido en el anteproyecto:
-                primero credenciales, luego código de verificación. */}
             <Box
               sx={{
                 mt: 0.5,
