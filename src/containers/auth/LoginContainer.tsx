@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/auth/useAuth";
 import { useRouter } from "next/navigation";
 import { useLogin } from "@/hooks/auth/useLogin";
+import { getAuthenticatedRedirectPath } from "@/features/auth/utils/authRedirect";
 
 // Container de la pantalla de login.
 // Este archivo contiene la interfaz principal del flujo de autenticación.
@@ -17,9 +19,7 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   Container,
-  FormControlLabel,
   Link,
   Paper,
   Stack,
@@ -37,6 +37,19 @@ export default function LoginContainer() {
   const { handleLogin, isLoading, error } = useLogin();
   // Permite navegar programáticamente entre rutas
   const router = useRouter();
+  const { user, token } = useAuth();
+
+  // Si ya existe una sesión activa,
+  // evita mostrar nuevamente el login.
+  useEffect(() => {
+    if (!user || !token) {
+      return;
+    }
+
+    const redirectPath = getAuthenticatedRedirectPath(user.rol);
+
+    router.replace(redirectPath);
+  }, [user, token, router]);
 
   // Maneja el envío del formulario de login.
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -46,11 +59,12 @@ export default function LoginContainer() {
     // Ejecuta el login real utilizando las credenciales ingresadas.
     const response = await handleLogin(email, password);
 
-      
-      if (response) {
-        router.push("/admin");
-      }
-    };
+    if (response) {
+      const redirectPath = getAuthenticatedRedirectPath(response.usuario.rol);
+
+      router.push(redirectPath);
+    }
+  };
 
   return (
     <Box
@@ -197,26 +211,6 @@ export default function LoginContainer() {
                 }}
               />
             </Stack>
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  size="small"
-                  disabled={isLoading}
-                  sx={{
-                    color: "#6b7d70",
-                    "&.Mui-checked": {
-                      color: "#2f6f46",
-                    },
-                  }}
-                />
-              }
-              label="Recordar sesión"
-              sx={{
-                color: "#263b2f",
-                fontWeight: 500,
-              }}
-            />
 
             {error && <Alert severity="error">{error}</Alert>}
 

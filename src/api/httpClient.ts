@@ -1,8 +1,13 @@
+import {
+  clearSession,
+  getStoredToken,
+} from "@/features/auth/utils/authStorage";
+
 // URL base utilizada por todas las llamadas
 // realizadas hacia el backend.
 const API_BASE_URL = "http://localhost:8080";
 
-// Métodos HTTP soportados
+// Métodos HTTP soportados.
 type HttpMethod =
   | "GET"
   | "POST"
@@ -15,59 +20,65 @@ type HttpMethod =
 type RequestOptions = {
   method?: HttpMethod;
   body?: unknown;
+
+  // Permite enviar un token manualmente si fuera necesario.
+  // Si no se envía, httpClient utilizará el token persistido.
   token?: string;
 };
 
 // Cliente HTTP reutilizable.
 //
-// Su responsabilidad NO es manejar login
-// ni productos.
-//
-// Su única responsabilidad es centralizar
-// la comunicación genérica con backend.
+// Centraliza comunicación con backend,
+// incorporación de JWT y manejo común
+// de errores HTTP.
 export async function httpClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-
   const {
     method = "GET",
     body,
     token,
   } = options;
 
+  // Prioriza token recibido explícitamente.
+  // Si no existe, utiliza el token persistido.
+  const authToken =
+    token || getStoredToken();
+
   const response = await fetch(
     `${API_BASE_URL}${endpoint}`,
     {
-
       method,
 
       headers: {
-
-        // Backend espera payload JSON
         "Content-Type": "application/json",
 
-        // JWT agregado únicamente cuando
-        // la solicitud requiere autenticación
-        ...(token
+        ...(authToken
           ? {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${authToken}`,
             }
           : {}),
       },
 
-      // Serializa payload solamente cuando existe
       body: body
         ? JSON.stringify(body)
         : undefined,
     }
   );
 
-  // Convierte respuesta backend a objeto JS
+  if (response.status === 401) {
+    clearSession();
+
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
+
+    throw new Error("Sesión expirada o no autorizada");
+  }
+
   const data = await response.json();
 
-  // Centraliza errores HTTP para evitar
-  // repetir validaciones en todos los módulos
   if (!response.ok) {
     throw new Error(
       data.message ||
@@ -75,6 +86,5 @@ export async function httpClient<T>(
     );
   }
 
-  // Devuelve respuesta tipada
   return data;
 }
