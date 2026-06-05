@@ -8,124 +8,203 @@ import {
 } from "@/api/productsApi";
 
 /*
-Hook specialized in managing
-the administrative product list.
+Hook especializado encargado de administrar
+la lógica relacionada al listado administrativo
+de productos.
 
-Responsibilities:
+Su responsabilidad es:
 
-- store loaded products
-- manage loading state
-- manage errors
-- expose a reusable function
-  to request products from backend
+- solicitar productos al backend
 
-It has no visual responsibility.
+- almacenar productos cargados
 
-It does not render components.
+- administrar loading
 
-It does not perform direct fetch calls.
+- administrar errores
 
-All backend communication happens
-through productsApi.
+- exponer funciones reutilizables
+  para consumir desde containers
+
+Este hook NO renderiza componentes.
+
+Este hook NO construye interfaz.
+
+Este hook NO realiza fetch directo.
+
+Toda comunicación ocurre mediante
+productsApi.
 */
 export function useProducts() {
+
   /*
-  Products currently loaded
-  from backend.
+  Almacena productos obtenidos
+  desde backend.
+
+  El container consumirá este estado
+  para renderizar cards, tablas
+  o cualquier representación visual.
   */
   const [products, setProducts] =
     useState<Product[]>([]);
 
   /*
-  Indicates whether an HTTP request
-  is currently running.
+  Indica cuándo existe una solicitud
+  en ejecución.
+
+  Permite que la interfaz pueda:
+
+  - mostrar spinner
+
+  - bloquear acciones
+
+  - mostrar mensajes de carga
   */
   const [loading, setLoading] =
     useState(false);
 
   /*
-  Error message that can be shown
-  by the UI when backend returns
-  an error or communication fails.
+  Guarda mensajes de error producidos
+  durante solicitudes.
+
+  El container puede utilizar esto
+  para renderizar mensajes amigables
+  para el usuario.
   */
   const [error, setError] =
     useState<string | null>(null);
 
   /*
-  Reusable function responsible
-  for loading products.
+  Función reutilizable encargada
+  de consultar productos.
 
-  It can be executed:
+  Puede utilizarse:
 
-  - when the screen loads
-  - when searching
-  - when refreshing
-  - after editing
-  - after changing product state
+  - al cargar pantalla
 
-  search is optional, allowing this
-  same function to be reused for
-  future search/filter behavior.
+  - al buscar
+
+  - al refrescar
+
+  - luego de crear productos
+
+  - luego de editar productos
+
+  - luego de desactivar productos
+
+  search es opcional para permitir
+  reutilización futura con filtros.
   */
   const fetchProducts =
     useCallback(
+
       async (
         search?: string
       ): Promise<void> => {
+
         try {
+
           /*
-          Start loading state.
+          Comienza estado de carga.
+
+          La interfaz sabrá que existe
+          una operación ejecutándose.
           */
+
           setLoading(true);
 
           /*
-          Clear previous errors.
+          Limpia errores anteriores.
+
+          Evita mostrar mensajes viejos
+          durante nuevas consultas.
           */
+
           setError(null);
 
           /*
-          Request products using
-          the API layer.
+          Solicita productos utilizando
+          la capa API.
+
+          El hook NO conoce detalles
+          técnicos del backend.
+
+          Sólo solicita información.
           */
+
           const data =
             await productsApi
               .getProducts(search);
 
           /*
-          Store backend response
-          in local hook state.
+          Actualiza estado local
+          con productos obtenidos.
+
+          Esto provoca re-render
+          automático del container.
           */
+
           setProducts(data);
+
         } catch (error) {
+
           /*
-          Convert technical errors
-          into UI-friendly messages.
+          Convierte errores técnicos
+          en mensajes utilizables
+          por la interfaz.
           */
+
           setError(
+
             error instanceof Error
               ? error.message
-              : "Error loading products"
+              : "Error al cargar productos"
+
           );
+
         } finally {
+
           /*
-          Stop loading state
-          regardless of success
-          or failure.
+          Finaliza estado de carga.
+
+          Ocurre tanto si la operación
+          fue exitosa como si falló.
           */
+
           setLoading(false);
+
         }
+
       },
+
       []
+
     );
 
   /*
-  Expose only what visual containers
-  need to render the screen.
+  Expone únicamente la información
+  necesaria para containers.
+
+  El container decide:
+
+  - cuándo cargar
+
+  - cómo mostrar
+
+  - cómo renderizar
+
+  El hook sólo entrega datos y lógica.
   */
+
   return {
+
     products,
+
     loading,
+
     error,
+
     fetchProducts,
+
   };
+
 }
