@@ -1,19 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/auth/useAuth";
 import { useRouter } from "next/navigation";
-import { useLogin } from "@/hooks/auth/useLogin";
-import { getAuthenticatedRedirectPath } from "@/features/auth/utils/authRedirect";
-
-// Container de la pantalla de login.
-// Este archivo contiene la interfaz principal del flujo de autenticación.
-//
-// La ruta "/" se define en src/app/page.tsx,
-// pero el contenido visual y funcional del login vive en este container.
-// De esta forma mantenemos separadas las responsabilidades:
-// - page.tsx define la ruta.
-// - LoginContainer.tsx define la pantalla de login.
 
 import {
   Alert,
@@ -27,20 +15,55 @@ import {
   Typography,
 } from "@mui/material";
 
-// Componente principal del container de login.
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useLogin } from "@/hooks/auth/useLogin";
+import { getAuthenticatedRedirectPath } from "@/features/auth/utils/authRedirect";
+
+import { loginStyles } from "./login.styles";
+
+/*
+Container de la pantalla de login.
+
+Responsabilidades:
+- renderizar interfaz de autenticación;
+- administrar campos del formulario;
+- ejecutar flujo de login mediante useLogin;
+- redirigir usuario autenticado según rol.
+
+NO realiza llamadas directas al backend.
+NO contiene lógica interna de autenticación.
+*/
 export default function LoginContainer() {
-  // Estado de los campos del formulario de autenticación.
+  /*
+  Estado local de los campos
+  del formulario de autenticación.
+  */
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Hook encargado del flujo real de autenticación.
-  const { handleLogin, isLoading, error } = useLogin();
-  // Permite navegar programáticamente entre rutas
+  /*
+  Router utilizado para redirigir
+  luego del login o si ya existe sesión.
+  */
   const router = useRouter();
+
+  /*
+  Obtiene la sesión actual desde
+  el contexto global de autenticación.
+  */
   const { user, token } = useAuth();
 
-  // Si ya existe una sesión activa,
-  // evita mostrar nuevamente el login.
+  /*
+  Hook encargado del flujo real
+  de autenticación contra backend.
+  */
+  const { handleLogin, isLoading, error } = useLogin();
+
+  /*
+  Si ya existe una sesión activa,
+  evita mostrar nuevamente el login
+  y redirige según el rol del usuario.
+  */
   useEffect(() => {
     if (!user || !token) {
       return;
@@ -51,12 +74,14 @@ export default function LoginContainer() {
     router.replace(redirectPath);
   }, [user, token, router]);
 
-  // Maneja el envío del formulario de login.
+  /*
+  Maneja el envío del formulario
+  y delega la autenticación real
+  al hook useLogin.
+  */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    // Evita que el navegador recargue la página al enviar el formulario.
     event.preventDefault();
 
-    // Ejecuta el login real utilizando las credenciales ingresadas.
     const response = await handleLogin(email, password);
 
     if (response) {
@@ -67,204 +92,122 @@ export default function LoginContainer() {
   };
 
   return (
-    <Box
-      component="main"
-      sx={{
-        minHeight: "100vh",
-        backgroundImage:
-          "linear-gradient(180deg, rgba(244, 248, 242, 0.28) 0%, rgba(244, 248, 242, 0.18) 45%, rgba(244, 248, 242, 0.08) 100%), url('/images/login-bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        px: 2,
-        py: 3,
-      }}
-    >
-      <Container
-        maxWidth="xs"
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 2.5,
-        }}
-      >
-        <Stack spacing={1.5} mb={3} sx={{ alignItems: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: 2,
-              bgcolor: "#2f6f46",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontWeight: 800,
-              fontSize: 24,
-            }}
-          >
-            G
-          </Box>
+    <Box component="main" sx={loginStyles.page}>
+      <Container maxWidth={false} sx={loginStyles.container}>
+        <Stack spacing={1.2} sx={loginStyles.brandWrapper}>
+          <Box sx={loginStyles.brandIcon}>G</Box>
 
-          <Box sx={{ textAlign: "center" }}>
+          <Box>
             <Typography
+              component="h1"
               variant="h4"
               fontWeight={900}
-              sx={{ color: "#123d2a", letterSpacing: "-0.04em" }}
+              sx={loginStyles.brandTitle}
             >
               Green Acres
             </Typography>
 
-            <Typography
-              variant="body2"
-              sx={{ color: "#4f6f5d", fontWeight: 500 }}
-            >
+            <Typography variant="body2" sx={loginStyles.brandSubtitle}>
               Gestión inteligente para clubes
             </Typography>
           </Box>
         </Stack>
 
-        <Paper
-          elevation={0}
-          sx={{
-            width: "100%",
-            p: { xs: 2.5, sm: 3 },
-            borderRadius: 5,
-            bgcolor: "rgba(255, 255, 255, 0.88)",
-            backdropFilter: "blur(14px)",
-            border: "1px solid rgba(255, 255, 255, 0.65)",
-            boxShadow: "0 24px 60px rgba(18, 61, 42, 0.22)",
-          }}
-        >
-          <Stack component="form" spacing={1.7} onSubmit={handleSubmit}>
+        <Paper elevation={0} sx={loginStyles.card}>
+          <Stack component="form" spacing={2} onSubmit={handleSubmit}>
             <Box>
               <Typography
+                component="h2"
                 variant="h5"
-                fontWeight={800}
-                sx={{ color: "#123d2a", letterSpacing: "-0.03em" }}
+                fontWeight={900}
+                sx={loginStyles.cardTitle}
               >
                 Inicio de sesión
               </Typography>
 
-              <Typography
-                variant="body2"
-                sx={{ color: "#4f6f5d", fontWeight: 500 }}
-              >
+              <Typography variant="body2" sx={loginStyles.cardSubtitle}>
                 Accedé con tus credenciales para continuar.
               </Typography>
             </Box>
 
-            <Stack spacing={0.7}>
+            <Stack spacing={0.8}>
               <Typography
+                component="label"
+                htmlFor="login-email"
                 variant="body2"
-                sx={{ color: "#123d2a", fontWeight: 700 }}
+                sx={loginStyles.fieldLabel}
               >
                 Correo electrónico
               </Typography>
 
               <TextField
+                id="login-email"
                 placeholder="Ingresá tu correo electrónico"
                 name="email"
                 type="email"
                 fullWidth
-                size="small"
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 disabled={isLoading}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 3,
-                    bgcolor: "rgba(250, 252, 250, 0.92)",
-                  },
-                }}
+                sx={loginStyles.input}
               />
             </Stack>
 
-            <Stack spacing={0.7}>
+            <Stack spacing={0.8}>
               <Typography
+                component="label"
+                htmlFor="login-password"
                 variant="body2"
-                sx={{ color: "#123d2a", fontWeight: 700 }}
+                sx={loginStyles.fieldLabel}
               >
                 Contraseña
               </Typography>
 
               <TextField
+                id="login-password"
                 placeholder="Ingresá tu contraseña"
                 name="password"
                 type="password"
                 fullWidth
-                size="small"
                 autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 disabled={isLoading}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 3,
-                    bgcolor: "rgba(250, 252, 250, 0.92)",
-                  },
-                }}
+                sx={loginStyles.input}
               />
             </Stack>
 
-            {error && <Alert severity="error">{error}</Alert>}
+            {error && (
+              <Alert severity="error" sx={loginStyles.errorAlert}>
+                {error}
+              </Alert>
+            )}
 
             <Button
               type="submit"
               variant="contained"
-              size="large"
               fullWidth
               disabled={isLoading}
-              sx={{
-                bgcolor: "#2f6f46",
-                textTransform: "none",
-                fontWeight: 700,
-                py: 1.2,
-                "&:hover": {
-                  bgcolor: "#255a38",
-                },
-              }}
+              sx={loginStyles.submitButton}
             >
               {isLoading ? "Ingresando..." : "Iniciar sesión"}
             </Button>
 
-            <Link
-              href="#"
-              underline="none"
-              sx={{
-                textAlign: "center",
-                fontSize: 14,
-                fontWeight: 600,
-                color: "#4f6f5d",
-                transition: "0.2s ease",
-                "&:hover": {
-                  color: "#2f6f46",
-                },
-              }}
-            >
+            <Link href="#" underline="none" sx={loginStyles.forgotPasswordLink}>
               ¿Olvidaste tu contraseña?
             </Link>
 
-            <Box
-              sx={{
-                mt: 0.5,
-                p: 2,
-                borderRadius: 3,
-                bgcolor: "rgba(238, 245, 239, 0.78)",
-                border: "1px solid rgba(173, 201, 180, 0.45)",
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <Typography variant="subtitle2" fontWeight={700}>
+            <Box sx={loginStyles.twoFactorBox}>
+              <Typography
+                variant="subtitle2"
+                fontWeight={900}
+                sx={loginStyles.twoFactorTitle}
+              >
                 Verificación en dos pasos
               </Typography>
 
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={loginStyles.twoFactorDescription}>
                 Luego de validar tus credenciales, el sistema solicitará un
                 código de verificación de 6 dígitos.
               </Typography>
