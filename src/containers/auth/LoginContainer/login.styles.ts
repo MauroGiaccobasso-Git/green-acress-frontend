@@ -91,7 +91,7 @@ export const loginStyles = {
 
   brandSubtitle: {
     mt: 0.8,
-    color: "rgba(255, 255, 255, 0.92)",
+    color: colors.text.inverse,
     fontWeight: 600,
     textShadow: "0 2px 12px rgba(0, 0, 0, 0.35)",
   },

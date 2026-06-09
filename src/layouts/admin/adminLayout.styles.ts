@@ -40,10 +40,24 @@ export const styles = {
     fontWeight: 900,
   },
 
+  /*
+  Mantiene una jerarquía visual más suave
+  debajo del nombre de la aplicación.
+  */
   brandSubtitle: {
     display: { xs: "none", sm: "block" },
     color: "rgba(255,255,255,0.72)",
     mt: 0.5,
+  },
+
+  /*
+  El peso tipográfico proviene del theme.
+  Solamente ajustamos detalles visuales
+  específicos del layout.
+  */
+  brandTitle: {
+    color: colors.text.inverse,
+    lineHeight: 1,
   },
 
   desktopNavigation: {
@@ -56,12 +70,16 @@ export const styles = {
     minHeight: 44,
     px: 2,
     borderRadius: 999,
-    color: isActive ? colors.brand.primaryDark : "rgba(255,255,255,0.82)",
+    color: isActive
+      ? colors.brand.primaryDark
+      : "rgba(255,255,255,0.82)",
     bgcolor: isActive ? colors.brand.primaryLight : "transparent",
     fontWeight: 800,
     textTransform: "none",
     "&:hover": {
-      bgcolor: isActive ? colors.brand.primaryLight : "rgba(255,255,255,0.10)",
+      bgcolor: isActive
+        ? colors.brand.primaryLight
+        : "rgba(255,255,255,0.10)",
     },
     "&.Mui-disabled": {
       color: "rgba(255,255,255,0.34)",
@@ -95,6 +113,14 @@ export const styles = {
     textAlign: "left",
   },
 
+  /*
+  Ajustes visuales específicos del
+  bloque de información del usuario.
+  */
+  userName: {
+    lineHeight: 1.1,
+  },
+
   userEmail: {
     color: "rgba(255,255,255,0.65)",
   },
@@ -117,6 +143,11 @@ export const styles = {
     display: "none",
   },
 
+  mobileDrawerTitle: {
+    color: colors.brand.primaryDark,
+    lineHeight: 1,
+  },
+
   mobileNavigationItem: (isActive: boolean) => ({
     minHeight: 48,
     mx: 1,
@@ -125,7 +156,9 @@ export const styles = {
     color: colors.text.primary,
     bgcolor: isActive ? colors.brand.primaryLight : "transparent",
     "&:hover": {
-      bgcolor: isActive ? colors.brand.primaryLight : colors.background.app,
+      bgcolor: isActive
+        ? colors.brand.primaryLight
+        : colors.background.app,
     },
     "&.Mui-selected": {
       bgcolor: colors.brand.primaryLight,
@@ -135,6 +168,16 @@ export const styles = {
     },
   }),
 
+  mobileNavigationIcon: {
+    display: "flex",
+    alignItems: "center",
+    mr: 1.5,
+  },
+
+  /*
+  Área donde se renderiza el contenido
+  dinámico de cada módulo administrativo.
+  */
   content: {
     py: { xs: 3, md: 4 },
   },

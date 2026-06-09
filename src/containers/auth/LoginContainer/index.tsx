@@ -98,12 +98,7 @@ export default function LoginContainer() {
           <Box sx={loginStyles.brandIcon}>G</Box>
 
           <Box>
-            <Typography
-              component="h1"
-              variant="h4"
-              fontWeight={900}
-              sx={loginStyles.brandTitle}
-            >
+            <Typography component="h1" variant="h4" sx={loginStyles.brandTitle}>
               Green Acres
             </Typography>
 
@@ -119,7 +114,6 @@ export default function LoginContainer() {
               <Typography
                 component="h2"
                 variant="h5"
-                fontWeight={900}
                 sx={loginStyles.cardTitle}
               >
                 Inicio de sesión
@@ -199,11 +193,7 @@ export default function LoginContainer() {
             </Link>
 
             <Box sx={loginStyles.twoFactorBox}>
-              <Typography
-                variant="subtitle2"
-                fontWeight={900}
-                sx={loginStyles.twoFactorTitle}
-              >
+              <Typography variant="subtitle2" sx={loginStyles.twoFactorTitle}>
                 Verificación en dos pasos
               </Typography>
 

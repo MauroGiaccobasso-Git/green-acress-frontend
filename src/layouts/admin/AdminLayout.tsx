@@ -125,10 +125,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <Avatar sx={styles.brandAvatar}>GA</Avatar>
 
               <Box>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 900, lineHeight: 1 }}
-                >
+                <Typography variant="subtitle1" sx={styles.brandTitle}>
                   Green Acres
                 </Typography>
 
@@ -170,10 +167,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <Avatar sx={styles.userAvatar}>A</Avatar>
 
               <Box sx={styles.userInfo}>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 800, lineHeight: 1.1 }}
-                >
+                <Typography variant="body2" sx={styles.userName}>
                   Administrador
                 </Typography>
 
@@ -207,7 +201,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <Avatar sx={styles.brandAvatar}>GA</Avatar>
 
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+              <Typography variant="subtitle1" sx={styles.mobileDrawerTitle}>
                 Green Acres
               </Typography>
 
@@ -231,15 +225,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   onClick={handleCloseMobileMenu}
                   sx={styles.mobileNavigationItem(isActive)}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      mr: 1.5,
-                    }}
-                  >
-                    {item.icon}
-                  </Box>
+                  <Box sx={styles.mobileNavigationIcon}>{item.icon}</Box>
 
                   <ListItemText primary={item.label} />
                 </ListItemButton>

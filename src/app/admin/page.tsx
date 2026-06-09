@@ -4,6 +4,7 @@ import { Box, Typography } from "@mui/material";
 
 import RequireAuth from "@/components/auth/requireAuth";
 import { AdminLayout } from "@/layouts/admin/AdminLayout";
+import { colors } from "@/theme/colors";
 
 // Pantalla administrativa inicial.
 //
@@ -17,15 +18,14 @@ export default function AdminPage() {
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 900,
-              color: "#0b2d1f",
+              color: colors.brand.primaryDark,
               mb: 2,
             }}
           >
             Panel administrativo
           </Typography>
 
-          <Typography color="text.secondary">
+          <Typography variant="body1" sx={{ color: colors.text.secondary }}>
             Seleccioná una sección del menú para comenzar a gestionar el sistema.
           </Typography>
         </Box>

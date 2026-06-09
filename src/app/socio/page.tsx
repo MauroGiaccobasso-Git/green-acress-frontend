@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import RequireAuth from "@/components/auth/requireAuth";
 import { useAuth } from "@/hooks/auth/useAuth";
+import { colors } from "@/theme/colors";
 
 // Pantalla inicial del portal de socio.
 //
@@ -29,7 +30,7 @@ export default function SocioPage() {
       <Box
         sx={{
           minHeight: "100vh",
-          bgcolor: "#f4f7f5",
+          bgcolor: colors.background.app,
           py: 4,
         }}
       >
@@ -39,19 +40,20 @@ export default function SocioPage() {
             sx={{
               p: 4,
               borderRadius: 4,
-              border: "1px solid #dbe5dd",
             }}
           >
             <Typography
               variant="h4"
-              fontWeight={700}
-              color="#1f3d2b"
+              sx={{ color: colors.brand.primaryDark }}
               gutterBottom
             >
               Portal del socio
             </Typography>
 
-            <Typography color="text.secondary" mb={3}>
+            <Typography
+              variant="body1"
+              sx={{ color: colors.text.secondary, mb: 3 }}
+            >
               Sesión iniciada correctamente. Esta pantalla funcionará como base
               inicial para el portal de socios del sistema.
             </Typography>

@@ -60,6 +60,8 @@ import {
 
 import { useProducts } from "@/hooks/products/useProducts";
 
+import { productsStyles } from "./products.styles";
+
 /*
 Container principal de la pantalla
 administrativa de productos.
@@ -105,63 +107,22 @@ export function ProductsContainer() {
   de productos dentro de un panel.
   */
   return (
-    <Box
-      component="main"
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "#f4f7f5",
-        py: 4,
-      }}
-    >
+    <Box component="main" sx={productsStyles.page}>
       <Container maxWidth="lg">
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            borderRadius: 4,
-            border: "1px solid #dbe5dd",
-          }}
-        >
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              color="#1f3d2b"
-              gutterBottom
-            >
+        <Paper elevation={0} sx={productsStyles.panel}>
+          <Box sx={productsStyles.header}>
+            <Typography variant="h4" sx={productsStyles.title} gutterBottom>
               Productos y stock
             </Typography>
 
-            <Typography color="text.secondary">
+            <Typography variant="body1" sx={productsStyles.subtitle}>
               Gestioná los productos del inventario, consultá su disponibilidad
               y prepará futuras acciones de edición o cambio de estado.
             </Typography>
           </Box>
 
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: {
-                xs: "column",
-                sm: "row",
-              },
-              gap: 2,
-              mb: 4,
-            }}
-          >
-            <Button
-              variant="contained"
-              sx={{
-                bgcolor: "#1f7a3a",
-                textTransform: "none",
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 3,
-                "&:hover": {
-                  bgcolor: "#17612e",
-                },
-              }}
-            >
+          <Box sx={productsStyles.actions}>
+            <Button variant="contained" sx={productsStyles.createButton}>
               Nuevo producto
             </Button>
 
@@ -172,53 +133,73 @@ export function ProductsContainer() {
             />
           </Box>
 
-          {loading && <p>Cargando productos...</p>}
+          {loading && (
+            <Typography variant="body2" sx={productsStyles.feedbackText}>
+              Cargando productos...
+            </Typography>
+          )}
 
-          {error && <p>{error}</p>}
+          {error && (
+            <Typography variant="body2" sx={productsStyles.errorText}>
+              {error}
+            </Typography>
+          )}
 
           {!loading && !error && (
-            <section>
+            <Box component="section">
               {products.length === 0 ? (
-                <p>No hay productos registrados.</p>
+                <Typography variant="body2" sx={productsStyles.feedbackText}>
+                  No hay productos registrados.
+                </Typography>
               ) : (
-                <Box
-                  sx={{
-                    display: "grid",
-                    gap: 2,
-                  }}
-                >
+                <Box sx={productsStyles.list}>
                   {products.map((product) => (
-                    <Card key={product.id}>
+                    <Card key={product.id} sx={productsStyles.card}>
                       <CardContent>
-                        <h2>{product.nombre}</h2>
+                        <Typography variant="h6" sx={productsStyles.cardTitle}>
+                          {product.nombre}
+                        </Typography>
 
-                        <p>{product.descripcion}</p>
+                        <Typography
+                          variant="body2"
+                          sx={productsStyles.cardDescription}
+                        >
+                          {product.descripcion}
+                        </Typography>
 
-                        <p>Tipo: {product.tipo}</p>
+                        <Typography variant="body2">
+                          Tipo: {product.tipo}
+                        </Typography>
 
-                        <p>Genética: {product.genetica}</p>
+                        <Typography variant="body2">
+                          Genética: {product.genetica}
+                        </Typography>
 
-                        <p>
+                        <Typography variant="body2">
                           THC:{" "}
                           {product.porcentaje_thc
                             ? `${product.porcentaje_thc}%`
                             : "No aplica"}
-                        </p>
+                        </Typography>
 
-                        <p>Precio: ${product.precio_venta_actual}</p>
+                        <Typography variant="body2">
+                          Precio: ${product.precio_venta_actual}
+                        </Typography>
 
-                        <p>
+                        <Typography variant="body2">
                           Disponible: {product.stock?.cantidad_disponible ?? 0}{" "}
                           {product.unidad_medida}
-                        </p>
+                        </Typography>
 
-                        <p>Estado: {product.estado}</p>
+                        <Typography variant="body2">
+                          Estado: {product.estado}
+                        </Typography>
                       </CardContent>
                     </Card>
                   ))}
                 </Box>
               )}
-            </section>
+            </Box>
           )}
         </Paper>
       </Container>

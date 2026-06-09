@@ -2,15 +2,12 @@
 
 import { useEffect } from "react";
 
-import {
-  Box,
-  CircularProgress,
-  Typography,
-} from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/hooks/auth/useAuth";
+import { colors } from "@/theme/colors";
 
 /*
 Roles permitidos actualmente
@@ -19,9 +16,7 @@ dentro del sistema.
 Se utiliza para restringir
 pantallas protegidas.
 */
-type AllowedRole =
-  | "ADMIN"
-  | "SOCIO";
+type AllowedRole = "ADMIN" | "SOCIO";
 
 /*
 Propiedades esperadas
@@ -74,16 +69,13 @@ export default function RequireAuth({
   children,
 
   allowedRoles,
-
 }: RequireAuthProps) {
-
   /*
   Router utilizado para realizar
   redirecciones automáticas.
   */
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
   /*
   Obtiene información global
@@ -102,10 +94,7 @@ export default function RequireAuth({
   sesión actual
   */
 
-  const {
-    user,
-    token,
-  } = useAuth();
+  const { user, token } = useAuth();
 
   /*
   Determina si el usuario posee
@@ -128,12 +117,7 @@ export default function RequireAuth({
   */
 
   const hasRequiredRole =
-
-    !allowedRoles ||
-
-    allowedRoles.includes(
-      user?.rol as AllowedRole
-    );
+    !allowedRoles || allowedRoles.includes(user?.rol as AllowedRole);
 
   /*
   Ejecuta validaciones de acceso.
@@ -150,7 +134,6 @@ export default function RequireAuth({
   */
 
   useEffect(() => {
-
     /*
     Usuario sin token.
 
@@ -158,11 +141,9 @@ export default function RequireAuth({
     */
 
     if (!token) {
-
       router.replace("/");
 
       return;
-
     }
 
     /*
@@ -171,20 +152,9 @@ export default function RequireAuth({
     */
 
     if (!hasRequiredRole) {
-
       router.replace("/");
-
     }
-
-  }, [
-
-    token,
-
-    hasRequiredRole,
-
-    router,
-
-  ]);
+  }, [token, hasRequiredRole, router]);
 
   /*
   Mientras se valida acceso
@@ -199,51 +169,31 @@ export default function RequireAuth({
   - render incorrecto
   */
 
-  if (
-
-    !token ||
-
-    !hasRequiredRole
-
-  ) {
-
+  if (!token || !hasRequiredRole) {
     return (
-
       <Box
         sx={{
-
           minHeight: "100vh",
-
-          bgcolor: "#f4f7f5",
-
+          bgcolor: colors.background.app,
           display: "flex",
-
           flexDirection: "column",
-
           alignItems: "center",
-
           justifyContent: "center",
-
           gap: 2,
-
         }}
       >
-
         <CircularProgress size={32} />
 
         <Typography
-          color="text.secondary"
-          fontWeight={500}
+          variant="body2"
+          sx={{
+            color: colors.text.secondary,
+          }}
         >
-
           Validando sesión...
-
         </Typography>
-
       </Box>
-
     );
-
   }
 
   /*
@@ -255,5 +205,4 @@ export default function RequireAuth({
   */
 
   return <>{children}</>;
-
 }
