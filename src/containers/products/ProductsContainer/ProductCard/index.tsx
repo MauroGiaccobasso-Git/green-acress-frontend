@@ -32,6 +32,11 @@ type ProductCardProps = {
   };
 };
 
+const unitLabels: Record<string, string> = {
+  GRAMOS: "g",
+  UNIDADES: "unidades",
+};
+
 const formatLabel = (value?: string | null) => {
   if (!value) {
     return "No definido";
@@ -74,6 +79,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const stockAvailable = product.stock?.cantidad_disponible ?? 0;
 
   const availabilityLevel = getAvailabilityLevel(stockAvailable);
+  const unitLabel = unitLabels[product.unidad_medida] ?? product.unidad_medida;
 
   return (
     <Card sx={productsStyles.productCard}>
@@ -95,16 +101,6 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <Box sx={productsStyles.imageOverlay} />
 
-        <Chip
-          size="small"
-          label={formatLabel(product.estado)}
-          sx={
-            product.estado === "ACTIVO"
-              ? productsStyles.activeStatusChip
-              : productsStyles.inactiveStatusChip
-          }
-        />
-
         <Tooltip title="Editar producto" arrow>
           <IconButton
             aria-label={`Editar producto ${product.nombre}`}
@@ -116,28 +112,38 @@ export function ProductCard({ product }: ProductCardProps) {
       </Box>
 
       <CardContent sx={productsStyles.productCardContent}>
-        <Box sx={productsStyles.productCardHeader}>
-          <Box sx={productsStyles.productTitleGroup}>
-            <Typography variant="h6" sx={productsStyles.productName}>
-              {product.nombre}
-            </Typography>
+        <Box sx={productsStyles.productTitleRow}>
+          <Typography variant="h6" sx={productsStyles.productName}>
+            {product.nombre}
+          </Typography>
 
-            <Typography variant="body2" sx={productsStyles.productDescription}>
-              {product.descripcion || "Sin descripción"}
-            </Typography>
+          <Box sx={productsStyles.productHeaderChips}>
+            <Chip
+              size="small"
+              label={formatLabel(product.genetica)}
+              sx={productsStyles.productGeneticsChip}
+            />
+
+            <Chip
+              size="small"
+              label={formatLabel(product.estado)}
+              sx={
+                product.estado === "ACTIVO"
+                  ? productsStyles.productActiveChip
+                  : productsStyles.productInactiveChip
+              }
+            />
           </Box>
         </Box>
+
+        <Typography variant="body2" sx={productsStyles.productDescription}>
+          {product.descripcion || "Sin descripción"}
+        </Typography>
 
         <Box sx={productsStyles.productChipGroup}>
           <Chip
             size="small"
             label={formatLabel(product.tipo)}
-            sx={productsStyles.productInfoChip}
-          />
-
-          <Chip
-            size="small"
-            label={formatLabel(product.genetica)}
             sx={productsStyles.productInfoChip}
           />
 
@@ -172,7 +178,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </Typography>
 
             <Typography variant="body1" sx={productsStyles.productStatValue}>
-              {stockTotal} {product.unidad_medida}
+              {stockTotal} {unitLabel}
             </Typography>
           </Box>
 
@@ -182,7 +188,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </Typography>
 
             <Typography variant="body1" sx={productsStyles.productStatValue}>
-              {stockReserved} {product.unidad_medida}
+              {stockReserved} {unitLabel}
             </Typography>
           </Box>
 
@@ -201,7 +207,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </Typography>
 
             <Typography variant="h6" sx={productsStyles.productAvailableValue}>
-              {stockAvailable} {product.unidad_medida}
+              {stockAvailable} {unitLabel}
             </Typography>
           </Box>
         </Box>

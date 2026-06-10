@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
 import {
   Alert,
   Box,
@@ -157,21 +159,16 @@ export function ProductsContainer() {
 
   return (
     <Box component="main" sx={productsStyles.page}>
-      <Container maxWidth="xl">
+      <Container maxWidth={false} disableGutters>
         <Paper elevation={0} sx={productsStyles.panel}>
           <Box sx={productsStyles.header}>
             <Box sx={productsStyles.headerContent}>
-              <Typography variant="overline" sx={productsStyles.eyebrow}>
-                Inventario
-              </Typography>
-
               <Typography variant="h4" sx={productsStyles.title}>
-                Productos y stock
+                Productos
               </Typography>
 
               <Typography variant="body1" sx={productsStyles.subtitle}>
-                Gestioná el catálogo del club, visualizá disponibilidad real y
-                controlá el estado operativo del inventario.
+                Gestioná el catálogo de productos del club
               </Typography>
             </Box>
 
@@ -191,7 +188,7 @@ export function ProductsContainer() {
                 size="small"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Buscar por nombre, genética, tipo o estado"
+                placeholder="Buscar productos..."
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -211,6 +208,24 @@ export function ProductsContainer() {
               >
                 Filtros
               </Button>
+            </Box>
+
+            <Box sx={productsStyles.resultsHeader}>
+              <Box sx={productsStyles.summaryCard}>
+                <Typography variant="body2" sx={productsStyles.summaryLabel}>
+                  {filteredProducts.length} productos encontrados
+                </Typography>
+              </Box>
+
+              <Box sx={productsStyles.viewToggleGroup} aria-hidden="true">
+                <Box sx={productsStyles.activeViewToggle}>
+                  <GridViewRoundedIcon fontSize="small" />
+                </Box>
+
+                <Box sx={productsStyles.viewToggle}>
+                  <ViewListRoundedIcon fontSize="small" />
+                </Box>
+              </Box>
             </Box>
 
             <Box sx={productsStyles.quickFilters}>
@@ -278,16 +293,6 @@ export function ProductsContainer() {
                 }
               />
             </Box>
-          </Box>
-
-          <Box sx={productsStyles.summaryCard}>
-            <Typography variant="caption" sx={productsStyles.summaryLabel}>
-              Productos visibles
-            </Typography>
-
-            <Typography variant="h6" sx={productsStyles.summaryValue}>
-              {filteredProducts.length}
-            </Typography>
           </Box>
 
           {loading && (

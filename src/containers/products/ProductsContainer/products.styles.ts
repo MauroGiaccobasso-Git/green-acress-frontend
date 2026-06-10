@@ -16,114 +16,140 @@ export const productsStyles = {
   page: {
     minHeight: "100vh",
     bgcolor: colors.background.app,
-    py: {
-      xs: 3,
-      md: 4,
-    },
   },
 
   panel: {
-    p: {
-      xs: 2.5,
-      sm: 3,
-      md: 4,
-    },
-    borderRadius: {
-      xs: 3,
-      md: 4,
-    },
-    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
-    bgcolor: colors.background.surface,
+    bgcolor: "transparent",
+    boxShadow: "none",
   },
 
   header: {
     display: "flex",
-    flexDirection: {
-      xs: "column",
-      md: "row",
-    },
-    alignItems: {
-      xs: "flex-start",
-      md: "center",
-    },
+    alignItems: { xs: "flex-start", md: "center" },
     justifyContent: "space-between",
-    gap: 3,
-    mb: 3,
+    gap: 2,
+    mb: 2.5,
+  },
+
+  headerContent: {
+    minWidth: 0,
   },
 
   eyebrow: {
-    color: colors.brand.primary,
-    fontWeight: 800,
-    letterSpacing: "0.14em",
+    display: "none",
   },
 
   title: {
-    color: colors.brand.primaryDark,
-    fontWeight: 900,
-    mb: 1,
-    letterSpacing: "-0.04em",
+    color: colors.text.primary,
+    fontSize: { xs: 28, md: 32 },
+    fontWeight: 650,
+    letterSpacing: "-0.035em",
+    lineHeight: 1.1,
+    mb: 0.75,
   },
 
   subtitle: {
     color: colors.text.secondary,
-    maxWidth: 720,
-    lineHeight: 1.7,
+    fontSize: 14,
+    fontWeight: 400,
   },
 
   createButton: {
-    minHeight: 46,
-    px: 3.5,
-    borderRadius: 2,
-    whiteSpace: "nowrap",
-    fontWeight: 800,
+    minHeight: 42,
+    px: 2.25,
+    borderRadius: "5px",
+    fontWeight: 600,
+    textTransform: "none",
+    boxShadow: (theme: Theme) =>
+      `0 8px 18px ${alpha(theme.palette.primary.main, 0.18)}`,
+  },
+
+  toolbar: {
+    mb: 2.5,
   },
 
   searchRow: {
     display: "grid",
     gridTemplateColumns: {
       xs: "1fr",
-      sm: "1fr auto",
+      md: "1fr auto",
     },
-    gap: 2,
-    alignItems: "flex-start",
-    mb: 2,
+    gap: 1.5,
+    alignItems: "center",
+    p: 1.5,
+    borderRadius: "5px",
+    bgcolor: colors.background.surface,
+    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
   },
 
   filterButton: {
-    minHeight: 40,
-    px: 3.5,
-    borderRadius: 2,
-    whiteSpace: "nowrap",
-    fontWeight: 800,
+    minHeight: 42,
+    px: 2,
+    borderRadius: "5px",
+    fontWeight: 600,
+    textTransform: "none",
+  },
+
+  resultsHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 2,
+    mt: 2,
+  },
+
+  viewToggleGroup: {
+    display: { xs: "none", sm: "flex" },
+    alignItems: "center",
+    gap: 0.75,
+  },
+
+  activeViewToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: "5px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: colors.brand.primary,
+    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.1),
+  },
+
+  viewToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: "5px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: colors.text.secondary,
   },
 
   quickFilters: {
     display: "flex",
     flexWrap: "wrap",
     gap: 1,
-    mb: 2.5,
+    mt: 2,
   },
 
   filterChip: {
-    height: 34,
+    height: 32,
     px: 0.5,
-    fontWeight: 700,
-    textTransform: "capitalize",
-    borderRadius: 2,
-    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.035),
+    borderRadius: "5px",
+    fontWeight: 500,
+    bgcolor: colors.background.surface,
     border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
 
     "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.08),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
     },
   },
 
   activeFilterChip: {
-    height: 34,
+    height: 32,
     px: 0.5,
-    fontWeight: 900,
-    textTransform: "capitalize",
-    borderRadius: 2,
+    borderRadius: "5px",
+    fontWeight: 600,
     color: colors.text.inverse,
     bgcolor: colors.brand.primary,
 
@@ -133,27 +159,30 @@ export const productsStyles = {
   },
 
   summaryCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
     width: "fit-content",
-    minWidth: 180,
-    px: 2,
-    py: 1.4,
-    mb: 4,
-    borderRadius: 2,
-    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
-    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.035),
+    bgcolor: "transparent",
   },
 
   summaryLabel: {
-    color: colors.text.secondary,
-    display: "block",
-    fontWeight: 700,
-    lineHeight: 1,
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: 400,
   },
 
   summaryValue: {
-    color: colors.brand.primaryDark,
-    fontWeight: 900,
-    lineHeight: 1.1,
+    minWidth: 32,
+    height: 32,
+    px: 1,
+    borderRadius: "5px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: colors.brand.primary,
+    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.1),
+    fontWeight: 600,
   },
 
   loadingState: {
@@ -169,7 +198,7 @@ export const productsStyles = {
   },
 
   alert: {
-    borderRadius: 2,
+    borderRadius: "5px",
     mb: 3,
   },
 
@@ -177,71 +206,66 @@ export const productsStyles = {
     py: 7,
     px: 3,
     textAlign: "center",
-    borderRadius: 3,
+    borderRadius: "5px",
     border: (theme: Theme) => `1px dashed ${theme.palette.divider}`,
-    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.03),
+    bgcolor: colors.background.surface,
   },
 
   emptyTitle: {
-    color: colors.brand.primaryDark,
-    fontWeight: 800,
+    color: colors.text.primary,
+    fontWeight: 600,
     mb: 1,
+  },
+
+  clearFiltersButton: {
+    mt: 2,
+    fontWeight: 600,
+    borderRadius: "5px",
+    textTransform: "none",
   },
 
   /*
   Grilla principal del catálogo.
-
-  Se mantiene mobile first:
-  - 1 columna en mobile/tablet;
-  - 2 columnas en desktop;
-  - 3 columnas en pantallas amplias.
   */
   productGrid: {
     display: "grid",
     gridTemplateColumns: {
       xs: "1fr",
-      md: "1fr 1fr",
+      md: "repeat(2, 1fr)",
       xl: "repeat(3, 1fr)",
     },
-    gap: {
-      xs: 2,
-      md: 2.5,
-    },
+    gap: 2.5,
     alignItems: "stretch",
   },
 
   /*
   Card premium de producto.
 
-  Mantiene una estética más limpia:
-  - menos border radius;
-  - imagen protagonista;
-  - acciones flotantes;
-  - métricas compactas;
-  - hover sutil y profesional.
+  Se reduce el radio a 5px para acercarse a la referencia visual,
+  manteniendo una apariencia limpia y profesional.
   */
   productCard: {
     overflow: "hidden",
-    borderRadius: 3,
-    border: (theme: Theme) => `1px solid ${alpha(theme.palette.divider, 0.9)}`,
+    borderRadius: "15px",
     bgcolor: colors.background.surface,
-    boxShadow: (theme: Theme) => `0 18px 45px ${alpha(theme.palette.common.black, 0.06)}`,
+    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+    boxShadow: "none",
     transition:
       "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
 
     "&:hover": {
-      transform: "translateY(-4px)",
-      borderColor: (theme: Theme) => alpha(theme.palette.primary.main, 0.32),
+      transform: "translateY(-3px)",
+      borderColor: (theme: Theme) => alpha(theme.palette.primary.main, 0.25),
       boxShadow: (theme: Theme) =>
-        `0 24px 60px ${alpha(theme.palette.common.black, 0.1)}`,
+        `0 16px 32px ${alpha(theme.palette.common.black, 0.07)}`,
     },
   },
 
   productImageWrapper: {
     position: "relative",
     height: {
-      xs: 184,
-      sm: 214,
+      xs: 170,
+      md: 184,
     },
     overflow: "hidden",
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
@@ -252,17 +276,16 @@ export const productsStyles = {
     height: "100%",
     display: "block",
     objectFit: "cover",
-    transform: "scale(1.01)",
   },
 
   imageOverlay: {
     position: "absolute",
     inset: 0,
     background: (theme: Theme) =>
-      `linear-gradient(180deg, ${alpha(theme.palette.common.black, 0.1)} 0%, ${alpha(
+      `linear-gradient(180deg, ${alpha(theme.palette.common.black, 0.04)} 0%, ${alpha(
         theme.palette.common.black,
-        0.02
-      )} 44%, ${alpha(theme.palette.common.black, 0.42)} 100%)`,
+        0.01
+      )} 55%, ${alpha(theme.palette.common.black, 0.22)} 100%)`,
     pointerEvents: "none",
   },
 
@@ -277,22 +300,22 @@ export const productsStyles = {
 
   productImageText: {
     color: colors.text.secondary,
-    fontWeight: 800,
+    fontWeight: 500,
   },
 
   activeStatusChip: {
     position: "absolute",
-    top: 14,
-    left: 14,
-    height: 30,
+    top: 12,
+    left: 12,
+    height: 28,
     px: 0.75,
-    fontWeight: 900,
-    textTransform: "capitalize",
-    borderRadius: 2,
+    borderRadius: "5px",
     color: colors.text.inverse,
     bgcolor: colors.brand.primary,
+    fontWeight: 600,
+    textTransform: "capitalize",
     border: (theme: Theme) =>
-      `1px solid ${alpha(theme.palette.common.white, 0.55)}`,
+      `1px solid ${alpha(theme.palette.common.white, 0.35)}`,
 
     "&:hover": {
       bgcolor: colors.brand.primary,
@@ -301,81 +324,118 @@ export const productsStyles = {
 
   inactiveStatusChip: {
     position: "absolute",
-    top: 14,
-    left: 14,
-    height: 30,
+    top: 12,
+    left: 12,
+    height: 28,
     px: 0.75,
-    fontWeight: 900,
-    textTransform: "capitalize",
-    borderRadius: 2,
+    borderRadius: "5px",
     color: colors.text.primary,
-    bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.9),
+    bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.92),
+    fontWeight: 600,
+    textTransform: "capitalize",
     border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
-
-    "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.94),
-    },
   },
 
   editProductButton: {
     position: "absolute",
-    top: 12,
     right: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 2,
+    bottom: 12,
+    width: 40,
+    height: 40,
+    borderRadius: "100px",
     color: colors.text.primary,
     bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.92),
-    border: (theme: Theme) => `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
     backdropFilter: "blur(10px)",
-    transition: "transform 160ms ease, background-color 160ms ease",
 
     "&:hover": {
-      transform: "translateY(-1px)",
       bgcolor: colors.background.surface,
+      transform: "translateY(-1px)",
     },
 
     "&:focus-visible": {
-      outline: (theme: Theme) => `3px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+      outline: (theme: Theme) =>
+        `3px solid ${alpha(theme.palette.primary.main, 0.3)}`,
       outlineOffset: 2,
     },
   },
 
   productCardContent: {
-    p: {
-      xs: 2,
-      sm: 2.25,
-    },
+    p: 2.15,
 
     "&:last-child": {
-      pb: {
-        xs: 2,
-        sm: 2.25,
-      },
+      pb: 2.15,
     },
   },
 
   productCardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 2,
-    mb: 1.5,
+    display: "none",
   },
 
   productTitleGroup: {
     minWidth: 0,
   },
 
+  productTitleRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr auto",
+    alignItems: "start",
+    gap: 1,
+    minWidth: 0,
+    mb: 1,
+  },
+
+  productHeaderChips: {
+    display: "flex",
+    alignItems: "center",
+    gap: 0.75,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
+
   productName: {
-    color: colors.brand.primaryDark,
-    fontWeight: 900,
-    letterSpacing: "-0.025em",
-    lineHeight: 1.15,
-    mb: 0.75,
+    color: colors.text.primary,
+    fontSize: 18,
+    fontWeight: 600,
+    letterSpacing: "-0.02em",
+    lineHeight: 1.2,
+  },
+
+  productGeneticsChip: {
+    height: 24,
+    borderRadius: "5px",
+    fontWeight: 500,
+    color: colors.brand.primary,
+    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.09),
+    textTransform: "capitalize",
+  },
+
+  productActiveChip: {
+    height: 24,
+    borderRadius: "5px",
+    fontWeight: 500,
+    color: colors.text.inverse,
+    bgcolor: colors.brand.primary,
+    textTransform: "capitalize",
+
+    "&:hover": {
+      bgcolor: colors.brand.primary,
+    },
+  },
+
+  productInactiveChip: {
+    height: 24,
+    borderRadius: "5px",
+    fontWeight: 500,
+    color: colors.text.secondary,
+    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.06),
+    textTransform: "capitalize",
   },
 
   productDescription: {
     color: colors.text.secondary,
+    fontSize: 14,
+    fontWeight: 400,
     lineHeight: 1.55,
     minHeight: 44,
   },
@@ -383,18 +443,17 @@ export const productsStyles = {
   productChipGroup: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 0.75,
+    gap: 0.8,
     mt: 2,
     mb: 2,
   },
 
   productInfoChip: {
     height: 28,
-    fontWeight: 800,
+    borderRadius: "5px",
+    fontWeight: 500,
+    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.055),
     textTransform: "capitalize",
-    borderRadius: 2,
-    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.07),
-    border: (theme: Theme) => `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
   },
 
   productDivider: {
@@ -403,74 +462,82 @@ export const productsStyles = {
 
   productStatsGrid: {
     display: "grid",
-    gridTemplateColumns: {
-      xs: "1fr 1fr",
-      sm: "repeat(4, 1fr)",
-      md: "1fr 1fr",
-      lg: "repeat(4, 1fr)",
-      xl: "1fr 1fr",
-    },
-    gap: 1,
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 0,
   },
 
   productStat: {
-    minHeight: 78,
-    p: 1.35,
-    borderRadius: 2,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.032),
+    minHeight: 72,
+    py: 1.25,
+    pr: 1.5,
+    borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+
+    "&:nth-of-type(odd)": {
+      borderRight: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+    },
+
+    "&:nth-of-type(even)": {
+      pl: 1.5,
+    },
   },
 
   productStatLabel: {
-    color: colors.text.secondary,
     display: "block",
-    fontWeight: 800,
+    color: colors.text.secondary,
+    fontWeight: 400,
     mb: 0.5,
   },
 
   productStatValue: {
     color: colors.text.primary,
-    fontWeight: 900,
+    fontSize: 15,
+    fontWeight: 600,
     lineHeight: 1.25,
   },
 
   productAvailableStat: {
-    minHeight: 78,
-    p: 1.35,
-    borderRadius: 2,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    bgcolor: (theme: Theme) => alpha(theme.palette.success.main, 0.1),
-    border: (theme: Theme) =>
-      `1px solid ${alpha(theme.palette.success.main, 0.25)}`,
+    minHeight: 72,
+    py: 1.25,
+    pl: 1.5,
   },
 
   productLowStock: {
-    bgcolor: (theme: Theme) => alpha(theme.palette.warning.main, 0.13),
-    border: (theme: Theme) =>
-      `1px solid ${alpha(theme.palette.warning.main, 0.32)}`,
+    color: (theme: Theme) => theme.palette.warning.main,
   },
 
   productEmptyStock: {
-    bgcolor: (theme: Theme) => alpha(theme.palette.error.main, 0.11),
-    border: (theme: Theme) =>
-      `1px solid ${alpha(theme.palette.error.main, 0.28)}`,
+    color: (theme: Theme) => theme.palette.error.main,
   },
 
   productAvailableLabel: {
-    color: colors.text.secondary,
     display: "block",
-    fontWeight: 900,
+    color: colors.text.secondary,
+    fontWeight: 400,
     mb: 0.5,
   },
 
   productAvailableValue: {
-    color: colors.brand.primaryDark,
-    fontWeight: 950,
+    color: colors.brand.primary,
+    fontSize: 17,
+    fontWeight: 650,
     lineHeight: 1.15,
+  },
+
+  filterDialog: {
+    borderRadius: "5px",
+  },
+
+  filterDialogTitle: {
+    fontWeight: 600,
+    color: colors.text.primary,
+    pb: 1,
+  },
+
+  filterDialogActions: {
+    px: 3,
+    pb: 3,
+    pt: 1,
+    justifyContent: "space-between",
   },
 
   filterModalContent: {
@@ -480,8 +547,8 @@ export const productsStyles = {
   },
 
   filterTitle: {
-    color: colors.brand.primaryDark,
-    fontWeight: 900,
+    color: colors.text.primary,
+    fontWeight: 600,
     mb: 1,
   },
 
@@ -489,53 +556,5 @@ export const productsStyles = {
     display: "flex",
     flexWrap: "wrap",
     gap: 1,
-  },
-
-      /*
-  Agrupa el contenido textual del encabezado.
-
-  Permite mantener la jerarquía visual separada del CTA principal.
-  */
-  headerContent: {
-    flex: 1,
-    minWidth: 0,
-  },
-
-  /*
-  Contenedor de herramientas del listado.
-
-  Agrupa búsqueda y filtros rápidos.
-  */
-  toolbar: {
-    mb: 3,
-  },
-
-  /*
-  Acción secundaria utilizada en estados vacíos.
-  */
-  clearFiltersButton: {
-    mt: 2,
-    fontWeight: 700,
-    borderRadius: 2,
-  },
-
-  /*
-  Modal de filtros administrativos.
-  */
-  filterDialog: {
-    borderRadius: 3,
-  },
-
-  filterDialogTitle: {
-    fontWeight: 800,
-    color: colors.brand.primaryDark,
-    pb: 1,
-  },
-
-  filterDialogActions: {
-    px: 3,
-    pb: 3,
-    pt: 1,
-    justifyContent: "space-between",
   },
 };
