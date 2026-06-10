@@ -29,8 +29,8 @@ export const productsStyles = {
       md: 4,
     },
     borderRadius: {
-      xs: 4,
-      md: 5,
+      xs: 3,
+      md: 4,
     },
     border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
     bgcolor: colors.background.surface,
@@ -73,7 +73,7 @@ export const productsStyles = {
   createButton: {
     minHeight: 46,
     px: 3.5,
-    borderRadius: 999,
+    borderRadius: 2,
     whiteSpace: "nowrap",
     fontWeight: 800,
   },
@@ -92,7 +92,7 @@ export const productsStyles = {
   filterButton: {
     minHeight: 40,
     px: 3.5,
-    borderRadius: 999,
+    borderRadius: 2,
     whiteSpace: "nowrap",
     fontWeight: 800,
   },
@@ -109,7 +109,7 @@ export const productsStyles = {
     px: 0.5,
     fontWeight: 700,
     textTransform: "capitalize",
-    borderRadius: 999,
+    borderRadius: 2,
     bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.035),
     border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
 
@@ -123,7 +123,7 @@ export const productsStyles = {
     px: 0.5,
     fontWeight: 900,
     textTransform: "capitalize",
-    borderRadius: 999,
+    borderRadius: 2,
     color: colors.text.inverse,
     bgcolor: colors.brand.primary,
 
@@ -138,7 +138,7 @@ export const productsStyles = {
     px: 2,
     py: 1.4,
     mb: 4,
-    borderRadius: 999,
+    borderRadius: 2,
     border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.035),
   },
@@ -169,7 +169,7 @@ export const productsStyles = {
   },
 
   alert: {
-    borderRadius: 3,
+    borderRadius: 2,
     mb: 3,
   },
 
@@ -177,7 +177,7 @@ export const productsStyles = {
     py: 7,
     px: 3,
     textAlign: "center",
-    borderRadius: 4,
+    borderRadius: 3,
     border: (theme: Theme) => `1px dashed ${theme.palette.divider}`,
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.03),
   },
@@ -212,31 +212,36 @@ export const productsStyles = {
 
   /*
   Card premium de producto.
-  Diseño inspirado en productos modernos:
-  imagen protagonista, contenido limpio
-  y métricas compactas.
+
+  Mantiene una estética más limpia:
+  - menos border radius;
+  - imagen protagonista;
+  - acciones flotantes;
+  - métricas compactas;
+  - hover sutil y profesional.
   */
   productCard: {
     overflow: "hidden",
-    borderRadius: 5,
-    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+    borderRadius: 3,
+    border: (theme: Theme) => `1px solid ${alpha(theme.palette.divider, 0.9)}`,
     bgcolor: colors.background.surface,
-    boxShadow: "none",
+    boxShadow: (theme: Theme) => `0 18px 45px ${alpha(theme.palette.common.black, 0.06)}`,
     transition:
       "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
 
     "&:hover": {
       transform: "translateY(-4px)",
       borderColor: (theme: Theme) => alpha(theme.palette.primary.main, 0.32),
-      boxShadow: (theme: Theme) => theme.shadows[5],
+      boxShadow: (theme: Theme) =>
+        `0 24px 60px ${alpha(theme.palette.common.black, 0.1)}`,
     },
   },
 
   productImageWrapper: {
     position: "relative",
     height: {
-      xs: 180,
-      sm: 210,
+      xs: 184,
+      sm: 214,
     },
     overflow: "hidden",
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
@@ -253,8 +258,11 @@ export const productsStyles = {
   imageOverlay: {
     position: "absolute",
     inset: 0,
-    background:
-      "linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.02) 42%, rgba(0,0,0,0.35) 100%)",
+    background: (theme: Theme) =>
+      `linear-gradient(180deg, ${alpha(theme.palette.common.black, 0.1)} 0%, ${alpha(
+        theme.palette.common.black,
+        0.02
+      )} 44%, ${alpha(theme.palette.common.black, 0.42)} 100%)`,
     pointerEvents: "none",
   },
 
@@ -275,11 +283,12 @@ export const productsStyles = {
   activeStatusChip: {
     position: "absolute",
     top: 14,
-    right: 14,
+    left: 14,
     height: 30,
     px: 0.75,
     fontWeight: 900,
     textTransform: "capitalize",
+    borderRadius: 2,
     color: colors.text.inverse,
     bgcolor: colors.brand.primary,
     border: (theme: Theme) =>
@@ -293,30 +302,55 @@ export const productsStyles = {
   inactiveStatusChip: {
     position: "absolute",
     top: 14,
-    right: 14,
+    left: 14,
     height: 30,
     px: 0.75,
     fontWeight: 900,
     textTransform: "capitalize",
+    borderRadius: 2,
     color: colors.text.primary,
-    bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.86),
+    bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.9),
     border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
 
     "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.92),
+      bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.94),
+    },
+  },
+
+  editProductButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 2,
+    color: colors.text.primary,
+    bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.92),
+    border: (theme: Theme) => `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+    backdropFilter: "blur(10px)",
+    transition: "transform 160ms ease, background-color 160ms ease",
+
+    "&:hover": {
+      transform: "translateY(-1px)",
+      bgcolor: colors.background.surface,
+    },
+
+    "&:focus-visible": {
+      outline: (theme: Theme) => `3px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+      outlineOffset: 2,
     },
   },
 
   productCardContent: {
     p: {
       xs: 2,
-      sm: 2.5,
+      sm: 2.25,
     },
 
     "&:last-child": {
       pb: {
         xs: 2,
-        sm: 2.5,
+        sm: 2.25,
       },
     },
   },
@@ -328,11 +362,15 @@ export const productsStyles = {
     mb: 1.5,
   },
 
+  productTitleGroup: {
+    minWidth: 0,
+  },
+
   productName: {
     color: colors.brand.primaryDark,
     fontWeight: 900,
-    letterSpacing: "-0.02em",
-    lineHeight: 1.2,
+    letterSpacing: "-0.025em",
+    lineHeight: 1.15,
     mb: 0.75,
   },
 
@@ -354,8 +392,9 @@ export const productsStyles = {
     height: 28,
     fontWeight: 800,
     textTransform: "capitalize",
-    borderRadius: 999,
+    borderRadius: 2,
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.07),
+    border: (theme: Theme) => `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
   },
 
   productDivider: {
@@ -376,12 +415,12 @@ export const productsStyles = {
 
   productStat: {
     minHeight: 78,
-    p: 1.4,
-    borderRadius: 3,
+    p: 1.35,
+    borderRadius: 2,
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.035),
+    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.032),
   },
 
   productStatLabel: {
@@ -399,8 +438,8 @@ export const productsStyles = {
 
   productAvailableStat: {
     minHeight: 78,
-    p: 1.4,
-    borderRadius: 3,
+    p: 1.35,
+    borderRadius: 2,
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
@@ -450,5 +489,53 @@ export const productsStyles = {
     display: "flex",
     flexWrap: "wrap",
     gap: 1,
+  },
+
+      /*
+  Agrupa el contenido textual del encabezado.
+
+  Permite mantener la jerarquía visual separada del CTA principal.
+  */
+  headerContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  /*
+  Contenedor de herramientas del listado.
+
+  Agrupa búsqueda y filtros rápidos.
+  */
+  toolbar: {
+    mb: 3,
+  },
+
+  /*
+  Acción secundaria utilizada en estados vacíos.
+  */
+  clearFiltersButton: {
+    mt: 2,
+    fontWeight: 700,
+    borderRadius: 2,
+  },
+
+  /*
+  Modal de filtros administrativos.
+  */
+  filterDialog: {
+    borderRadius: 3,
+  },
+
+  filterDialogTitle: {
+    fontWeight: 800,
+    color: colors.brand.primaryDark,
+    pb: 1,
+  },
+
+  filterDialogActions: {
+    px: 3,
+    pb: 3,
+    pt: 1,
+    justifyContent: "space-between",
   },
 };

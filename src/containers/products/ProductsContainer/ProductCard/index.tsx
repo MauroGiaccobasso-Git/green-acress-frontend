@@ -1,9 +1,12 @@
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   Box,
   Card,
   CardContent,
   Chip,
   Divider,
+  IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 
@@ -59,6 +62,7 @@ Responsabilidades:
 - mostrar imagen, información principal y estado;
 - presentar atributos del producto mediante chips;
 - mostrar datos de stock de forma clara;
+- preparar la acción visual de edición para el futuro modal;
 - mantener ProductsContainer más limpio y enfocado en filtros/listado.
 
 No ejecuta lógica de negocio.
@@ -100,11 +104,20 @@ export function ProductCard({ product }: ProductCardProps) {
               : productsStyles.inactiveStatusChip
           }
         />
+
+        <Tooltip title="Editar producto" arrow>
+          <IconButton
+            aria-label={`Editar producto ${product.nombre}`}
+            sx={productsStyles.editProductButton}
+          >
+            <EditOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <CardContent sx={productsStyles.productCardContent}>
         <Box sx={productsStyles.productCardHeader}>
-          <Box>
+          <Box sx={productsStyles.productTitleGroup}>
             <Typography variant="h6" sx={productsStyles.productName}>
               {product.nombre}
             </Typography>

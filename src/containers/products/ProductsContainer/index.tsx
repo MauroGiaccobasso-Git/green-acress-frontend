@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import {
   Alert,
   Box,
@@ -13,6 +16,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  InputAdornment,
   Paper,
   TextField,
   Typography,
@@ -156,7 +160,7 @@ export function ProductsContainer() {
       <Container maxWidth="xl">
         <Paper elevation={0} sx={productsStyles.panel}>
           <Box sx={productsStyles.header}>
-            <Box>
+            <Box sx={productsStyles.headerContent}>
               <Typography variant="overline" sx={productsStyles.eyebrow}>
                 Inventario
               </Typography>
@@ -171,93 +175,109 @@ export function ProductsContainer() {
               </Typography>
             </Box>
 
-            <Button variant="contained" sx={productsStyles.createButton}>
+            <Button
+              variant="contained"
+              startIcon={<AddRoundedIcon />}
+              sx={productsStyles.createButton}
+            >
               Nuevo producto
             </Button>
           </Box>
 
-          <Box sx={productsStyles.searchRow}>
-            <TextField
-              fullWidth
-              size="small"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Buscar producto..."
-            />
+          <Box sx={productsStyles.toolbar}>
+            <Box sx={productsStyles.searchRow}>
+              <TextField
+                fullWidth
+                size="small"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar por nombre, genética, tipo o estado"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRoundedIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
 
-            <Button
-              variant="outlined"
-              sx={productsStyles.filterButton}
-              onClick={() => setFilterModalOpen(true)}
-            >
-              Filtros
-            </Button>
-          </Box>
+              <Button
+                variant="outlined"
+                startIcon={<FilterListRoundedIcon />}
+                sx={productsStyles.filterButton}
+                onClick={() => setFilterModalOpen(true)}
+              >
+                Filtros
+              </Button>
+            </Box>
 
-          <Box sx={productsStyles.quickFilters}>
-            <Chip
-              label={`Todos (${products.length})`}
-              onClick={() => setFilters(initialFilters)}
-              sx={
-                filters.type === "TODOS" &&
-                filters.status === "TODOS" &&
-                filters.genetics === "TODOS"
-                  ? productsStyles.activeFilterChip
-                  : productsStyles.filterChip
-              }
-            />
+            <Box sx={productsStyles.quickFilters}>
+              <Chip
+                label={`Todos (${products.length})`}
+                onClick={() => setFilters(initialFilters)}
+                sx={
+                  filters.type === "TODOS" &&
+                  filters.status === "TODOS" &&
+                  filters.genetics === "TODOS"
+                    ? productsStyles.activeFilterChip
+                    : productsStyles.filterChip
+                }
+              />
 
-            <Chip
-              label={`Flores (${getFilteredCount({
-                ...filters,
-                type: "FLOR",
-              })})`}
-              onClick={() => handleTypeQuickFilter("FLOR")}
-              sx={
-                filters.type === "FLOR"
-                  ? productsStyles.activeFilterChip
-                  : productsStyles.filterChip
-              }
-            />
+              <Chip
+                label={`Flores (${getFilteredCount({
+                  ...filters,
+                  type: "FLOR",
+                })})`}
+                onClick={() => handleTypeQuickFilter("FLOR")}
+                sx={
+                  filters.type === "FLOR"
+                    ? productsStyles.activeFilterChip
+                    : productsStyles.filterChip
+                }
+              />
 
-            <Chip
-              label={`Semillas (${getFilteredCount({
-                ...filters,
-                type: "SEMILLA",
-              })})`}
-              onClick={() => handleTypeQuickFilter("SEMILLA")}
-              sx={
-                filters.type === "SEMILLA"
-                  ? productsStyles.activeFilterChip
-                  : productsStyles.filterChip
-              }
-            />
+              <Chip
+                label={`Semillas (${getFilteredCount({
+                  ...filters,
+                  type: "SEMILLA",
+                })})`}
+                onClick={() => handleTypeQuickFilter("SEMILLA")}
+                sx={
+                  filters.type === "SEMILLA"
+                    ? productsStyles.activeFilterChip
+                    : productsStyles.filterChip
+                }
+              />
 
-            <Chip
-              label={`Activos (${getFilteredCount({
-                ...filters,
-                status: "ACTIVO",
-              })})`}
-              onClick={() => handleStatusQuickFilter("ACTIVO")}
-              sx={
-                filters.status === "ACTIVO"
-                  ? productsStyles.activeFilterChip
-                  : productsStyles.filterChip
-              }
-            />
+              <Chip
+                label={`Activos (${getFilteredCount({
+                  ...filters,
+                  status: "ACTIVO",
+                })})`}
+                onClick={() => handleStatusQuickFilter("ACTIVO")}
+                sx={
+                  filters.status === "ACTIVO"
+                    ? productsStyles.activeFilterChip
+                    : productsStyles.filterChip
+                }
+              />
 
-            <Chip
-              label={`Inactivos (${getFilteredCount({
-                ...filters,
-                status: "INACTIVO",
-              })})`}
-              onClick={() => handleStatusQuickFilter("INACTIVO")}
-              sx={
-                filters.status === "INACTIVO"
-                  ? productsStyles.activeFilterChip
-                  : productsStyles.filterChip
-              }
-            />
+              <Chip
+                label={`Inactivos (${getFilteredCount({
+                  ...filters,
+                  status: "INACTIVO",
+                })})`}
+                onClick={() => handleStatusQuickFilter("INACTIVO")}
+                sx={
+                  filters.status === "INACTIVO"
+                    ? productsStyles.activeFilterChip
+                    : productsStyles.filterChip
+                }
+              />
+            </Box>
           </Box>
 
           <Box sx={productsStyles.summaryCard}>
@@ -311,7 +331,10 @@ export function ProductsContainer() {
                     Probá ajustar la búsqueda o limpiar los filtros aplicados.
                   </Typography>
 
-                  <Button sx={{ mt: 2 }} onClick={handleClearFilters}>
+                  <Button
+                    sx={productsStyles.clearFiltersButton}
+                    onClick={handleClearFilters}
+                  >
                     Limpiar filtros
                   </Button>
                 </Box>
@@ -334,8 +357,15 @@ export function ProductsContainer() {
         onClose={() => setFilterModalOpen(false)}
         fullWidth
         maxWidth="sm"
+        slotProps={{
+          paper: {
+            sx: productsStyles.filterDialog,
+          },
+        }}
       >
-        <DialogTitle>Filtros de productos</DialogTitle>
+        <DialogTitle sx={productsStyles.filterDialogTitle}>
+          Filtros de productos
+        </DialogTitle>
 
         <DialogContent sx={productsStyles.filterModalContent}>
           <Box>
@@ -417,7 +447,7 @@ export function ProductsContainer() {
           </Box>
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions sx={productsStyles.filterDialogActions}>
           <Button onClick={handleClearFilters}>Limpiar</Button>
 
           <Button variant="contained" onClick={() => setFilterModalOpen(false)}>
