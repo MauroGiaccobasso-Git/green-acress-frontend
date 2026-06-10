@@ -18,7 +18,7 @@ export const styles = {
   marca superior, navegación agrupada por secciones
   y usuario anclado al pie.
   */
-  desktopSidebar: {
+  desktopSidebar: (isOpen: boolean) => ({
     display: { xs: "none", md: "flex" },
     position: "fixed",
     inset: "0 auto 0 0",
@@ -28,7 +28,9 @@ export const styles = {
     bgcolor: colors.background.surface,
     borderRight: (theme: Theme) => `1px solid ${theme.palette.divider}`,
     zIndex: (theme: Theme) => theme.zIndex.drawer,
-  },
+    transform: isOpen ? "translateX(0)" : `translateX(-${SIDEBAR_WIDTH}px)`,
+    transition: "transform 180ms ease",
+  }),
 
   sidebarBrand: {
     display: "flex",
@@ -51,10 +53,13 @@ export const styles = {
   brandAvatar: {
     width: 46,
     height: 46,
-    bgcolor: colors.brand.primaryLight,
-    color: colors.brand.primaryDark,
-    fontWeight: 900,
-    fontSize: 17,
+    bgcolor: "transparent",
+    color: colors.brand.primary,
+    fontWeight: 700,
+
+    "& .MuiSvgIcon-root": {
+      fontSize: 36,
+    },
   },
 
   /*
@@ -65,7 +70,7 @@ export const styles = {
   brandTitle: {
     color: colors.brand.primaryDark,
     lineHeight: 1,
-    fontWeight: 900,
+    fontWeight: 700,
   },
 
   /*
@@ -76,7 +81,7 @@ export const styles = {
     display: "block",
     color: colors.text.secondary,
     mt: 0.35,
-    fontWeight: 600,
+    fontWeight: 500,
   },
 
   navigationSections: {
@@ -100,7 +105,7 @@ export const styles = {
     display: "block",
     px: 1.25,
     color: colors.text.secondary,
-    fontWeight: 900,
+    fontWeight: 700,
     letterSpacing: "0.08em",
     fontSize: 11,
   },
@@ -131,7 +136,7 @@ export const styles = {
     bgcolor: isActive
       ? (theme: Theme) => alpha(theme.palette.primary.main, 0.09)
       : "transparent",
-    fontWeight: 800,
+    fontWeight: 700,
     textTransform: "none",
 
     "&:hover": {
@@ -189,7 +194,7 @@ export const styles = {
   navigationText: (isActive: boolean) => ({
     color: isActive ? colors.brand.primaryDark : colors.text.primary,
     fontSize: 14,
-    fontWeight: isActive ? 800 : 650,
+    fontWeight: isActive ? 700 : 500,
   }),
 
   /*
@@ -227,11 +232,15 @@ export const styles = {
     },
   },
 
-  mainShell: {
+  mainShell: (isSidebarOpen: boolean) => ({
     flex: 1,
     minWidth: 0,
-    ml: { xs: 0, md: `${SIDEBAR_WIDTH}px` },
-  },
+    ml: {
+      xs: 0,
+      md: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : 0,
+    },
+    transition: "margin-left 180ms ease",
+  }),
 
   appBar: {
     bgcolor: colors.background.surface,
@@ -246,6 +255,13 @@ export const styles = {
 
   mobileMenuButton: {
     display: { xs: "inline-flex", md: "none" },
+    width: 44,
+    height: 44,
+    color: colors.text.primary,
+  },
+
+  desktopMenuButton: {
+    display: { xs: "none", md: "inline-flex" },
     width: 44,
     height: 44,
     color: colors.text.primary,
@@ -283,7 +299,7 @@ export const styles = {
     bgcolor: colors.brand.primaryLight,
     color: colors.brand.primaryDark,
     fontSize: 14,
-    fontWeight: 900,
+    fontWeight: 800,
   },
 
   userInfo: {
@@ -299,13 +315,13 @@ export const styles = {
   userName: {
     color: colors.text.primary,
     lineHeight: 1.1,
-    fontWeight: 800,
+    fontWeight: 700,
   },
 
   userEmail: {
     display: "block",
     color: colors.text.secondary,
-    fontWeight: 600,
+    fontWeight: 500,
   },
 
   mobileDrawerPaper: {
@@ -319,18 +335,18 @@ export const styles = {
   },
 
   mobileDrawerHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: 1.25,
-    minHeight: 86,
-    px: 2.5,
+    p: 0,
     borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+
+    "& > div": {
+      width: "100%",
+    },
   },
 
   mobileDrawerTitle: {
     color: colors.brand.primaryDark,
     lineHeight: 1,
-    fontWeight: 900,
+    fontWeight: 700,
   },
 
   mobileDrawerSubtitle: {

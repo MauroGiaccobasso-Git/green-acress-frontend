@@ -28,6 +28,7 @@ import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlin
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 
 import { useAuth } from "@/hooks/auth/useAuth";
 import { styles } from "./adminLayout.styles";
@@ -41,7 +42,7 @@ const navigationSections = [
     title: "Principal",
     items: [
       {
-        label: "Dashboard",
+        label: "Inicio",
         href: "/admin",
         icon: <HomeOutlinedIcon fontSize="small" />,
       },
@@ -124,6 +125,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
 
   const isUserMenuOpen = Boolean(anchorEl);
 
@@ -147,11 +149,34 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     setIsMobileMenuOpen(false);
   };
 
+  // Permite ocultar o mostrar el sidebar en desktop desde el botón hamburguesa.
+  const handleToggleDesktopSidebar = () => {
+    setIsDesktopSidebarOpen((currentValue) => !currentValue);
+  };
+
   // Cierra la sesión desde el menú del usuario.
   const handleLogout = () => {
     handleCloseUserMenu();
     logout();
   };
+
+  const renderBrand = () => (
+    <Box sx={styles.sidebarBrand}>
+      <Avatar sx={styles.brandAvatar}>
+        <SpaOutlinedIcon />
+      </Avatar>
+
+      <Box>
+        <Typography variant="subtitle1" sx={styles.brandTitle}>
+          Green Acres
+        </Typography>
+
+        <Typography variant="caption" sx={styles.brandSubtitle}>
+          Club Cannábico
+        </Typography>
+      </Box>
+    </Box>
+  );
 
   /*
   Renderiza la navegación por secciones.
@@ -210,20 +235,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <Box sx={styles.page}>
       {/* Sidebar desktop permanente, alineado al diseño premium del panel administrativo. */}
-      <Box component="aside" sx={styles.desktopSidebar}>
-        <Box sx={styles.sidebarBrand}>
-          <Avatar sx={styles.brandAvatar}>GA</Avatar>
-
-          <Box>
-            <Typography variant="subtitle1" sx={styles.brandTitle}>
-              Green Acres
-            </Typography>
-
-            <Typography variant="caption" sx={styles.brandSubtitle}>
-              Club Cannábico
-            </Typography>
-          </Box>
-        </Box>
+      <Box
+        component="aside"
+        sx={styles.desktopSidebar(isDesktopSidebarOpen)}
+      >
+        {renderBrand()}
 
         {renderNavigation()}
 
@@ -253,14 +269,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </Box>
       </Box>
 
-      <Box sx={styles.mainShell}>
+      <Box sx={styles.mainShell(isDesktopSidebarOpen)}>
         <AppBar position="sticky" elevation={0} sx={styles.appBar}>
           <Toolbar disableGutters sx={styles.toolbar}>
-            {/* Botón visible solo en mobile para abrir la navegación administrativa. */}
+            {/* Mobile: abre drawer. Desktop: muestra/oculta sidebar. */}
             <IconButton
               onClick={handleOpenMobileMenu}
               aria-label="Abrir navegación administrativa"
               sx={styles.mobileMenuButton}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            <IconButton
+              onClick={handleToggleDesktopSidebar}
+              aria-label="Mostrar u ocultar navegación administrativa"
+              sx={styles.desktopMenuButton}
             >
               <MenuIcon />
             </IconButton>
@@ -297,19 +321,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }}
       >
         <Box sx={styles.mobileDrawer} role="navigation">
-          <Box sx={styles.mobileDrawerHeader}>
-            <Avatar sx={styles.brandAvatar}>GA</Avatar>
-
-            <Box>
-              <Typography variant="subtitle1" sx={styles.mobileDrawerTitle}>
-                Green Acres
-              </Typography>
-
-              <Typography variant="caption" sx={styles.mobileDrawerSubtitle}>
-                Club Cannábico
-              </Typography>
-            </Box>
-          </Box>
+          <Box sx={styles.mobileDrawerHeader}>{renderBrand()}</Box>
 
           {renderNavigation(true)}
         </Box>
