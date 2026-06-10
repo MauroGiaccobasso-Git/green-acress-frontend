@@ -1,58 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-/*
-Componentes Material UI utilizados
-para construir la interfaz visual
-de la pantalla administrativa
-de productos.
-
-Container:
-- centra el contenido horizontalmente
-- limita el ancho máximo
-- ayuda a mantener una interfaz ordenada
-
-Paper:
-- genera superficies o paneles visuales
-- permite agrupar información relacionada
-- aporta una apariencia más profesional
-
-Box:
-- componente genérico utilizado para layout
-- facilita espaciados, alineaciones y distribución
-- suele reemplazar div cuando se utiliza MUI
-
-Typography:
-- representa títulos y textos
-- mantiene consistencia visual
-- evita utilizar etiquetas HTML sueltas
-
-Button:
-- representa acciones ejecutables
-- en esta pantalla se utilizará para
-  "Nuevo producto"
-
-TextField:
-- campo de entrada estilizado de Material UI
-- será utilizado inicialmente para búsqueda
-- podrá reutilizarse luego en formularios
-
-Card:
-- contenedor visual para mostrar información
-  individual de cada producto
-- facilita la lectura y separación de datos
-
-CardContent:
-- área interna de una Card donde se ubica
-  el contenido principal de la tarjeta
-*/
 import {
+  Alert,
   Box,
   Button,
-  Card,
-  CardContent,
+  Chip,
+  CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
   TextField,
   Typography,
@@ -60,142 +20,307 @@ import {
 
 import { useProducts } from "@/hooks/products/useProducts";
 
+import { ProductCard } from "./ProductCard";
 import { productsStyles } from "./products.styles";
 
+type ProductFilter = {
+  type: string;
+  status: string;
+  genetics: string;
+};
+
+const initialFilters: ProductFilter = {
+  type: "TODOS",
+  status: "TODOS",
+  genetics: "TODOS",
+};
+
+// Normaliza textos técnicos recibidos desde backend para mostrarlos de forma clara.
+const formatLabel = (value?: string | null) => {
+  if (!value) {
+    return "No definido";
+  }
+
+  return value.toLowerCase().replace("_", " ");
+};
+
 /*
-Container principal de la pantalla
-administrativa de productos.
+Container principal del módulo administrativo de productos.
 
 Responsabilidades:
+- cargar productos desde useProducts;
+- administrar búsqueda y filtros de interfaz;
+- renderizar estados de carga, error y vacío;
+- delegar la presentación individual de cada producto a ProductCard.
 
-- construir la interfaz visual
-- disparar la carga inicial
-  de productos
-- consumir useProducts
-- renderizar estados de carga,
-  error y datos
-
-NO realiza fetch directo.
-
-NO conoce detalles del backend.
+No realiza llamadas directas al backend.
+No contiene reglas de negocio del dominio.
 */
 export function ProductsContainer() {
   const { products, loading, error, fetchProducts } = useProducts();
 
-  /*
-  Ejecuta la carga inicial
-  de productos cuando la
-  pantalla se monta.
-  */
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<ProductFilter>(initialFilters);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+
+  // Carga inicial del listado al montar la pantalla.
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
   /*
-  Estructura general de la pantalla.
+  Calcula cantidades visibles por filtro rápido.
 
-  Box:
-  actúa como fondo principal
-  de toda la vista.
-
-  Container:
-  centra el contenido y limita
-  el ancho máximo.
-
-  Paper:
-  agrupa visualmente el módulo
-  de productos dentro de un panel.
+  Se usa para mostrar chips informativos como:
+  Todos, Flores, Semillas, Activos e Inactivos.
   */
+  const getFilteredCount = (filter: ProductFilter) => {
+    return products.filter((product) => {
+      const matchesType =
+        filter.type === "TODOS" || product.tipo === filter.type;
+
+      const matchesStatus =
+        filter.status === "TODOS" || product.estado === filter.status;
+
+      const matchesGenetics =
+        filter.genetics === "TODOS" || product.genetica === filter.genetics;
+
+      return matchesType && matchesStatus && matchesGenetics;
+    }).length;
+  };
+
+  /*
+  Aplica búsqueda y filtros locales sobre los productos cargados.
+
+  Esta decisión mantiene una experiencia rápida para el MVP,
+  evitando llamadas innecesarias al backend mientras el volumen
+  de productos es reducido.
+  */
+  const filteredProducts = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const searchableValues = [
+        product.nombre,
+        product.descripcion,
+        product.tipo,
+        product.genetica,
+        product.estado,
+      ];
+
+      const matchesSearch =
+        !normalizedSearch ||
+        searchableValues.some((value) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(normalizedSearch),
+        );
+
+      const matchesType =
+        filters.type === "TODOS" || product.tipo === filters.type;
+
+      const matchesStatus =
+        filters.status === "TODOS" || product.estado === filters.status;
+
+      const matchesGenetics =
+        filters.genetics === "TODOS" || product.genetica === filters.genetics;
+
+      return matchesSearch && matchesType && matchesStatus && matchesGenetics;
+    });
+  }, [products, searchTerm, filters]);
+
+  const hasProducts = products.length > 0;
+  const hasSearchResults = filteredProducts.length > 0;
+
+  const handleTypeQuickFilter = (type: string) => {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      type,
+    }));
+  };
+
+  const handleStatusQuickFilter = (status: string) => {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      status,
+    }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters(initialFilters);
+    setSearchTerm("");
+  };
+
   return (
     <Box component="main" sx={productsStyles.page}>
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         <Paper elevation={0} sx={productsStyles.panel}>
           <Box sx={productsStyles.header}>
-            <Typography variant="h4" sx={productsStyles.title} gutterBottom>
-              Productos y stock
-            </Typography>
+            <Box>
+              <Typography variant="overline" sx={productsStyles.eyebrow}>
+                Inventario
+              </Typography>
 
-            <Typography variant="body1" sx={productsStyles.subtitle}>
-              Gestioná los productos del inventario, consultá su disponibilidad
-              y prepará futuras acciones de edición o cambio de estado.
-            </Typography>
-          </Box>
+              <Typography variant="h4" sx={productsStyles.title}>
+                Productos y stock
+              </Typography>
 
-          <Box sx={productsStyles.actions}>
+              <Typography variant="body1" sx={productsStyles.subtitle}>
+                Gestioná el catálogo del club, visualizá disponibilidad real y
+                controlá el estado operativo del inventario.
+              </Typography>
+            </Box>
+
             <Button variant="contained" sx={productsStyles.createButton}>
               Nuevo producto
             </Button>
+          </Box>
 
+          <Box sx={productsStyles.searchRow}>
             <TextField
               fullWidth
               size="small"
-              placeholder="Buscar por nombre, tipo, genética o estado"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar producto..."
+            />
+
+            <Button
+              variant="outlined"
+              sx={productsStyles.filterButton}
+              onClick={() => setFilterModalOpen(true)}
+            >
+              Filtros
+            </Button>
+          </Box>
+
+          <Box sx={productsStyles.quickFilters}>
+            <Chip
+              label={`Todos (${products.length})`}
+              onClick={() => setFilters(initialFilters)}
+              sx={
+                filters.type === "TODOS" &&
+                filters.status === "TODOS" &&
+                filters.genetics === "TODOS"
+                  ? productsStyles.activeFilterChip
+                  : productsStyles.filterChip
+              }
+            />
+
+            <Chip
+              label={`Flores (${getFilteredCount({
+                ...filters,
+                type: "FLOR",
+              })})`}
+              onClick={() => handleTypeQuickFilter("FLOR")}
+              sx={
+                filters.type === "FLOR"
+                  ? productsStyles.activeFilterChip
+                  : productsStyles.filterChip
+              }
+            />
+
+            <Chip
+              label={`Semillas (${getFilteredCount({
+                ...filters,
+                type: "SEMILLA",
+              })})`}
+              onClick={() => handleTypeQuickFilter("SEMILLA")}
+              sx={
+                filters.type === "SEMILLA"
+                  ? productsStyles.activeFilterChip
+                  : productsStyles.filterChip
+              }
+            />
+
+            <Chip
+              label={`Activos (${getFilteredCount({
+                ...filters,
+                status: "ACTIVO",
+              })})`}
+              onClick={() => handleStatusQuickFilter("ACTIVO")}
+              sx={
+                filters.status === "ACTIVO"
+                  ? productsStyles.activeFilterChip
+                  : productsStyles.filterChip
+              }
+            />
+
+            <Chip
+              label={`Inactivos (${getFilteredCount({
+                ...filters,
+                status: "INACTIVO",
+              })})`}
+              onClick={() => handleStatusQuickFilter("INACTIVO")}
+              sx={
+                filters.status === "INACTIVO"
+                  ? productsStyles.activeFilterChip
+                  : productsStyles.filterChip
+              }
             />
           </Box>
 
-          {loading && (
-            <Typography variant="body2" sx={productsStyles.feedbackText}>
-              Cargando productos...
+          <Box sx={productsStyles.summaryCard}>
+            <Typography variant="caption" sx={productsStyles.summaryLabel}>
+              Productos visibles
             </Typography>
+
+            <Typography variant="h6" sx={productsStyles.summaryValue}>
+              {filteredProducts.length}
+            </Typography>
+          </Box>
+
+          {loading && (
+            <Box sx={productsStyles.loadingState}>
+              <CircularProgress size={28} />
+
+              <Typography variant="body2" sx={productsStyles.feedbackText}>
+                Cargando productos...
+              </Typography>
+            </Box>
           )}
 
           {error && (
-            <Typography variant="body2" sx={productsStyles.errorText}>
+            <Alert severity="error" sx={productsStyles.alert}>
               {error}
-            </Typography>
+            </Alert>
           )}
 
           {!loading && !error && (
             <Box component="section">
-              {products.length === 0 ? (
-                <Typography variant="body2" sx={productsStyles.feedbackText}>
-                  No hay productos registrados.
-                </Typography>
-              ) : (
-                <Box sx={productsStyles.list}>
-                  {products.map((product) => (
-                    <Card key={product.id} sx={productsStyles.card}>
-                      <CardContent>
-                        <Typography variant="h6" sx={productsStyles.cardTitle}>
-                          {product.nombre}
-                        </Typography>
+              {!hasProducts && (
+                <Box sx={productsStyles.emptyState}>
+                  <Typography variant="h6" sx={productsStyles.emptyTitle}>
+                    Todavía no hay productos registrados
+                  </Typography>
 
-                        <Typography
-                          variant="body2"
-                          sx={productsStyles.cardDescription}
-                        >
-                          {product.descripcion}
-                        </Typography>
+                  <Typography variant="body2" sx={productsStyles.feedbackText}>
+                    Cuando registres productos, se mostrarán junto con su stock,
+                    estado e imagen asociada.
+                  </Typography>
+                </Box>
+              )}
 
-                        <Typography variant="body2">
-                          Tipo: {product.tipo}
-                        </Typography>
+              {hasProducts && !hasSearchResults && (
+                <Box sx={productsStyles.emptyState}>
+                  <Typography variant="h6" sx={productsStyles.emptyTitle}>
+                    No se encontraron resultados
+                  </Typography>
 
-                        <Typography variant="body2">
-                          Genética: {product.genetica}
-                        </Typography>
+                  <Typography variant="body2" sx={productsStyles.feedbackText}>
+                    Probá ajustar la búsqueda o limpiar los filtros aplicados.
+                  </Typography>
 
-                        <Typography variant="body2">
-                          THC:{" "}
-                          {product.porcentaje_thc
-                            ? `${product.porcentaje_thc}%`
-                            : "No aplica"}
-                        </Typography>
+                  <Button sx={{ mt: 2 }} onClick={handleClearFilters}>
+                    Limpiar filtros
+                  </Button>
+                </Box>
+              )}
 
-                        <Typography variant="body2">
-                          Precio: ${product.precio_venta_actual}
-                        </Typography>
-
-                        <Typography variant="body2">
-                          Disponible: {product.stock?.cantidad_disponible ?? 0}{" "}
-                          {product.unidad_medida}
-                        </Typography>
-
-                        <Typography variant="body2">
-                          Estado: {product.estado}
-                        </Typography>
-                      </CardContent>
-                    </Card>
+              {hasSearchResults && (
+                <Box sx={productsStyles.productGrid}>
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
                   ))}
                 </Box>
               )}
@@ -203,6 +328,103 @@ export function ProductsContainer() {
           )}
         </Paper>
       </Container>
+
+      <Dialog
+        open={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Filtros de productos</DialogTitle>
+
+        <DialogContent sx={productsStyles.filterModalContent}>
+          <Box>
+            <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
+              Tipo de producto
+            </Typography>
+
+            <Box sx={productsStyles.modalChipGroup}>
+              {["TODOS", "FLOR", "SEMILLA"].map((type) => (
+                <Chip
+                  key={type}
+                  label={formatLabel(type)}
+                  onClick={() =>
+                    setFilters((currentFilters) => ({
+                      ...currentFilters,
+                      type,
+                    }))
+                  }
+                  sx={
+                    filters.type === type
+                      ? productsStyles.activeFilterChip
+                      : productsStyles.filterChip
+                  }
+                />
+              ))}
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
+              Estado
+            </Typography>
+
+            <Box sx={productsStyles.modalChipGroup}>
+              {["TODOS", "ACTIVO", "INACTIVO"].map((status) => (
+                <Chip
+                  key={status}
+                  label={formatLabel(status)}
+                  onClick={() =>
+                    setFilters((currentFilters) => ({
+                      ...currentFilters,
+                      status,
+                    }))
+                  }
+                  sx={
+                    filters.status === status
+                      ? productsStyles.activeFilterChip
+                      : productsStyles.filterChip
+                  }
+                />
+              ))}
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
+              Genética
+            </Typography>
+
+            <Box sx={productsStyles.modalChipGroup}>
+              {["TODOS", "INDICA", "SATIVA", "HIBRIDA"].map((genetics) => (
+                <Chip
+                  key={genetics}
+                  label={formatLabel(genetics)}
+                  onClick={() =>
+                    setFilters((currentFilters) => ({
+                      ...currentFilters,
+                      genetics,
+                    }))
+                  }
+                  sx={
+                    filters.genetics === genetics
+                      ? productsStyles.activeFilterChip
+                      : productsStyles.filterChip
+                  }
+                />
+              ))}
+            </Box>
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={handleClearFilters}>Limpiar</Button>
+
+          <Button variant="contained" onClick={() => setFilterModalOpen(false)}>
+            Aplicar filtros
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
