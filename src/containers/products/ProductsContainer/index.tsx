@@ -14,18 +14,19 @@ import {
   Chip,
   CircularProgress,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   InputAdornment,
   Paper,
+  Popover,
+  Snackbar,
   TextField,
   Typography,
+  type AlertColor,
 } from "@mui/material";
 
+import { Product, UpdateProductPayload } from "@/api/productsApi";
 import { useProducts } from "@/hooks/products/useProducts";
 
+import ProductFormModal from "./ProductFormModal";
 import { ProductCard } from "./ProductCard";
 import { productsStyles } from "./products.styles";
 
@@ -35,10 +36,27 @@ type ProductFilter = {
   genetics: string;
 };
 
+type ProductFeedback = {
+  open: boolean;
+  message: string;
+  severity: AlertColor;
+};
+
 const initialFilters: ProductFilter = {
   type: "TODOS",
   status: "TODOS",
   genetics: "TODOS",
+};
+
+const filterLabels: Record<string, string> = {
+  TODOS: "Todos",
+  FLOR: "Flores",
+  SEMILLA: "Semillas",
+  ACTIVO: "Activos",
+  INACTIVO: "Inactivos",
+  INDICA: "Índica",
+  SATIVA: "Sativa",
+  HIBRIDA: "Híbrida",
 };
 
 // Normaliza textos técnicos recibidos desde backend para mostrarlos de forma clara.
@@ -47,7 +65,7 @@ const formatLabel = (value?: string | null) => {
     return "No definido";
   }
 
-  return value.toLowerCase().replace("_", " ");
+  return filterLabels[value] ?? value.toLowerCase().replace("_", " ");
 };
 
 /*
@@ -56,6 +74,9 @@ Container principal del módulo administrativo de productos.
 Responsabilidades:
 - cargar productos desde useProducts;
 - administrar búsqueda y filtros de interfaz;
+- administrar apertura y cierre del modal de edición;
+- delegar actualización de productos al hook;
+- administrar feedback visual de operaciones;
 - renderizar estados de carga, error y vacío;
 - delegar la presentación individual de cada producto a ProductCard.
 
@@ -63,37 +84,44 @@ No realiza llamadas directas al backend.
 No contiene reglas de negocio del dominio.
 */
 export function ProductsContainer() {
-  const { products, loading, error, fetchProducts } = useProducts();
+  const { products, loading, error, fetchProducts, updateProduct } =
+    useProducts();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<ProductFilter>(initialFilters);
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filterAnchorEl, setFilterAnchorEl] = useState<HTMLElement | null>(
+    null,
+  );
+
+  const filterPopoverOpen = Boolean(filterAnchorEl);
+
+  /*
+  Producto seleccionado para edición.
+
+  Se mantiene en el container porque
+  representa estado de pantalla, no
+  responsabilidad del ProductCard.
+  */
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  /*
+  Feedback visual de operaciones.
+
+  Se administra en el container porque
+  responde al resultado de acciones del
+  módulo, no a la presentación interna
+  del modal.
+  */
+  const [feedback, setFeedback] = useState<ProductFeedback>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // Carga inicial del listado al montar la pantalla.
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-
-  /*
-  Calcula cantidades visibles por filtro rápido.
-
-  Se usa para mostrar chips informativos como:
-  Todos, Flores, Semillas, Activos e Inactivos.
-  */
-  const getFilteredCount = (filter: ProductFilter) => {
-    return products.filter((product) => {
-      const matchesType =
-        filter.type === "TODOS" || product.tipo === filter.type;
-
-      const matchesStatus =
-        filter.status === "TODOS" || product.estado === filter.status;
-
-      const matchesGenetics =
-        filter.genetics === "TODOS" || product.genetica === filter.genetics;
-
-      return matchesType && matchesStatus && matchesGenetics;
-    }).length;
-  };
 
   /*
   Aplica búsqueda y filtros locales sobre los productos cargados.
@@ -138,23 +166,129 @@ export function ProductsContainer() {
   const hasProducts = products.length > 0;
   const hasSearchResults = filteredProducts.length > 0;
 
-  const handleTypeQuickFilter = (type: string) => {
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      type,
-    }));
+  const activeFilterCount = [
+    filters.type !== "TODOS",
+    filters.status !== "TODOS",
+    filters.genetics !== "TODOS",
+  ].filter(Boolean).length;
+
+  /*
+  Chips visibles únicamente cuando existen filtros activos.
+
+  No funcionan como entrada principal de filtrado,
+  sino como resumen editable de la selección aplicada.
+  */
+  const activeFilterChips = [
+    {
+      key: "type",
+      visible: filters.type !== "TODOS",
+      label: formatLabel(filters.type),
+      onDelete: () =>
+        setFilters((currentFilters) => ({
+          ...currentFilters,
+          type: "TODOS",
+        })),
+    },
+    {
+      key: "status",
+      visible: filters.status !== "TODOS",
+      label: formatLabel(filters.status),
+      onDelete: () =>
+        setFilters((currentFilters) => ({
+          ...currentFilters,
+          status: "TODOS",
+        })),
+    },
+    {
+      key: "genetics",
+      visible: filters.genetics !== "TODOS",
+      label: formatLabel(filters.genetics),
+      onDelete: () =>
+        setFilters((currentFilters) => ({
+          ...currentFilters,
+          genetics: "TODOS",
+        })),
+    },
+  ].filter((chip) => chip.visible);
+
+  const handleOpenFilterPopover = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    setFilterAnchorEl(event.currentTarget);
   };
 
-  const handleStatusQuickFilter = (status: string) => {
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      status,
-    }));
+  const handleCloseFilterPopover = () => {
+    setFilterAnchorEl(null);
   };
 
   const handleClearFilters = () => {
     setFilters(initialFilters);
     setSearchTerm("");
+  };
+
+  /*
+  Abre el modal de edición con el
+  producto seleccionado desde la card.
+  */
+  const handleOpenEditModal = (product: Product) => {
+    setSelectedProduct(product);
+  };
+
+  /*
+  Cierra el modal y limpia el producto
+  seleccionado para evitar arrastrar
+  estado entre ediciones.
+  */
+  const handleCloseProductModal = () => {
+    setSelectedProduct(null);
+  };
+
+  /*
+  Cierra el feedback visual.
+
+  El estado se conserva mínimamente para
+  evitar parpadeos innecesarios mientras
+  el Snackbar finaliza su animación.
+  */
+  const handleCloseFeedback = () => {
+    setFeedback((currentFeedback) => ({
+      ...currentFeedback,
+      open: false,
+    }));
+  };
+
+  /*
+  Recibe el payload construido por el modal
+  y delega la actualización al hook.
+
+  Si la operación fue exitosa, se cierra
+  el modal y se muestra confirmación.
+  Si falla, se informa el error sin cerrar
+  el formulario para permitir corrección.
+  */
+  const handleSubmitProductForm = async (
+    productId: number,
+    payload: UpdateProductPayload,
+  ) => {
+    const updatedProduct = await updateProduct(productId, payload);
+
+    if (updatedProduct) {
+      handleCloseProductModal();
+
+      setFeedback({
+        open: true,
+        severity: "success",
+        message: "Producto actualizado correctamente.",
+      });
+
+      return;
+    }
+
+    setFeedback({
+      open: true,
+      severity: "error",
+      message: "No se pudo actualizar el producto. Revisá los datos e intentá nuevamente.",
+    });
   };
 
   return (
@@ -188,7 +322,7 @@ export function ProductsContainer() {
                 size="small"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Buscar productos..."
+                placeholder="Buscar por nombre, tipo, genética o estado..."
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -203,10 +337,21 @@ export function ProductsContainer() {
               <Button
                 variant="outlined"
                 startIcon={<FilterListRoundedIcon />}
-                sx={productsStyles.filterButton}
-                onClick={() => setFilterModalOpen(true)}
+                sx={
+                  activeFilterCount > 0
+                    ? [
+                        productsStyles.filterButton,
+                        productsStyles.filterButtonActive,
+                      ]
+                    : productsStyles.filterButton
+                }
+                onClick={handleOpenFilterPopover}
+                aria-haspopup="dialog"
+                aria-expanded={filterPopoverOpen ? "true" : undefined}
               >
-                Filtros
+                {activeFilterCount > 0
+                  ? `Filtros (${activeFilterCount})`
+                  : "Filtros"}
               </Button>
             </Box>
 
@@ -228,71 +373,27 @@ export function ProductsContainer() {
               </Box>
             </Box>
 
-            <Box sx={productsStyles.quickFilters}>
-              <Chip
-                label={`Todos (${products.length})`}
-                onClick={() => setFilters(initialFilters)}
-                sx={
-                  filters.type === "TODOS" &&
-                  filters.status === "TODOS" &&
-                  filters.genetics === "TODOS"
-                    ? productsStyles.activeFilterChip
-                    : productsStyles.filterChip
-                }
-              />
+            {activeFilterCount > 0 && (
+              <Box sx={productsStyles.activeFiltersBar}>
+                <Box sx={productsStyles.activeFiltersList}>
+                  {activeFilterChips.map((chip) => (
+                    <Chip
+                      key={chip.key}
+                      label={chip.label}
+                      onDelete={chip.onDelete}
+                      sx={productsStyles.activeFilterSummaryChip}
+                    />
+                  ))}
+                </Box>
 
-              <Chip
-                label={`Flores (${getFilteredCount({
-                  ...filters,
-                  type: "FLOR",
-                })})`}
-                onClick={() => handleTypeQuickFilter("FLOR")}
-                sx={
-                  filters.type === "FLOR"
-                    ? productsStyles.activeFilterChip
-                    : productsStyles.filterChip
-                }
-              />
-
-              <Chip
-                label={`Semillas (${getFilteredCount({
-                  ...filters,
-                  type: "SEMILLA",
-                })})`}
-                onClick={() => handleTypeQuickFilter("SEMILLA")}
-                sx={
-                  filters.type === "SEMILLA"
-                    ? productsStyles.activeFilterChip
-                    : productsStyles.filterChip
-                }
-              />
-
-              <Chip
-                label={`Activos (${getFilteredCount({
-                  ...filters,
-                  status: "ACTIVO",
-                })})`}
-                onClick={() => handleStatusQuickFilter("ACTIVO")}
-                sx={
-                  filters.status === "ACTIVO"
-                    ? productsStyles.activeFilterChip
-                    : productsStyles.filterChip
-                }
-              />
-
-              <Chip
-                label={`Inactivos (${getFilteredCount({
-                  ...filters,
-                  status: "INACTIVO",
-                })})`}
-                onClick={() => handleStatusQuickFilter("INACTIVO")}
-                sx={
-                  filters.status === "INACTIVO"
-                    ? productsStyles.activeFilterChip
-                    : productsStyles.filterChip
-                }
-              />
-            </Box>
+                <Button
+                  sx={productsStyles.activeFiltersClearButton}
+                  onClick={handleClearFilters}
+                >
+                  Limpiar todo
+                </Button>
+              </Box>
+            )}
           </Box>
 
           {loading && (
@@ -348,7 +449,11 @@ export function ProductsContainer() {
               {hasSearchResults && (
                 <Box sx={productsStyles.productGrid}>
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onEdit={handleOpenEditModal}
+                    />
                   ))}
                 </Box>
               )}
@@ -357,26 +462,44 @@ export function ProductsContainer() {
         </Paper>
       </Container>
 
-      <Dialog
-        open={filterModalOpen}
-        onClose={() => setFilterModalOpen(false)}
-        fullWidth
-        maxWidth="sm"
+      <Popover
+        open={filterPopoverOpen}
+        anchorEl={filterAnchorEl}
+        onClose={handleCloseFilterPopover}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
         slotProps={{
           paper: {
-            sx: productsStyles.filterDialog,
+            sx: productsStyles.filterPopoverPaper,
           },
         }}
       >
-        <DialogTitle sx={productsStyles.filterDialogTitle}>
-          Filtros de productos
-        </DialogTitle>
-
-        <DialogContent sx={productsStyles.filterModalContent}>
-          <Box>
-            <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
-              Tipo de producto
+        <Box sx={productsStyles.filterPopoverContent}>
+          <Box sx={productsStyles.filterPopoverHeader}>
+            <Typography variant="h6" sx={productsStyles.filterDialogTitle}>
+              Filtros de productos
             </Typography>
+          </Box>
+
+          <Box sx={productsStyles.filterSection}>
+            <Box sx={productsStyles.filterSectionHeader}>
+              <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
+                Tipo de producto
+              </Typography>
+
+              <Typography
+                variant="caption"
+                sx={productsStyles.filterSectionHelp}
+              >
+                Filtrar por tipo de producto.
+              </Typography>
+            </Box>
 
             <Box sx={productsStyles.modalChipGroup}>
               {["TODOS", "FLOR", "SEMILLA"].map((type) => (
@@ -399,10 +522,19 @@ export function ProductsContainer() {
             </Box>
           </Box>
 
-          <Box>
-            <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
-              Estado
-            </Typography>
+          <Box sx={productsStyles.filterSection}>
+            <Box sx={productsStyles.filterSectionHeader}>
+              <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
+                Estado
+              </Typography>
+
+              <Typography
+                variant="caption"
+                sx={productsStyles.filterSectionHelp}
+              >
+                Filtrar por estado del producto.
+              </Typography>
+            </Box>
 
             <Box sx={productsStyles.modalChipGroup}>
               {["TODOS", "ACTIVO", "INACTIVO"].map((status) => (
@@ -425,10 +557,19 @@ export function ProductsContainer() {
             </Box>
           </Box>
 
-          <Box>
-            <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
-              Genética
-            </Typography>
+          <Box sx={productsStyles.filterSection}>
+            <Box sx={productsStyles.filterSectionHeader}>
+              <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
+                Genética
+              </Typography>
+
+              <Typography
+                variant="caption"
+                sx={productsStyles.filterSectionHelp}
+              >
+                Filtrar por genética del producto.
+              </Typography>
+            </Box>
 
             <Box sx={productsStyles.modalChipGroup}>
               {["TODOS", "INDICA", "SATIVA", "HIBRIDA"].map((genetics) => (
@@ -450,16 +591,52 @@ export function ProductsContainer() {
               ))}
             </Box>
           </Box>
-        </DialogContent>
 
-        <DialogActions sx={productsStyles.filterDialogActions}>
-          <Button onClick={handleClearFilters}>Limpiar</Button>
+          <Box sx={productsStyles.filterFooter}>
+            <Button
+              sx={productsStyles.filterClearButton}
+              onClick={handleClearFilters}
+            >
+              Limpiar
+            </Button>
 
-          <Button variant="contained" onClick={() => setFilterModalOpen(false)}>
-            Aplicar filtros
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Button
+              variant="contained"
+              sx={productsStyles.filterApplyButton}
+              onClick={handleCloseFilterPopover}
+            >
+              Aplicar
+            </Button>
+          </Box>
+        </Box>
+      </Popover>
+
+      <ProductFormModal
+        open={Boolean(selectedProduct)}
+        product={selectedProduct}
+        loading={loading}
+        onClose={handleCloseProductModal}
+        onSubmit={handleSubmitProductForm}
+      />
+
+      <Snackbar
+        open={feedback.open}
+        autoHideDuration={3500}
+        onClose={handleCloseFeedback}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+      >
+        <Alert
+          onClose={handleCloseFeedback}
+          severity={feedback.severity}
+          variant="filled"
+          sx={productsStyles.productFeedbackAlert}
+        >
+          {feedback.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

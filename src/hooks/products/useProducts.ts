@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import {
   Product,
   productsApi,
+  UpdateProductPayload,
 } from "@/api/productsApi";
 
 /*
@@ -181,6 +182,113 @@ export function useProducts() {
     );
 
   /*
+  Función reutilizable encargada
+  de actualizar un producto existente.
+
+  El hook delega la comunicación
+  HTTP en productsApi y luego
+  actualiza el estado local para
+  reflejar el cambio en pantalla.
+
+  No contiene reglas de negocio.
+  Las validaciones definitivas
+  permanecen en el backend.
+  */
+  const updateProduct =
+    useCallback(
+
+      async (
+        productId: number,
+        payload: UpdateProductPayload
+      ): Promise<Product | null> => {
+
+        try {
+
+          /*
+          Comienza estado de carga
+          para bloquear acciones
+          mientras se actualiza
+          el producto.
+          */
+
+          setLoading(true);
+
+          /*
+          Limpia errores previos
+          antes de ejecutar una
+          nueva operación.
+          */
+
+          setError(null);
+
+          /*
+          Ejecuta la actualización
+          mediante la capa API.
+          */
+
+          const updatedProduct =
+            await productsApi
+              .updateProduct(
+                productId,
+                payload
+              );
+
+          /*
+          Actualiza el listado local
+          sin forzar una recarga completa.
+
+          Esto mantiene la interfaz
+          reactiva y evita una consulta
+          innecesaria al backend.
+          */
+
+          setProducts((currentProducts) =>
+            currentProducts.map((product) =>
+              product.id === productId
+                ? updatedProduct
+                : product
+            )
+          );
+
+          return updatedProduct;
+
+        } catch (error) {
+
+          /*
+          Convierte errores técnicos
+          en mensajes utilizables
+          por el container.
+          */
+
+          setError(
+
+            error instanceof Error
+              ? error.message
+              : "Error al actualizar producto"
+
+          );
+
+          return null;
+
+        } finally {
+
+          /*
+          Finaliza estado de carga
+          independientemente del
+          resultado de la operación.
+          */
+
+          setLoading(false);
+
+        }
+
+      },
+
+      []
+
+    );
+
+  /*
   Expone únicamente la información
   necesaria para containers.
 
@@ -204,6 +312,8 @@ export function useProducts() {
     error,
 
     fetchProducts,
+
+    updateProduct,
 
   };
 

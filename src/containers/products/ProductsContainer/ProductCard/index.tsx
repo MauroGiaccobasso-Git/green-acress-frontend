@@ -10,26 +10,22 @@ import {
   Typography,
 } from "@mui/material";
 
+import { Product } from "@/api/productsApi";
+
 import { productsStyles } from "../products.styles";
 
 type ProductCardProps = {
-  product: {
-    id: number;
-    nombre: string;
-    descripcion?: string | null;
-    imagen_url?: string | null;
-    tipo: string;
-    genetica?: string | null;
-    porcentaje_thc?: number | null;
-    unidad_medida: string;
-    precio_venta_actual: number | string;
-    estado: string;
-    stock?: {
-      cantidad_total: number;
-      cantidad_reservada: number;
-      cantidad_disponible: number;
-    } | null;
-  };
+  product: Product;
+
+  /*
+  Acción visual de edición.
+
+  La card no abre modales por sí misma
+  ni conoce lógica de negocio. Sólo
+  notifica al container qué producto
+  fue seleccionado.
+  */
+  onEdit: (product: Product) => void;
 };
 
 const unitLabels: Record<string, string> = {
@@ -67,13 +63,14 @@ Responsabilidades:
 - mostrar imagen, información principal y estado;
 - presentar atributos del producto mediante chips;
 - mostrar datos de stock de forma clara;
-- preparar la acción visual de edición para el futuro modal;
+- exponer acción de edición al container;
 - mantener ProductsContainer más limpio y enfocado en filtros/listado.
 
 No ejecuta lógica de negocio.
 No realiza llamadas al backend.
+No administra modales.
 */
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onEdit }: ProductCardProps) {
   const stockTotal = product.stock?.cantidad_total ?? 0;
   const stockReserved = product.stock?.cantidad_reservada ?? 0;
   const stockAvailable = product.stock?.cantidad_disponible ?? 0;
@@ -104,6 +101,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <Tooltip title="Editar producto" arrow>
           <IconButton
             aria-label={`Editar producto ${product.nombre}`}
+            onClick={() => onEdit(product)}
             sx={productsStyles.editProductButton}
           >
             <EditOutlinedIcon fontSize="small" />
