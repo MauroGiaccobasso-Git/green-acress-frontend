@@ -16,30 +16,56 @@ import {
 } from "@mui/material";
 import { FormEvent, useState } from "react";
 
-import { Product, UpdateProductPayload } from "@/api/productsApi";
+import {
+  CreateProductPayload,
+  Product,
+  UpdateProductPayload,
+} from "@/api/productsApi";
 
 import { productsStyles } from "../products.styles";
 
+type ProductFormMode = "create" | "edit";
+
+/*
+Payload utilizado por el formulario en modo edición.
+
+Incluye estado porque la UI permite modificarlo,
+pero el container será responsable de separar:
+
+- datos generales → PUT /productos/:id
+- estado lógico → PATCH /productos/:id/estado
+*/
+export type EditProductFormPayload = UpdateProductPayload & {
+  estado: Product["estado"];
+};
+
+export type ProductFormSubmitPayload =
+  | CreateProductPayload
+  | EditProductFormPayload;
+
 type ProductFormModalProps = {
   open: boolean;
-  product: Product | null;
+  mode: ProductFormMode;
+  product?: Product | null;
   loading: boolean;
   onClose: () => void;
-  onSubmit: (productId: number, payload: UpdateProductPayload) => Promise<void>;
+  onSubmit: (payload: ProductFormSubmitPayload) => Promise<void>;
 };
 
 type ProductFormContentProps = {
   open: boolean;
-  product: Product;
+  mode: ProductFormMode;
+  product?: Product | null;
   loading: boolean;
   onClose: () => void;
-  onSubmit: (productId: number, payload: UpdateProductPayload) => Promise<void>;
+  onSubmit: (payload: ProductFormSubmitPayload) => Promise<void>;
 };
 
 type ProductFormState = {
   nombre: string;
   descripcion: string;
   imagen_url: string;
+  tipo: "FLOR" | "SEMILLA";
   genetica: "INDICA" | "SATIVA" | "HIBRIDA";
   porcentaje_thc: string;
   precio_venta_actual: string;
@@ -62,33 +88,46 @@ const formatLabel = (value?: string | null) => {
 };
 
 /*
-Construye el estado inicial del formulario
-a partir del producto seleccionado.
-
-Se mantiene separado para evitar useEffect
-con setState y favorecer un formulario
-más predecible.
+Obtiene la unidad de medida correspondiente
+al tipo de producto.
 */
-function buildInitialFormState(product: Product): ProductFormState {
-  return {
-    nombre: product.nombre,
-    descripcion: product.descripcion,
-    imagen_url: product.imagen_url ?? "",
-    genetica: product.genetica,
-    porcentaje_thc:
-      product.porcentaje_thc !== null ? String(product.porcentaje_thc) : "",
-    precio_venta_actual: String(product.precio_venta_actual),
-    estado: product.estado,
-  };
+function getUnitByType(type: ProductFormState["tipo"]) {
+  return type === "FLOR" ? "GRAMOS" : "UNIDADES";
 }
 
 /*
-Valida una URL de forma básica.
-
-La validación definitiva de persistencia
-sigue quedando en backend, pero este control
-evita errores evidentes antes de enviar.
+Construye el estado inicial del formulario.
 */
+function buildInitialFormState(
+  mode: ProductFormMode,
+  product?: Product | null,
+): ProductFormState {
+  if (mode === "edit" && product) {
+    return {
+      nombre: product.nombre,
+      descripcion: product.descripcion ?? "",
+      imagen_url: product.imagen_url ?? "",
+      tipo: product.tipo,
+      genetica: product.genetica,
+      porcentaje_thc:
+        product.porcentaje_thc !== null ? String(product.porcentaje_thc) : "",
+      precio_venta_actual: String(product.precio_venta_actual),
+      estado: product.estado,
+    };
+  }
+
+  return {
+    nombre: "",
+    descripcion: "",
+    imagen_url: "",
+    tipo: "FLOR",
+    genetica: "HIBRIDA",
+    porcentaje_thc: "",
+    precio_venta_actual: "",
+    estado: "ACTIVO",
+  };
+}
+
 function isValidUrl(value: string) {
   if (!value.trim()) {
     return true;
@@ -103,12 +142,6 @@ function isValidUrl(value: string) {
   }
 }
 
-/*
-Compara el estado actual contra el estado inicial.
-
-Permite detectar cambios sin guardar y prevenir
-cierres accidentales del modal.
-*/
 function hasUnsavedChanges(
   currentForm: ProductFormState,
   initialForm: ProductFormState,
@@ -117,6 +150,7 @@ function hasUnsavedChanges(
     currentForm.nombre !== initialForm.nombre ||
     currentForm.descripcion !== initialForm.descripcion ||
     currentForm.imagen_url !== initialForm.imagen_url ||
+    currentForm.tipo !== initialForm.tipo ||
     currentForm.genetica !== initialForm.genetica ||
     currentForm.porcentaje_thc !== initialForm.porcentaje_thc ||
     currentForm.precio_venta_actual !== initialForm.precio_venta_actual ||
@@ -124,13 +158,6 @@ function hasUnsavedChanges(
   );
 }
 
-/*
-Devuelve el error correspondiente a un campo.
-
-Centralizar esta lógica permite reutilizarla
-tanto al salir de un input como al enviar
-el formulario completo.
-*/
 function getFieldError(
   field: keyof ProductFormState,
   form: ProductFormState,
@@ -140,8 +167,8 @@ function getFieldError(
     return "El nombre es obligatorio.";
   }
 
-  if (field === "descripcion" && !form.descripcion.trim()) {
-    return "La descripción es obligatoria.";
+  if (field === "nombre" && form.nombre.trim().length > 50) {
+    return "El nombre no puede superar los 50 caracteres.";
   }
 
   if (
@@ -150,6 +177,14 @@ function getFieldError(
     !isValidUrl(form.imagen_url)
   ) {
     return "Ingresá una URL válida que comience con http o https.";
+  }
+
+  if (field === "tipo" && !form.tipo) {
+    return "El tipo de producto es obligatorio.";
+  }
+
+  if (field === "genetica" && !form.genetica) {
+    return "La genética es obligatoria.";
   }
 
   if (field === "precio_venta_actual") {
@@ -179,63 +214,59 @@ function getFieldError(
   return undefined;
 }
 
-/*
-Contenido interno del formulario.
-
-Se separa del componente exportado para permitir
-reinicializar el estado local mediante key={product.id},
-sin usar setState dentro de useEffect.
-*/
 function ProductFormContent({
   open,
+  mode,
   product,
   loading,
   onClose,
   onSubmit,
 }: ProductFormContentProps) {
   const [initialForm] = useState<ProductFormState>(() =>
-    buildInitialFormState(product),
+    buildInitialFormState(mode, product),
   );
 
   const [form, setForm] = useState<ProductFormState>(initialForm);
-
   const [errors, setErrors] = useState<ProductFormErrors>({});
-
-  /*
-  Controla si la imagen ingresada no pudo
-  cargarse en la vista previa.
-
-  Esto evita mostrar el ícono nativo de imagen rota
-  y mantiene una experiencia visual más cuidada.
-  */
   const [imagePreviewFailed, setImagePreviewFailed] = useState(false);
-
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
 
-  const isSeed = product.tipo === "SEMILLA";
-
-  const stockAvailable = product.stock?.cantidad_disponible ?? 0;
-
-  const unitLabel = unitLabels[product.unidad_medida] ?? product.unidad_medida;
-
+  const isCreateMode = mode === "create";
+  const isSeed = form.tipo === "SEMILLA";
+  const derivedUnit = getUnitByType(form.tipo);
+  const stockAvailable = product?.stock?.cantidad_disponible ?? 0;
+  const unitLabel = unitLabels[derivedUnit] ?? derivedUnit;
   const isDirty = hasUnsavedChanges(form, initialForm);
 
+  const title = isCreateMode ? "Nuevo producto" : "Editar producto";
+
+  const subtitle = isCreateMode
+    ? "Registrá un nuevo producto para incorporarlo al catálogo administrativo."
+    : "Actualizá los datos visibles del catálogo sin modificar el tipo ni el stock asociado.";
+
+  const submitLabel = isCreateMode ? "Crear producto" : "Guardar cambios";
+  const loadingLabel = isCreateMode ? "Creando..." : "Guardando...";
+
   const handleChange = (field: keyof ProductFormState, value: string) => {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
-    }));
+    setForm((currentForm) => {
+      if (field === "tipo" && value === "SEMILLA") {
+        return {
+          ...currentForm,
+          tipo: "SEMILLA",
+          porcentaje_thc: "",
+        };
+      }
 
-    /*
-    Limpia el error del campo editado.
+      return {
+        ...currentForm,
+        [field]: value,
+      };
+    });
 
-    Esto evita mantener mensajes viejos
-    después de que el usuario corrige
-    el dato.
-    */
     setErrors((currentErrors) => ({
       ...currentErrors,
       [field]: undefined,
+      ...(field === "tipo" ? { porcentaje_thc: undefined } : {}),
     }));
 
     if (field === "imagen_url") {
@@ -252,18 +283,12 @@ function ProductFormContent({
     }));
   };
 
-  /*
-  Validaciones básicas de experiencia.
-
-  No reemplazan las reglas de negocio
-  del backend, pero previenen errores
-  evidentes antes de enviar el formulario.
-  */
   const validateForm = () => {
     const fieldsToValidate: Array<keyof ProductFormState> = [
       "nombre",
-      "descripcion",
       "imagen_url",
+      "tipo",
+      "genetica",
       "precio_venta_actual",
       "porcentaje_thc",
     ];
@@ -293,9 +318,26 @@ function ProductFormContent({
       return;
     }
 
-    await onSubmit(product.id, {
+    if (isCreateMode) {
+      await onSubmit({
+        nombre: form.nombre.trim(),
+        descripcion:
+          form.descripcion.trim() !== "" ? form.descripcion.trim() : null,
+        imagen_url:
+          form.imagen_url.trim() !== "" ? form.imagen_url.trim() : null,
+        tipo: form.tipo,
+        genetica: form.genetica,
+        porcentaje_thc: isSeed ? null : Number(form.porcentaje_thc),
+        precio_venta_actual: Number(form.precio_venta_actual),
+      });
+
+      return;
+    }
+
+    await onSubmit({
       nombre: form.nombre.trim(),
-      descripcion: form.descripcion.trim(),
+      descripcion:
+        form.descripcion.trim() !== "" ? form.descripcion.trim() : null,
       imagen_url: form.imagen_url.trim() !== "" ? form.imagen_url.trim() : null,
       genetica: form.genetica,
       porcentaje_thc: isSeed ? null : Number(form.porcentaje_thc),
@@ -304,13 +346,6 @@ function ProductFormContent({
     });
   };
 
-  /*
-  Controla cierres solicitados por botón,
-  tecla Escape o click fuera del modal.
-
-  Si existen cambios sin guardar, se pide
-  confirmación para evitar pérdida accidental.
-  */
   const handleRequestClose = () => {
     if (loading) {
       return;
@@ -346,23 +381,30 @@ function ProductFormContent({
           <Box sx={productsStyles.productFormHeader}>
             <Box>
               <DialogTitle sx={productsStyles.productFormTitle}>
-                Editar producto
+                {title}
               </DialogTitle>
 
               <Typography sx={productsStyles.productFormSubtitle}>
-                Actualizá los datos visibles del catálogo sin modificar el tipo
-                ni el stock asociado.
+                {subtitle}
               </Typography>
+
+              {isCreateMode && (
+                <Typography sx={productsStyles.productFormDefaultStatusText}>
+                  Los nuevos productos se crean activos por defecto.
+                </Typography>
+              )}
             </Box>
 
-            <Chip
-              label={formatLabel(form.estado)}
-              sx={
-                form.estado === "ACTIVO"
-                  ? productsStyles.productFormStatusActiveChip
-                  : productsStyles.productFormStatusInactiveChip
-              }
-            />
+            {!isCreateMode && (
+              <Chip
+                label={formatLabel(form.estado)}
+                sx={
+                  form.estado === "ACTIVO"
+                    ? productsStyles.productFormStatusActiveChip
+                    : productsStyles.productFormStatusInactiveChip
+                }
+              />
+            )}
           </Box>
 
           <DialogContent sx={productsStyles.productFormContent}>
@@ -373,7 +415,9 @@ function ProductFormContent({
                     <Box
                       component="img"
                       src={form.imagen_url}
-                      alt={`Imagen de ${form.nombre || product.nombre}`}
+                      alt={`Imagen de ${
+                        form.nombre || product?.nombre || "producto"
+                      }`}
                       onError={() => setImagePreviewFailed(true)}
                       sx={productsStyles.productFormImage}
                     />
@@ -400,7 +444,7 @@ function ProductFormContent({
                   <Box sx={productsStyles.productFormPreviewChips}>
                     <Chip
                       size="small"
-                      label={formatLabel(product.tipo)}
+                      label={formatLabel(form.tipo)}
                       sx={productsStyles.productFormPreviewChip}
                     />
 
@@ -412,7 +456,11 @@ function ProductFormContent({
 
                     <Chip
                       size="small"
-                      label={`${stockAvailable} ${unitLabel} disponibles`}
+                      label={
+                        isCreateMode
+                          ? `Unidad: ${formatLabel(derivedUnit)}`
+                          : `${stockAvailable} ${unitLabel} disponibles`
+                      }
                       sx={productsStyles.productFormPreviewChip}
                     />
                   </Box>
@@ -455,17 +503,19 @@ function ProductFormContent({
                     />
 
                     <TextField
-                      label="Descripción *"
+                      label="Descripción"
                       value={form.descripcion}
                       onChange={(event) =>
                         handleChange("descripcion", event.target.value)
                       }
-                      onBlur={() => handleBlur("descripcion")}
                       multiline
                       minRows={3}
                       fullWidth
                       error={Boolean(errors.descripcion)}
-                      helperText={errors.descripcion}
+                      helperText={
+                        errors.descripcion ??
+                        "Opcional. Ayuda a identificar mejor el producto en el catálogo."
+                      }
                       sx={[
                         productsStyles.productFormField,
                         productsStyles.productFormFullWidth,
@@ -527,20 +577,21 @@ function ProductFormContent({
                       sx={productsStyles.productFormField}
                     />
 
-                    <TextField
-                      select
-                      label="Estado *"
-                      value={form.estado}
-                      onChange={(event) =>
-                        handleChange("estado", event.target.value)
-                      }
-                      fullWidth
-                      sx={productsStyles.productFormField}
-                    >
-                      <MenuItem value="ACTIVO">Activo</MenuItem>
-
-                      <MenuItem value="INACTIVO">Inactivo</MenuItem>
-                    </TextField>
+                    {!isCreateMode && (
+                      <TextField
+                        select
+                        label="Estado *"
+                        value={form.estado}
+                        onChange={(event) =>
+                          handleChange("estado", event.target.value)
+                        }
+                        fullWidth
+                        sx={productsStyles.productFormField}
+                      >
+                        <MenuItem value="ACTIVO">Activo</MenuItem>
+                        <MenuItem value="INACTIVO">Inactivo</MenuItem>
+                      </TextField>
+                    )}
                   </Box>
                 </Box>
 
@@ -557,35 +608,85 @@ function ProductFormContent({
                     </Typography>
                   </Box>
 
-                  <Box sx={productsStyles.productFormMetaGrid}>
-                    <Box sx={productsStyles.productFormReadonlyCard}>
-                      <Typography sx={productsStyles.productFormReadonlyLabel}>
-                        Tipo
-                      </Typography>
+                  {isCreateMode ? (
+                    <Box sx={productsStyles.productFormGrid}>
+                      <TextField
+                        select
+                        label="Tipo *"
+                        value={form.tipo}
+                        onChange={(event) =>
+                          handleChange("tipo", event.target.value)
+                        }
+                        onBlur={() => handleBlur("tipo")}
+                        fullWidth
+                        error={Boolean(errors.tipo)}
+                        helperText={
+                          errors.tipo ??
+                          "Define la unidad y las reglas asociadas al THC."
+                        }
+                        sx={productsStyles.productFormField}
+                      >
+                        <MenuItem value="FLOR">Flor</MenuItem>
+                        <MenuItem value="SEMILLA">Semilla</MenuItem>
+                      </TextField>
 
-                      <Typography sx={productsStyles.productFormReadonlyValue}>
-                        {formatLabel(product.tipo)}
-                      </Typography>
+                      <Box sx={productsStyles.productFormReadonlyCard}>
+                        <Typography
+                          sx={productsStyles.productFormReadonlyLabel}
+                        >
+                          Unidad
+                        </Typography>
 
-                      <Typography sx={productsStyles.productFormReadonlyHint}>
-                        No modificable luego de la creación.
-                      </Typography>
+                        <Typography
+                          sx={productsStyles.productFormReadonlyValue}
+                        >
+                          {formatLabel(derivedUnit)}
+                        </Typography>
+
+                        <Typography sx={productsStyles.productFormReadonlyHint}>
+                          Se define automáticamente por el tipo seleccionado.
+                        </Typography>
+                      </Box>
                     </Box>
+                  ) : (
+                    <Box sx={productsStyles.productFormMetaGrid}>
+                      <Box sx={productsStyles.productFormReadonlyCard}>
+                        <Typography
+                          sx={productsStyles.productFormReadonlyLabel}
+                        >
+                          Tipo
+                        </Typography>
 
-                    <Box sx={productsStyles.productFormReadonlyCard}>
-                      <Typography sx={productsStyles.productFormReadonlyLabel}>
-                        Unidad
-                      </Typography>
+                        <Typography
+                          sx={productsStyles.productFormReadonlyValue}
+                        >
+                          {formatLabel(form.tipo)}
+                        </Typography>
 
-                      <Typography sx={productsStyles.productFormReadonlyValue}>
-                        {formatLabel(product.unidad_medida)}
-                      </Typography>
+                        <Typography sx={productsStyles.productFormReadonlyHint}>
+                          No modificable luego de la creación.
+                        </Typography>
+                      </Box>
 
-                      <Typography sx={productsStyles.productFormReadonlyHint}>
-                        Definida automáticamente por el tipo.
-                      </Typography>
+                      <Box sx={productsStyles.productFormReadonlyCard}>
+                        <Typography
+                          sx={productsStyles.productFormReadonlyLabel}
+                        >
+                          Unidad
+                        </Typography>
+
+                        <Typography
+                          sx={productsStyles.productFormReadonlyValue}
+                        >
+                          {formatLabel(derivedUnit)}
+                        </Typography>
+
+                        <Typography sx={productsStyles.productFormReadonlyHint}>
+                          Definida automáticamente por el tipo.
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
+                  )}
 
                   <Box sx={productsStyles.productFormGrid}>
                     <TextField
@@ -595,13 +696,14 @@ function ProductFormContent({
                       onChange={(event) =>
                         handleChange("genetica", event.target.value)
                       }
+                      onBlur={() => handleBlur("genetica")}
                       fullWidth
+                      error={Boolean(errors.genetica)}
+                      helperText={errors.genetica}
                       sx={productsStyles.productFormField}
                     >
                       <MenuItem value="INDICA">Índica</MenuItem>
-
                       <MenuItem value="SATIVA">Sativa</MenuItem>
-
                       <MenuItem value="HIBRIDA">Híbrida</MenuItem>
                     </TextField>
 
@@ -674,7 +776,7 @@ function ProductFormContent({
                 />
               )}
 
-              {loading ? "Guardando..." : "Guardar cambios"}
+              {loading ? loadingLabel : submitLabel}
             </Button>
           </DialogActions>
         </Box>
@@ -725,28 +827,23 @@ function ProductFormContent({
   );
 }
 
-/*
-Modal visual para edición de productos.
-
-No realiza llamadas directas a la API.
-No utiliza hooks de negocio.
-No contiene reglas definitivas del backend.
-*/
 export default function ProductFormModal({
   open,
+  mode,
   product,
   loading,
   onClose,
   onSubmit,
 }: ProductFormModalProps) {
-  if (!product) {
+  if (mode === "edit" && !product) {
     return null;
   }
 
   return (
     <ProductFormContent
-      key={product.id}
+      key={mode === "edit" ? product?.id : `create-product-${Number(open)}`}
       open={open}
+      mode={mode}
       product={product}
       loading={loading}
       onClose={onClose}

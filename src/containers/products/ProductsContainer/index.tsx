@@ -23,10 +23,16 @@ import {
   type AlertColor,
 } from "@mui/material";
 
-import { Product, UpdateProductPayload } from "@/api/productsApi";
+import {
+  CreateProductPayload,
+  Product,
+  UpdateProductPayload,
+} from "@/api/productsApi";
 import { useProducts } from "@/hooks/products/useProducts";
 
-import ProductFormModal from "./ProductFormModal";
+import ProductFormModal, {
+  ProductFormSubmitPayload,
+} from "./ProductFormModal";
 import { ProductCard } from "./ProductCard";
 import { productsStyles } from "./products.styles";
 
@@ -40,6 +46,12 @@ type ProductFeedback = {
   open: boolean;
   message: string;
   severity: AlertColor;
+};
+
+type ProductFormMode = "create" | "edit";
+
+type EditProductPayloadWithStatus = UpdateProductPayload & {
+  estado: Product["estado"];
 };
 
 const initialFilters: ProductFilter = {
@@ -74,8 +86,8 @@ Container principal del módulo administrativo de productos.
 Responsabilidades:
 - cargar productos desde useProducts;
 - administrar búsqueda y filtros de interfaz;
-- administrar apertura y cierre del modal de edición;
-- delegar actualización de productos al hook;
+- administrar apertura y cierre del modal de alta/edición;
+- delegar creación, actualización y baja lógica de productos al hook;
 - administrar feedback visual de operaciones;
 - renderizar estados de carga, error y vacío;
 - delegar la presentación individual de cada producto a ProductCard.
@@ -84,8 +96,15 @@ No realiza llamadas directas al backend.
 No contiene reglas de negocio del dominio.
 */
 export function ProductsContainer() {
-  const { products, loading, error, fetchProducts, updateProduct } =
-    useProducts();
+  const {
+    products,
+    loading,
+    error,
+    fetchProducts,
+    createProduct,
+    updateProduct,
+    updateProductStatus,
+  } = useProducts();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<ProductFilter>(initialFilters);
@@ -95,41 +114,23 @@ export function ProductsContainer() {
 
   const filterPopoverOpen = Boolean(filterAnchorEl);
 
-  /*
-  Producto seleccionado para edición.
+  const [productFormMode, setProductFormMode] =
+    useState<ProductFormMode>("create");
 
-  Se mantiene en el container porque
-  representa estado de pantalla, no
-  responsabilidad del ProductCard.
-  */
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  /*
-  Feedback visual de operaciones.
+  const [productModalOpen, setProductModalOpen] = useState(false);
 
-  Se administra en el container porque
-  responde al resultado de acciones del
-  módulo, no a la presentación interna
-  del modal.
-  */
   const [feedback, setFeedback] = useState<ProductFeedback>({
     open: false,
     message: "",
     severity: "success",
   });
 
-  // Carga inicial del listado al montar la pantalla.
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  /*
-  Aplica búsqueda y filtros locales sobre los productos cargados.
-
-  Esta decisión mantiene una experiencia rápida para el MVP,
-  evitando llamadas innecesarias al backend mientras el volumen
-  de productos es reducido.
-  */
   const filteredProducts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -172,12 +173,6 @@ export function ProductsContainer() {
     filters.genetics !== "TODOS",
   ].filter(Boolean).length;
 
-  /*
-  Chips visibles únicamente cuando existen filtros activos.
-
-  No funcionan como entrada principal de filtrado,
-  sino como resumen editable de la selección aplicada.
-  */
   const activeFilterChips = [
     {
       key: "type",
@@ -226,30 +221,23 @@ export function ProductsContainer() {
     setSearchTerm("");
   };
 
-  /*
-  Abre el modal de edición con el
-  producto seleccionado desde la card.
-  */
-  const handleOpenEditModal = (product: Product) => {
-    setSelectedProduct(product);
+  const handleOpenCreateModal = () => {
+    setProductFormMode("create");
+    setSelectedProduct(null);
+    setProductModalOpen(true);
   };
 
-  /*
-  Cierra el modal y limpia el producto
-  seleccionado para evitar arrastrar
-  estado entre ediciones.
-  */
+  const handleOpenEditModal = (product: Product) => {
+    setProductFormMode("edit");
+    setSelectedProduct(product);
+    setProductModalOpen(true);
+  };
+
   const handleCloseProductModal = () => {
+    setProductModalOpen(false);
     setSelectedProduct(null);
   };
 
-  /*
-  Cierra el feedback visual.
-
-  El estado se conserva mínimamente para
-  evitar parpadeos innecesarios mientras
-  el Snackbar finaliza su animación.
-  */
   const handleCloseFeedback = () => {
     setFeedback((currentFeedback) => ({
       ...currentFeedback,
@@ -259,35 +247,136 @@ export function ProductsContainer() {
 
   /*
   Recibe el payload construido por el modal
-  y delega la actualización al hook.
+  y delega la creación o actualización al hook
+  según el modo activo del formulario.
 
-  Si la operación fue exitosa, se cierra
-  el modal y se muestra confirmación.
-  Si falla, se informa el error sin cerrar
-  el formulario para permitir corrección.
+  En edición se separa la actualización
+  de datos generales del cambio de estado
+  lógico, porque el backend expone endpoints
+  distintos para cada responsabilidad.
   */
   const handleSubmitProductForm = async (
-    productId: number,
-    payload: UpdateProductPayload,
+    payload: ProductFormSubmitPayload,
   ) => {
-    const updatedProduct = await updateProduct(productId, payload);
+    if (productFormMode === "create") {
+      const createdProduct = await createProduct(
+        payload as CreateProductPayload,
+      );
 
-    if (updatedProduct) {
-      handleCloseProductModal();
+      if (createdProduct) {
+        handleCloseProductModal();
+
+        setFeedback({
+          open: true,
+          severity: "success",
+          message: "Producto registrado correctamente.",
+        });
+
+        return;
+      }
 
       setFeedback({
         open: true,
-        severity: "success",
-        message: "Producto actualizado correctamente.",
+        severity: "error",
+        message:
+          "No se pudo registrar el producto. Revisá los datos e intentá nuevamente.",
       });
 
       return;
     }
 
+    if (!selectedProduct) {
+      setFeedback({
+        open: true,
+        severity: "error",
+        message: "No se encontró el producto seleccionado para editar.",
+      });
+
+      return;
+    }
+
+    const editPayload = payload as EditProductPayloadWithStatus;
+
+    const productDataPayload: UpdateProductPayload = {
+      nombre: editPayload.nombre,
+      descripcion: editPayload.descripcion,
+      imagen_url: editPayload.imagen_url,
+      genetica: editPayload.genetica,
+      porcentaje_thc: editPayload.porcentaje_thc,
+      precio_venta_actual: editPayload.precio_venta_actual,
+    };
+
+    const hasDataChanges =
+      productDataPayload.nombre !== selectedProduct.nombre ||
+      (productDataPayload.descripcion ?? null) !==
+        (selectedProduct.descripcion ?? null) ||
+      (productDataPayload.imagen_url ?? null) !==
+        (selectedProduct.imagen_url ?? null) ||
+      productDataPayload.genetica !== selectedProduct.genetica ||
+      productDataPayload.porcentaje_thc !== selectedProduct.porcentaje_thc ||
+      productDataPayload.precio_venta_actual !==
+        selectedProduct.precio_venta_actual;
+
+    const hasStatusChange = editPayload.estado !== selectedProduct.estado;
+
+    if (!hasDataChanges && !hasStatusChange) {
+      handleCloseProductModal();
+
+      setFeedback({
+        open: true,
+        severity: "info",
+        message: "No se detectaron cambios para guardar.",
+      });
+
+      return;
+    }
+
+    if (hasDataChanges) {
+      const updatedProduct = await updateProduct(
+        selectedProduct.id,
+        productDataPayload,
+      );
+
+      if (!updatedProduct) {
+        setFeedback({
+          open: true,
+          severity: "error",
+          message:
+            "No se pudo actualizar el producto. Revisá los datos e intentá nuevamente.",
+        });
+
+        return;
+      }
+    }
+
+    if (hasStatusChange) {
+      const updatedProductStatus = await updateProductStatus(
+        selectedProduct.id,
+        {
+          estado: editPayload.estado,
+        },
+      );
+
+      if (!updatedProductStatus) {
+        setFeedback({
+          open: true,
+          severity: "error",
+          message:
+            "No se pudo actualizar el estado del producto. Revisá los datos e intentá nuevamente.",
+        });
+
+        return;
+      }
+    }
+
+    handleCloseProductModal();
+
     setFeedback({
       open: true,
-      severity: "error",
-      message: "No se pudo actualizar el producto. Revisá los datos e intentá nuevamente.",
+      severity: "success",
+      message: hasStatusChange
+        ? "Estado del producto actualizado correctamente."
+        : "Producto actualizado correctamente.",
     });
   };
 
@@ -310,6 +399,7 @@ export function ProductsContainer() {
               variant="contained"
               startIcon={<AddRoundedIcon />}
               sx={productsStyles.createButton}
+              onClick={handleOpenCreateModal}
             >
               Nuevo producto
             </Button>
@@ -612,7 +702,8 @@ export function ProductsContainer() {
       </Popover>
 
       <ProductFormModal
-        open={Boolean(selectedProduct)}
+        open={productModalOpen}
+        mode={productFormMode}
         product={selectedProduct}
         loading={loading}
         onClose={handleCloseProductModal}

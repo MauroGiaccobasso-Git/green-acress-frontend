@@ -38,7 +38,10 @@ const formatLabel = (value?: string | null) => {
     return "No definido";
   }
 
-  return value.toLowerCase().replace("_", " ");
+  return value
+    .toLowerCase()
+    .replace("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
 
 const formatPrice = (value: number | string) => {

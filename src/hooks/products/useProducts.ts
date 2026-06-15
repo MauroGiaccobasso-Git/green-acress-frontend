@@ -3,9 +3,11 @@
 import { useCallback, useState } from "react";
 
 import {
+  CreateProductPayload,
   Product,
   productsApi,
   UpdateProductPayload,
+  UpdateProductStatusPayload,
 } from "@/api/productsApi";
 
 /*
@@ -36,7 +38,6 @@ Toda comunicación ocurre mediante
 productsApi.
 */
 export function useProducts() {
-
   /*
   Almacena productos obtenidos
   desde backend.
@@ -77,154 +78,99 @@ export function useProducts() {
   /*
   Función reutilizable encargada
   de consultar productos.
-
-  Puede utilizarse:
-
-  - al cargar pantalla
-
-  - al buscar
-
-  - al refrescar
-
-  - luego de crear productos
-
-  - luego de editar productos
-
-  - luego de desactivar productos
-
-  search es opcional para permitir
-  reutilización futura con filtros.
   */
   const fetchProducts =
     useCallback(
-
       async (
         search?: string
       ): Promise<void> => {
-
         try {
-
-          /*
-          Comienza estado de carga.
-
-          La interfaz sabrá que existe
-          una operación ejecutándose.
-          */
-
           setLoading(true);
-
-          /*
-          Limpia errores anteriores.
-
-          Evita mostrar mensajes viejos
-          durante nuevas consultas.
-          */
-
           setError(null);
-
-          /*
-          Solicita productos utilizando
-          la capa API.
-
-          El hook NO conoce detalles
-          técnicos del backend.
-
-          Sólo solicita información.
-          */
 
           const data =
             await productsApi
               .getProducts(search);
 
-          /*
-          Actualiza estado local
-          con productos obtenidos.
-
-          Esto provoca re-render
-          automático del container.
-          */
-
           setProducts(data);
-
         } catch (error) {
-
-          /*
-          Convierte errores técnicos
-          en mensajes utilizables
-          por la interfaz.
-          */
-
           setError(
-
             error instanceof Error
               ? error.message
               : "Error al cargar productos"
-
           );
-
         } finally {
-
-          /*
-          Finaliza estado de carga.
-
-          Ocurre tanto si la operación
-          fue exitosa como si falló.
-          */
-
           setLoading(false);
-
         }
-
       },
-
       []
-
     );
 
   /*
   Función reutilizable encargada
-  de actualizar un producto existente.
+  de registrar un nuevo producto.
 
   El hook delega la comunicación
   HTTP en productsApi y luego
-  actualiza el estado local para
-  reflejar el cambio en pantalla.
+  agrega el producto creado al
+  estado local del listado.
 
   No contiene reglas de negocio.
   Las validaciones definitivas
   permanecen en el backend.
   */
+  const createProduct =
+    useCallback(
+      async (
+        payload: CreateProductPayload
+      ): Promise<Product | null> => {
+        try {
+          setLoading(true);
+          setError(null);
+
+          const createdProduct =
+            await productsApi
+              .createProduct(payload);
+
+          setProducts((currentProducts) => [
+            createdProduct,
+            ...currentProducts,
+          ]);
+
+          return createdProduct;
+        } catch (error) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Error al registrar producto"
+          );
+
+          return null;
+        } finally {
+          setLoading(false);
+        }
+      },
+      []
+    );
+
+  /*
+  Función reutilizable encargada
+  de actualizar los datos editables
+  de un producto existente.
+
+  No modifica el estado lógico.
+  La activación o inactivación se
+  gestiona mediante updateProductStatus.
+  */
   const updateProduct =
     useCallback(
-
       async (
         productId: number,
         payload: UpdateProductPayload
       ): Promise<Product | null> => {
-
         try {
-
-          /*
-          Comienza estado de carga
-          para bloquear acciones
-          mientras se actualiza
-          el producto.
-          */
-
           setLoading(true);
-
-          /*
-          Limpia errores previos
-          antes de ejecutar una
-          nueva operación.
-          */
-
           setError(null);
-
-          /*
-          Ejecuta la actualización
-          mediante la capa API.
-          */
 
           const updatedProduct =
             await productsApi
@@ -232,15 +178,6 @@ export function useProducts() {
                 productId,
                 payload
               );
-
-          /*
-          Actualiza el listado local
-          sin forzar una recarga completa.
-
-          Esto mantiene la interfaz
-          reactiva y evita una consulta
-          innecesaria al backend.
-          */
 
           setProducts((currentProducts) =>
             currentProducts.map((product) =>
@@ -251,70 +188,79 @@ export function useProducts() {
           );
 
           return updatedProduct;
-
         } catch (error) {
-
-          /*
-          Convierte errores técnicos
-          en mensajes utilizables
-          por el container.
-          */
-
           setError(
-
             error instanceof Error
               ? error.message
               : "Error al actualizar producto"
-
           );
 
           return null;
-
         } finally {
-
-          /*
-          Finaliza estado de carga
-          independientemente del
-          resultado de la operación.
-          */
-
           setLoading(false);
-
         }
-
       },
-
       []
-
     );
 
   /*
-  Expone únicamente la información
-  necesaria para containers.
+  Función reutilizable encargada
+  de actualizar el estado lógico
+  de un producto.
 
-  El container decide:
-
-  - cuándo cargar
-
-  - cómo mostrar
-
-  - cómo renderizar
-
-  El hook sólo entrega datos y lógica.
+  Se utiliza para activar o inactivar
+  productos sin eliminarlos físicamente,
+  respetando la baja lógica definida
+  para el módulo.
   */
+  const updateProductStatus =
+    useCallback(
+      async (
+        productId: number,
+        payload: UpdateProductStatusPayload
+      ): Promise<Product | null> => {
+        try {
+          setLoading(true);
+          setError(null);
+
+          const updatedProduct =
+            await productsApi
+              .updateProductStatus(
+                productId,
+                payload
+              );
+
+          setProducts((currentProducts) =>
+            currentProducts.map((product) =>
+              product.id === productId
+                ? updatedProduct
+                : product
+            )
+          );
+
+          return updatedProduct;
+        } catch (error) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Error al actualizar estado del producto"
+          );
+
+          return null;
+        } finally {
+          setLoading(false);
+        }
+      },
+      []
+    );
 
   return {
-
     products,
-
     loading,
-
     error,
-
     fetchProducts,
-
+    createProduct,
     updateProduct,
-
+    updateProductStatus,
   };
-
 }

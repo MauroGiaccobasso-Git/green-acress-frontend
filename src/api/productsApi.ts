@@ -33,7 +33,7 @@ export type Product = {
 
   nombre: string;
 
-  descripcion: string;
+  descripcion: string | null;
 
   /*
   URL opcional de la imagen del producto.
@@ -64,17 +64,49 @@ export type Product = {
 };
 
 /*
+Representa los campos necesarios
+para registrar un nuevo producto.
+
+En el alta el tipo sí se envía porque
+define la unidad de medida y las reglas
+asociadas al THC.
+
+El stock no se incluye porque debe
+gestionarse mediante movimientos
+trazables de inventario.
+*/
+export type CreateProductPayload = {
+  nombre: string;
+
+  descripcion?: string | null;
+
+  imagen_url?: string | null;
+
+  tipo: "FLOR" | "SEMILLA";
+
+  genetica: "INDICA" | "SATIVA" | "HIBRIDA";
+
+  porcentaje_thc: number | null;
+
+  precio_venta_actual: number;
+};
+
+/*
 Representa los campos permitidos
-para la edición de un producto.
+para la edición de datos de un producto.
 
 El tipo de producto queda excluido
 porque es inmutable según las reglas
 de negocio del backend.
+
+El estado también queda excluido porque
+la baja lógica se gestiona mediante
+un endpoint específico PATCH /estado.
 */
 export type UpdateProductPayload = {
   nombre: string;
 
-  descripcion: string;
+  descripcion?: string | null;
 
   imagen_url?: string | null;
 
@@ -83,8 +115,31 @@ export type UpdateProductPayload = {
   porcentaje_thc: number | null;
 
   precio_venta_actual: number;
+};
 
+/*
+Representa el payload utilizado para
+modificar el estado lógico de un producto.
+
+Se separa de la edición general para
+mantener alineado el frontend con
+la API real del backend.
+*/
+export type UpdateProductStatusPayload = {
   estado: "ACTIVO" | "INACTIVO";
+};
+
+/*
+Representa la respuesta devuelta por backend
+al registrar un producto.
+
+El endpoint retorna un mensaje informativo
+junto con el producto creado.
+*/
+type CreateProductResponse = {
+  message: string;
+
+  producto: Product;
 };
 
 /*
@@ -104,6 +159,17 @@ type UpdateProductResponse = {
 
   producto: Product;
 };
+
+/*
+Representa la respuesta devuelta por backend
+al actualizar el estado lógico de un producto.
+*/
+type UpdateProductStatusResponse = {
+  message: string;
+
+  producto: Product;
+};
+
 /*
 Centraliza las operaciones HTTP
 relacionadas con productos.
@@ -119,14 +185,28 @@ export const productsApi = {
   },
 
   /*
+  Registra un nuevo producto.
+
+  La validación final de reglas de negocio
+  continúa siendo responsabilidad del backend.
+  */
+  async createProduct(payload: CreateProductPayload): Promise<Product> {
+    const response = await httpClient<CreateProductResponse>("/productos", {
+      method: "POST",
+      body: payload,
+    });
+
+    return response.producto;
+  },
+
+  /*
   Actualiza la información editable
   de un producto existente.
 
-  La validación de reglas de negocio
-  continúa siendo responsabilidad
-  del backend.
+  No modifica el estado lógico.
+  La baja lógica se realiza mediante
+  updateProductStatus.
   */
-
   async updateProduct(
     productId: number,
     payload: UpdateProductPayload,
@@ -135,6 +215,29 @@ export const productsApi = {
       `/productos/${productId}`,
       {
         method: "PUT",
+        body: payload,
+      },
+    );
+
+    return response.producto;
+  },
+
+  /*
+  Actualiza el estado lógico de un producto.
+
+  Se utiliza para activar o inactivar
+  productos sin eliminarlos físicamente,
+  respetando la baja lógica definida
+  para el módulo.
+  */
+  async updateProductStatus(
+    productId: number,
+    payload: UpdateProductStatusPayload,
+  ): Promise<Product> {
+    const response = await httpClient<UpdateProductStatusResponse>(
+      `/productos/${productId}/estado`,
+      {
+        method: "PATCH",
         body: payload,
       },
     );

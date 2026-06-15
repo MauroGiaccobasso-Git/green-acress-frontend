@@ -500,10 +500,12 @@ export const productsStyles = {
   productInactiveChip: {
     height: 24,
     borderRadius: "5px",
-    fontWeight: 500,
-    color: colors.text.secondary,
-    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.06),
-    textTransform: "capitalize",
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: colors.state.error,
+    bgcolor: (theme: Theme) => alpha(theme.palette.error.main, 0.12),
+    border: (theme: Theme) =>
+      `1px solid ${alpha(theme.palette.error.main, 0.28)}`,
   },
 
   productDescription: {
@@ -801,6 +803,12 @@ export const productsStyles = {
     maxWidth: 560,
   },
 
+  productFormDefaultStatusText: {
+    mt: 1,
+    fontSize: "0.85rem",
+    color: colors.text.secondary,
+  },
+
   productFormStatusActiveChip: {
     height: 30,
     borderRadius: "999px",
@@ -815,12 +823,13 @@ export const productsStyles = {
   },
 
   productFormStatusInactiveChip: {
-    height: 30,
-    borderRadius: "999px",
-    color: colors.text.secondary,
-    bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.07),
+    height: 32,
+    borderRadius: "5px",
     fontWeight: 700,
-    textTransform: "capitalize",
+    color: colors.state.error,
+    bgcolor: (theme: Theme) => alpha(theme.palette.error.main, 0.12),
+    border: (theme: Theme) =>
+      `1px solid ${alpha(theme.palette.error.main, 0.28)}`,
   },
 
   productFormContent: {
