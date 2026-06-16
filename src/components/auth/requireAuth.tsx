@@ -44,9 +44,7 @@ rutas privadas del sistema.
 Su responsabilidad es validar:
 
 - existencia de sesión
-
 - existencia de token
-
 - permisos por rol
 
 Si alguna validación falla:
@@ -94,7 +92,7 @@ export default function RequireAuth({
   sesión actual
   */
 
-  const { user, token } = useAuth();
+  const { user, token, isAuthReady } = useAuth();
 
   /*
   Determina si el usuario posee
@@ -122,18 +120,26 @@ export default function RequireAuth({
   /*
   Ejecuta validaciones de acceso.
 
-  Se ejecuta cuando cambia:
+  Importante:
+  no se valida token ni permisos hasta que
+  AuthProvider haya terminado de restaurar
+  la sesión persistida.
 
-  - token
-
-  - rol
-
-  - router
-
-  - permisos
+  Esto evita que Next.js renderice estados
+  distintos entre servidor y cliente,
+  corrigiendo el hydration mismatch.
   */
 
   useEffect(() => {
+    /*
+    Mientras la autenticación inicial
+    no está lista, no se redirige.
+    */
+
+    if (!isAuthReady) {
+      return;
+    }
+
     /*
     Usuario sin token.
 
@@ -154,22 +160,22 @@ export default function RequireAuth({
     if (!hasRequiredRole) {
       router.replace("/");
     }
-  }, [token, hasRequiredRole, router]);
+  }, [isAuthReady, token, hasRequiredRole, router]);
 
   /*
-  Mientras se valida acceso
-  mostramos una pantalla temporal.
+  Mientras se restaura la sesión
+  o se valida acceso, mostramos
+  una pantalla temporal.
 
   Esto evita:
 
   - flashes visuales
-
   - contenido protegido visible
-
   - render incorrecto
+  - errores de hidratación
   */
 
-  if (!token || !hasRequiredRole) {
+  if (!isAuthReady || !token || !hasRequiredRole) {
     return (
       <Box
         sx={{
