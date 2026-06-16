@@ -1,70 +1,35 @@
 "use client";
 
-import { Box, Button, Container, Paper, Typography } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { Box, Typography } from "@mui/material";
 
-import { useAuth } from "@/hooks/auth/useAuth";
 import RequireAuth from "@/components/auth/requireAuth";
+import { AdminLayout } from "@/layouts/admin/AdminLayout";
+import { colors } from "@/theme/colors";
 
 // Pantalla administrativa inicial.
 //
-// Actualmente funciona como pantalla base
-// para validar autenticación, persistencia,
-// protección de rutas y logout.
+// Funciona como punto de entrada del panel,
+// reutilizando el layout común del administrador.
 export default function AdminPage() {
-  const router = useRouter();
-
-  const { logout } = useAuth();
-
-  // Ejecuta cierre de sesión completo
-  // y redirige nuevamente al login.
-  const handleLogout = () => {
-    logout();
-
-    router.push("/");
-  };
-
   return (
-    // Protege contenido interno
-    // permitiendo acceso únicamente
-    // a usuarios ADMIN autenticados.
     <RequireAuth allowedRoles={["ADMIN"]}>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          bgcolor: "#f4f7f5",
-          py: 4,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Paper
-            elevation={0}
+      <AdminLayout>
+        <Box>
+          <Typography
+            variant="h3"
             sx={{
-              p: 4,
-              borderRadius: 4,
-              border: "1px solid #dbe5dd",
+              color: colors.brand.primaryDark,
+              mb: 2,
             }}
           >
-            <Typography
-              variant="h4"
-              fontWeight={700}
-              color="#1f3d2b"
-              gutterBottom
-            >
-              Panel administrativo
-            </Typography>
+            Panel administrativo
+          </Typography>
 
-            <Typography color="text.secondary" mb={3}>
-              Sesión iniciada correctamente. Esta pantalla funcionará como base
-              inicial para el dashboard administrativo del sistema.
-            </Typography>
-
-            <Button variant="outlined" color="error" onClick={handleLogout}>
-              Cerrar sesión
-            </Button>
-          </Paper>
-        </Container>
-      </Box>
+          <Typography variant="body1" sx={{ color: colors.text.secondary }}>
+            Seleccioná una sección del menú para comenzar a gestionar el sistema.
+          </Typography>
+        </Box>
+      </AdminLayout>
     </RequireAuth>
   );
 }

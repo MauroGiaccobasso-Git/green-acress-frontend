@@ -6,6 +6,7 @@ type LoginUser = {
   id: number;
   email: string;
   rol: "ADMIN" | "SOCIO";
+  estado: "ACTIVO" | "INACTIVO" | "BLOQUEADO";
 };
 
 // Estructura esperada de respuesta
@@ -18,20 +19,15 @@ type LoginResponse = {
 // Módulo encargado de centralizar
 // operaciones relacionadas a autenticación.
 export const authApi = {
-
   // Realiza solicitud login hacia backend
   login(email: string, password: string) {
+    return httpClient<LoginResponse>("/auth/login", {
+      method: "POST",
 
-    return httpClient<LoginResponse>(
-      "/auth/login",
-      {
-        method: "POST",
-
-        body: {
-          email,
-          password,
-        },
-      }
-    );
+      body: {
+        email,
+        password,
+      },
+    });
   },
 };
