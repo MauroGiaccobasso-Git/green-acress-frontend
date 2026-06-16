@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 
 import {
   clearSession,
@@ -38,6 +38,21 @@ type AuthContextValue = {
   token: string | null;
 
   /*
+  Indica si el frontend ya terminó
+  de restaurar la sesión persistida.
+
+  Es necesario en Next.js para evitar
+  diferencias entre el HTML generado
+  inicialmente y el HTML hidratado
+  en el navegador.
+
+  Mientras este valor sea false,
+  las rutas protegidas no deben decidir
+  si redirigen o muestran contenido privado.
+  */
+  isAuthReady: boolean;
+
+  /*
   Acción utilizada para iniciar sesión
   dentro del frontend.
 
@@ -48,10 +63,7 @@ type AuthContextValue = {
   Luego actualiza el estado global
   y guarda la sesión en localStorage.
   */
-  login: (
-    user: StoredAuthUser,
-    token: string
-  ) => void;
+  login: (user: StoredAuthUser, token: string) => void;
 
   /*
   Acción utilizada para cerrar sesión.
@@ -75,8 +87,7 @@ este contexto directamente.
 
 Para eso usamos el hook useAuth.
 */
-export const AuthContext =
-  createContext<AuthContextValue | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 /*
 Provider global de autenticación.
@@ -90,6 +101,7 @@ para que distintas pantallas puedan saber:
 - si hay usuario logueado
 - qué usuario está logueado
 - qué token existe
+- si la sesión persistida ya fue restaurada
 - cómo iniciar sesión
 - cómo cerrar sesión
 */
@@ -101,29 +113,70 @@ export default function AuthProvider({
   /*
   Estado del usuario autenticado.
 
-  Se inicializa leyendo authStorage.
+  Importante:
+  no se inicializa leyendo localStorage
+  directamente dentro de useState.
 
-  Esto permite recuperar la sesión
-  si el usuario refresca la página
-  y todavía existe información válida
-  guardada en localStorage.
+  En Next.js, el primer render debe ser
+  consistente entre servidor y cliente.
+  Como localStorage solo existe en el navegador,
+  la sesión se restaura después del montaje
+  usando useEffect.
   */
-  const [user, setUser] =
-    useState<StoredAuthUser | null>(() =>
-      getStoredUser()
-    );
+  const [user, setUser] = useState<StoredAuthUser | null>(null);
 
   /*
   Estado del token JWT.
 
-  También se inicializa desde authStorage
-  para mantener la sesión luego de recargar
-  la aplicación.
+  Se inicializa en null por la misma razón:
+  evitar diferencias de hidratación entre
+  el render inicial y el cliente.
   */
-  const [token, setToken] =
-    useState<string | null>(() =>
-      getStoredToken()
-    );
+  const [token, setToken] = useState<string | null>(null);
+
+  /*
+  Estado que indica si el AuthProvider
+  ya terminó de verificar si existe
+  una sesión persistida.
+
+  Mientras sea false, RequireAuth debe mostrar
+  un estado neutral de validación y no debe
+  renderizar contenido protegido ni redirigir.
+  */
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
+  /*
+  Restaura la sesión persistida luego
+  de que el componente se monta en el navegador.
+
+  Este efecto corre únicamente del lado cliente,
+  por lo que es seguro acceder a localStorage
+  mediante authStorage.
+
+  Esta decisión corrige el hydration mismatch
+  detectado en rutas protegidas como /admin/products.
+  */
+  useEffect(() => {
+    /*
+  La restauración se difiere a una microtarea
+  para evitar setState sincrónico dentro del effect,
+  cumpliendo con la regla de ESLint de React.
+
+  Esto mantiene la corrección del hydration mismatch
+  sin romper la persistencia de sesión.
+  */
+    queueMicrotask(() => {
+      const storedUser = getStoredUser();
+
+      const storedToken = getStoredToken();
+
+      setUser(storedUser);
+
+      setToken(storedToken);
+
+      setIsAuthReady(true);
+    });
+  }, []);
 
   /*
   Inicia sesión dentro del frontend.
@@ -138,13 +191,12 @@ export default function AuthProvider({
   De esta forma, AuthProvider no conoce
   detalles internos de localStorage.
   */
-  const login = (
-    user: StoredAuthUser,
-    token: string
-  ) => {
+  const login = (user: StoredAuthUser, token: string) => {
     setUser(user);
 
     setToken(token);
+
+    setIsAuthReady(true);
 
     saveSession(user, token);
   };
@@ -166,6 +218,8 @@ export default function AuthProvider({
 
     setToken(null);
 
+    setIsAuthReady(true);
+
     clearSession();
   };
 
@@ -182,6 +236,7 @@ export default function AuthProvider({
       value={{
         user,
         token,
+        isAuthReady,
         login,
         logout,
       }}
