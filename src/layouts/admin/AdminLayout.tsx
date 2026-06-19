@@ -32,9 +32,12 @@ import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 
 import { useAuth } from "@/hooks/auth/useAuth";
 import { styles } from "./adminLayout.styles";
+import { PageHeader } from "@/components/common/PageHeader";
 
 type AdminLayoutProps = {
   children: ReactNode;
+  title?: string;
+  subtitle?: string;
 };
 
 const navigationSections = [
@@ -89,7 +92,7 @@ const navigationSections = [
       {
         label: "Compras",
         href: "/admin/purchases",
-        disabled: true,
+        disabled: false,
         icon: <ShoppingBagOutlinedIcon fontSize="small" />,
       },
     ],
@@ -119,7 +122,7 @@ const navigationSections = [
   },
 ];
 
-export function AdminLayout({ children }: AdminLayoutProps) {
+export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
 
@@ -235,10 +238,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <Box sx={styles.page}>
       {/* Sidebar desktop permanente, alineado al diseño premium del panel administrativo. */}
-      <Box
-        component="aside"
-        sx={styles.desktopSidebar(isDesktopSidebarOpen)}
-      >
+      <Box component="aside" sx={styles.desktopSidebar(isDesktopSidebarOpen)}>
         {renderBrand()}
 
         {renderNavigation()}
@@ -288,6 +288,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             >
               <MenuIcon />
             </IconButton>
+
+            {/* Header dinámico de cada página administrativa. */}
+            <PageHeader title={title} subtitle={subtitle} />
 
             <Box sx={styles.toolbarSpacer} />
 
