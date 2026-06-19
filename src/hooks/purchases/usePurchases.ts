@@ -7,7 +7,7 @@ import {
   Purchase,
   purchasesApi,
 } from "@/api/purchasesApi";
-import { Product, productsApi } from "@/api/productsApi";
+import { CreateProductPayload, Product, productsApi } from "@/api/productsApi";
 import { Provider, providersApi } from "@/api/providersApi";
 
 /*
@@ -21,6 +21,8 @@ Su responsabilidad es:
 - obtener productos
 
 - registrar compras
+
+- crear semillas desde el flujo de compras
 
 - administrar loading
 
@@ -46,8 +48,7 @@ export function usePurchases() {
   El container utilizará esta colección
   para construir el selector de proveedor.
   */
-  const [providers, setProviders] =
-    useState<Provider[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
 
   /*
   Productos obtenidos desde backend.
@@ -56,8 +57,7 @@ export function usePurchases() {
   únicamente semillas para respetar
   las reglas del módulo.
   */
-  const [products, setProducts] =
-    useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   /*
   Almacena la última compra registrada.
@@ -65,29 +65,31 @@ export function usePurchases() {
   Permite mostrar feedback visual
   luego de una operación exitosa.
   */
-  const [createdPurchase, setCreatedPurchase] =
-    useState<Purchase | null>(null);
+  const [createdPurchase, setCreatedPurchase] = useState<Purchase | null>(null);
 
   /*
   Indica cuándo existe una solicitud
   de carga en ejecución.
   */
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   /*
   Indica cuándo se está registrando
   una compra.
   */
-  const [submitting, setSubmitting] =
-    useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  /*
+  Indica cuándo se está creando una
+  semilla desde el flujo de compras.
+  */
+  const [creatingSeed, setCreatingSeed] = useState(false);
 
   /*
   Guarda errores producidos durante
   operaciones del módulo.
   */
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   /*
   Obtiene proveedores y productos
@@ -96,35 +98,28 @@ export function usePurchases() {
   Ambas consultas se ejecutan en paralelo
   para reducir tiempos de espera.
   */
-  const fetchPurchaseOptions =
-    useCallback(
-      async (): Promise<void> => {
-        try {
-          setLoading(true);
-          setError(null);
+  const fetchPurchaseOptions = useCallback(async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
 
-          const [
-            providersData,
-            productsData,
-          ] = await Promise.all([
-            providersApi.getProviders(),
-            productsApi.getProducts(),
-          ]);
+      const [providersData, productsData] = await Promise.all([
+        providersApi.getProviders(),
+        productsApi.getProducts(),
+      ]);
 
-          setProviders(providersData);
-          setProducts(productsData);
-        } catch (error) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error al cargar datos para compras"
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+      setProviders(providersData);
+      setProducts(productsData);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Error al cargar datos para compras",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   /*
   Registra una nueva compra.
@@ -139,36 +134,66 @@ export function usePurchases() {
 
   - validar reglas de negocio
   */
-  const createPurchase =
-    useCallback(
-      async (
-        payload: CreatePurchasePayload
-      ): Promise<Purchase | null> => {
-        try {
-          setSubmitting(true);
-          setError(null);
+  const createPurchase = useCallback(
+    async (payload: CreatePurchasePayload): Promise<Purchase | null> => {
+      try {
+        setSubmitting(true);
+        setError(null);
 
-          const purchase =
-            await purchasesApi
-              .createPurchase(payload);
+        const purchase = await purchasesApi.createPurchase(payload);
 
-          setCreatedPurchase(purchase);
+        setCreatedPurchase(purchase);
 
-          return purchase;
-        } catch (error) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error al registrar compra"
-          );
+        return purchase;
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Error al registrar compra",
+        );
 
-          return null;
-        } finally {
-          setSubmitting(false);
-        }
-      },
-      []
-    );
+        return null;
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [],
+  );
+
+  /*
+  Crea una nueva semilla desde el flujo
+  de compras.
+
+  La creación continúa usando el módulo
+  de productos, pero se expone desde este
+  hook para mantener el container sin
+  llamadas HTTP directas.
+
+  Luego de crearla, se agrega al estado
+  local para que el selector la muestre
+  inmediatamente sin recargar la pantalla.
+  */
+  const createSeedProduct = useCallback(
+    async (payload: CreateProductPayload): Promise<Product | null> => {
+      try {
+        setCreatingSeed(true);
+        setError(null);
+
+        const createdProduct = await productsApi.createProduct(payload);
+
+        setProducts((currentProducts) => [createdProduct, ...currentProducts]);
+
+        return createdProduct;
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Error al crear la semilla",
+        );
+
+        return null;
+      } finally {
+        setCreatingSeed(false);
+      }
+    },
+    [],
+  );
 
   /*
   Permite limpiar errores desde
@@ -192,9 +217,11 @@ export function usePurchases() {
     createdPurchase,
     loading,
     submitting,
+    creatingSeed,
     error,
     fetchPurchaseOptions,
     createPurchase,
+    createSeedProduct,
     clearError,
     clearCreatedPurchase,
   };

@@ -32,8 +32,10 @@ import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 
 import { Product } from "@/api/productsApi";
 import { usePurchases } from "@/hooks/purchases/usePurchases";
+import { colors } from "@/theme/colors";
 
 import { purchasesStyles } from "./purchases.styles";
+import { CreateSeedModal } from "@/components/CreateSeedModal";
 
 type PurchaseItem = {
   product: Product;
@@ -49,9 +51,11 @@ export default function PurchasesContainer() {
     createdPurchase,
     loading,
     submitting,
+    creatingSeed,
     error,
     fetchPurchaseOptions,
     createPurchase,
+    createSeedProduct,
     clearError,
     clearCreatedPurchase,
   } = usePurchases();
@@ -66,6 +70,7 @@ export default function PurchasesContainer() {
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [isCreateSeedModalOpen, setIsCreateSeedModalOpen] = useState(false);
 
   /*
   Carga inicial de proveedores y productos.
@@ -205,6 +210,25 @@ export default function PurchasesContainer() {
     ]);
 
     resetItemForm();
+  };
+
+  /*
+  Crea una semilla desde Compras y la selecciona automáticamente.
+
+  Esto evita que el administrador tenga que salir del flujo,
+  ir a Productos, crear la semilla y volver a cargar la compra.
+  */
+  const handleCreateSeed = async (
+    payload: Parameters<typeof createSeedProduct>[0],
+  ) => {
+    const createdSeed = await createSeedProduct(payload);
+
+    if (!createdSeed) return null;
+
+    setSelectedProductId(String(createdSeed.id));
+    setUnitPrice(String(createdSeed.precio_venta_actual));
+
+    return createdSeed;
   };
 
   const handleRemoveItem = (indexToRemove: number) => {
@@ -446,24 +470,62 @@ export default function PurchasesContainer() {
                 </Box>
 
                 <Box sx={purchasesStyles.addItemGrid}>
-                  <FormControl fullWidth>
-                    <InputLabel id="seed-label">Semilla *</InputLabel>
+                  <Box sx={{ minWidth: 0 }}>
+                    <FormControl fullWidth>
+                      <InputLabel id="seed-label">Semilla *</InputLabel>
 
-                    <Select
-                      labelId="seed-label"
-                      label="Semilla *"
-                      value={selectedProductId}
-                      onChange={(event) =>
-                        setSelectedProductId(event.target.value)
-                      }
+                      <Select
+                        labelId="seed-label"
+                        label="Semilla *"
+                        value={selectedProductId}
+                        onChange={(event) =>
+                          setSelectedProductId(event.target.value)
+                        }
+                      >
+                        {activeSeedProducts.map((product) => (
+                          <MenuItem key={product.id} value={String(product.id)}>
+                            {product.nombre}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.75,
+                        mt: 1,
+                      }}
                     >
-                      {activeSeedProducts.map((product) => (
-                        <MenuItem key={product.id} value={String(product.id)}>
-                          {product.nombre}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      <Typography
+                        sx={{
+                          color: colors.text.secondary,
+                          fontSize: 12,
+                          fontWeight: 500,
+                        }}
+                      >
+                        ¿No encontrás la semilla?
+                      </Typography>
+
+                      <Button
+                        variant="text"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={() => setIsCreateSeedModalOpen(true)}
+                        sx={{
+                          minHeight: 28,
+                          px: 0.5,
+                          color: colors.brand.primary,
+                          fontSize: 12,
+                          fontWeight: 850,
+                          textTransform: "none",
+                        }}
+                      >
+                        Crear nueva semilla
+                      </Button>
+                    </Box>
+                  </Box>
 
                   <TextField
                     label="Cantidad *"
@@ -790,6 +852,13 @@ export default function PurchasesContainer() {
           </Card>
         </Box>
       )}
+
+      <CreateSeedModal
+        open={isCreateSeedModalOpen}
+        creating={creatingSeed}
+        onClose={() => setIsCreateSeedModalOpen(false)}
+        onCreate={handleCreateSeed}
+      />
 
       <Snackbar
         open={successOpen}
