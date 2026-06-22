@@ -18,7 +18,10 @@ NO implementa interfaz.
 export default function ProductsPage() {
   return (
     <RequireAuth allowedRoles={["ADMIN"]}>
-      <AdminLayout>
+      <AdminLayout
+        title="Productos"
+        subtitle="Gestión del catálogo de productos del club"
+      >
         <ProductsContainer />
       </AdminLayout>
     </RequireAuth>

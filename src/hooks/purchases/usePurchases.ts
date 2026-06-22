@@ -8,7 +8,11 @@ import {
   purchasesApi,
 } from "@/api/purchasesApi";
 import { CreateProductPayload, Product, productsApi } from "@/api/productsApi";
-import { Provider, providersApi } from "@/api/providersApi";
+import {
+  CreateProviderPayload,
+  Provider,
+  providersApi,
+} from "@/api/providersApi";
 
 /*
 Hook especializado encargado de administrar
@@ -23,6 +27,8 @@ Su responsabilidad es:
 - registrar compras
 
 - crear semillas desde el flujo de compras
+
+- crear proveedores desde el flujo de compras
 
 - administrar loading
 
@@ -84,6 +90,12 @@ export function usePurchases() {
   semilla desde el flujo de compras.
   */
   const [creatingSeed, setCreatingSeed] = useState(false);
+
+  /*
+  Indica cuándo se está creando un
+  proveedor desde el flujo de compras.
+  */
+  const [creatingProvider, setCreatingProvider] = useState(false);
 
   /*
   Guarda errores producidos durante
@@ -196,6 +208,48 @@ export function usePurchases() {
   );
 
   /*
+  Crea un nuevo proveedor desde el flujo
+  de compras.
+
+  La creación continúa usando la API de
+  proveedores, pero se expone desde este
+  hook para mantener el container sin
+  llamadas HTTP directas.
+
+  Luego de crearlo, se agrega al estado
+  local para que el selector lo muestre
+  inmediatamente sin recargar la pantalla.
+  */
+  const createProvider = useCallback(
+    async (payload: CreateProviderPayload): Promise<Provider | null> => {
+      try {
+        setCreatingProvider(true);
+        setError(null);
+
+        const createdProvider = await providersApi.createProvider(payload);
+
+        setProviders((currentProviders) => [
+          createdProvider,
+          ...currentProviders,
+        ]);
+
+        return createdProvider;
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Error al crear el proveedor",
+        );
+
+        return null;
+      } finally {
+        setCreatingProvider(false);
+      }
+    },
+    [],
+  );
+
+  /*
   Permite limpiar errores desde
   la interfaz.
   */
@@ -218,10 +272,12 @@ export function usePurchases() {
     loading,
     submitting,
     creatingSeed,
+    creatingProvider,
     error,
     fetchPurchaseOptions,
     createPurchase,
     createSeedProduct,
+    createProvider,
     clearError,
     clearCreatedPurchase,
   };

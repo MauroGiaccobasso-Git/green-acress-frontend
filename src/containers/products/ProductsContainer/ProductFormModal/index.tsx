@@ -52,14 +52,7 @@ type ProductFormModalProps = {
   onSubmit: (payload: ProductFormSubmitPayload) => Promise<void>;
 };
 
-type ProductFormContentProps = {
-  open: boolean;
-  mode: ProductFormMode;
-  product?: Product | null;
-  loading: boolean;
-  onClose: () => void;
-  onSubmit: (payload: ProductFormSubmitPayload) => Promise<void>;
-};
+type ProductFormContentProps = ProductFormModalProps;
 
 type ProductFormState = {
   nombre: string;
@@ -80,10 +73,7 @@ const unitLabels: Record<string, string> = {
 };
 
 const formatLabel = (value?: string | null) => {
-  if (!value) {
-    return "No definido";
-  }
-
+  if (!value) return "No definido";
   return value.toLowerCase().replace("_", " ");
 };
 
@@ -110,8 +100,14 @@ function buildInitialFormState(
       tipo: product.tipo,
       genetica: product.genetica,
       porcentaje_thc:
-        product.porcentaje_thc !== null ? String(product.porcentaje_thc) : "",
-      precio_venta_actual: String(product.precio_venta_actual),
+        product.porcentaje_thc !== null && product.porcentaje_thc !== undefined
+          ? String(product.porcentaje_thc)
+          : "",
+      precio_venta_actual:
+        product.precio_venta_actual !== null &&
+        product.precio_venta_actual !== undefined
+          ? String(product.precio_venta_actual)
+          : "",
       estado: product.estado,
     };
   }
@@ -129,13 +125,10 @@ function buildInitialFormState(
 }
 
 function isValidUrl(value: string) {
-  if (!value.trim()) {
-    return true;
-  }
+  if (!value.trim()) return true;
 
   try {
     const url = new URL(value);
-
     return ["http:", "https:"].includes(url.protocol);
   } catch {
     return false;
@@ -187,7 +180,12 @@ function getFieldError(
     return "La genética es obligatoria.";
   }
 
-  if (field === "precio_venta_actual") {
+  /*
+  El precio de venta solo aplica a productos tipo FLOR.
+  Las semillas forman parte del circuito de compras,
+  inventario y producción interna.
+  */
+  if (field === "precio_venta_actual" && !isSeed) {
     const price = Number(form.precio_venta_actual);
 
     if (!form.precio_venta_actual || Number.isNaN(price) || price <= 0) {
@@ -254,6 +252,7 @@ function ProductFormContent({
           ...currentForm,
           tipo: "SEMILLA",
           porcentaje_thc: "",
+          precio_venta_actual: "",
         };
       }
 
@@ -266,7 +265,12 @@ function ProductFormContent({
     setErrors((currentErrors) => ({
       ...currentErrors,
       [field]: undefined,
-      ...(field === "tipo" ? { porcentaje_thc: undefined } : {}),
+      ...(field === "tipo"
+        ? {
+            porcentaje_thc: undefined,
+            precio_venta_actual: undefined,
+          }
+        : {}),
     }));
 
     if (field === "imagen_url") {
@@ -314,9 +318,7 @@ function ProductFormContent({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     if (isCreateMode) {
       await onSubmit({
@@ -328,7 +330,7 @@ function ProductFormContent({
         tipo: form.tipo,
         genetica: form.genetica,
         porcentaje_thc: isSeed ? null : Number(form.porcentaje_thc),
-        precio_venta_actual: Number(form.precio_venta_actual),
+        precio_venta_actual: isSeed ? null : Number(form.precio_venta_actual),
       });
 
       return;
@@ -341,15 +343,13 @@ function ProductFormContent({
       imagen_url: form.imagen_url.trim() !== "" ? form.imagen_url.trim() : null,
       genetica: form.genetica,
       porcentaje_thc: isSeed ? null : Number(form.porcentaje_thc),
-      precio_venta_actual: Number(form.precio_venta_actual),
+      precio_venta_actual: isSeed ? null : Number(form.precio_venta_actual),
       estado: form.estado,
     });
   };
 
   const handleRequestClose = () => {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     if (isDirty) {
       setDiscardDialogOpen(true);
@@ -552,30 +552,56 @@ function ProductFormContent({
                     </Typography>
 
                     <Typography sx={productsStyles.productFormSectionText}>
-                      Información operativa visible para la gestión.
+                      {isSeed
+                        ? "Las semillas se gestionan como insumos de producción interna."
+                        : "Información operativa visible para la gestión."}
                     </Typography>
                   </Box>
 
                   <Box sx={productsStyles.productFormGrid}>
-                    <TextField
-                      label="Precio de venta *"
-                      type="number"
-                      value={form.precio_venta_actual}
-                      onChange={(event) =>
-                        handleChange("precio_venta_actual", event.target.value)
-                      }
-                      onBlur={() => handleBlur("precio_venta_actual")}
-                      fullWidth
-                      error={Boolean(errors.precio_venta_actual)}
-                      helperText={errors.precio_venta_actual}
-                      slotProps={{
-                        htmlInput: {
-                          min: 1,
-                          step: 1,
-                        },
-                      }}
-                      sx={productsStyles.productFormField}
-                    />
+                    {isSeed ? (
+                      <Box sx={productsStyles.productFormReadonlyCard}>
+                        <Typography
+                          sx={productsStyles.productFormReadonlyLabel}
+                        >
+                          Precio de venta
+                        </Typography>
+
+                        <Typography
+                          sx={productsStyles.productFormReadonlyValue}
+                        >
+                          No aplica
+                        </Typography>
+
+                        <Typography sx={productsStyles.productFormReadonlyHint}>
+                          Las semillas no se comercializan a socios. Su costo se
+                          registra en compras.
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <TextField
+                        label="Precio de venta *"
+                        type="number"
+                        value={form.precio_venta_actual}
+                        onChange={(event) =>
+                          handleChange(
+                            "precio_venta_actual",
+                            event.target.value,
+                          )
+                        }
+                        onBlur={() => handleBlur("precio_venta_actual")}
+                        fullWidth
+                        error={Boolean(errors.precio_venta_actual)}
+                        helperText={errors.precio_venta_actual}
+                        slotProps={{
+                          htmlInput: {
+                            min: 1,
+                            step: 1,
+                          },
+                        }}
+                        sx={productsStyles.productFormField}
+                      />
+                    )}
 
                     {!isCreateMode && (
                       <TextField
@@ -622,7 +648,7 @@ function ProductFormContent({
                         error={Boolean(errors.tipo)}
                         helperText={
                           errors.tipo ??
-                          "Define la unidad y las reglas asociadas al THC."
+                          "Define la unidad y las reglas asociadas al producto."
                         }
                         sx={productsStyles.productFormField}
                       >
@@ -708,7 +734,7 @@ function ProductFormContent({
                     </TextField>
 
                     <TextField
-                      label="THC (%) *"
+                      label={isSeed ? "THC (%)" : "THC (%) *"}
                       type="number"
                       value={form.porcentaje_thc}
                       onChange={(event) =>
@@ -728,7 +754,7 @@ function ProductFormContent({
                       helperText={
                         errors.porcentaje_thc ??
                         (isSeed
-                          ? "Las semillas no admiten porcentaje THC."
+                          ? "No aplica para semillas."
                           : "Valor requerido para productos de tipo flor.")
                       }
                       sx={

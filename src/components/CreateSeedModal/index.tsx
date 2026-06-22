@@ -25,11 +25,16 @@ import { CreateProductPayload, Product } from "@/api/productsApi";
 
 import { createSeedModalStyles } from "./CreateSeedModal.styles";
 
+export type CreateSeedFromPurchaseData = {
+  productPayload: CreateProductPayload;
+  purchaseUnitPrice: number;
+};
+
 type CreateSeedModalProps = {
   open: boolean;
   creating: boolean;
   onClose: () => void;
-  onCreate: (payload: CreateProductPayload) => Promise<Product | null>;
+  onCreate: (data: CreateSeedFromPurchaseData) => Promise<Product | null>;
 };
 
 type SeedGenetics = CreateProductPayload["genetica"];
@@ -50,8 +55,10 @@ Decisiones de negocio:
 - tipo se envía siempre como SEMILLA.
 - unidad de medida la resuelve backend como UNIDADES.
 - porcentaje_thc se envía null porque no aplica a semillas.
-- el stock inicial no se carga acá; se incrementa luego mediante la compra.
+- precio_venta_actual se envía null porque las semillas no se venden a socios.
 - el precio visible se presenta como precio de compra para respetar el contexto del módulo.
+- el precio de compra se devuelve separado al contenedor para precargar el detalle de compra.
+- el stock inicial no se carga acá; se incrementa luego mediante la compra.
 */
 export function CreateSeedModal({
   open,
@@ -64,9 +71,15 @@ export function CreateSeedModal({
   const [purchasePrice, setPurchasePrice] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
+  const parsedPurchasePrice = Number(purchasePrice);
+
   const canSubmit = useMemo(
-    () => name.trim().length > 0 && Number(purchasePrice) > 0 && !creating,
-    [creating, name, purchasePrice],
+    () =>
+      name.trim().length > 0 &&
+      parsedPurchasePrice > 0 &&
+      !Number.isNaN(parsedPurchasePrice) &&
+      !creating,
+    [creating, name, parsedPurchasePrice],
   );
 
   const resetForm = () => {
@@ -91,29 +104,33 @@ export function CreateSeedModal({
       return;
     }
 
-    if (Number(purchasePrice) <= 0 || Number.isNaN(Number(purchasePrice))) {
+    if (parsedPurchasePrice <= 0 || Number.isNaN(parsedPurchasePrice)) {
       setFormError("El precio de compra debe ser mayor a cero.");
       return;
     }
 
     /*
-    Nota técnica:
-    El modelo Producto requiere precio_venta_actual.
-    En este flujo rápido se utiliza el precio de compra como valor inicial
-    para cumplir el contrato actual, y luego se precarga como precio unitario
-    de la compra.
+    Se separan explícitamente dos conceptos distintos:
 
-    Si más adelante se separa precio de compra y precio de venta en Producto,
-    este flujo deberá ajustarse.
+    productPayload:
+    Datos del catálogo de productos. La semilla se crea sin THC
+    y sin precio de venta porque no se comercializa a socios.
+
+    purchaseUnitPrice:
+    Precio unitario de compra. Pertenece al detalle de la compra,
+    no al producto.
     */
     const createdSeed = await onCreate({
-      nombre: name.trim(),
-      descripcion: null,
-      imagen_url: null,
-      tipo: "SEMILLA",
-      genetica: genetics,
-      porcentaje_thc: null,
-      precio_venta_actual: Number(purchasePrice),
+      productPayload: {
+        nombre: name.trim(),
+        descripcion: null,
+        imagen_url: null,
+        tipo: "SEMILLA",
+        genetica: genetics,
+        porcentaje_thc: null,
+        precio_venta_actual: null,
+      },
+      purchaseUnitPrice: parsedPurchasePrice,
     });
 
     if (!createdSeed) return;
@@ -208,8 +225,8 @@ export function CreateSeedModal({
           <Box sx={createSeedModalStyles.helperBox}>
             <Typography sx={createSeedModalStyles.helperText}>
               Se creará como producto tipo SEMILLA, unidad UNIDADES, estado
-              ACTIVO y THC no aplica. El stock se incrementará al confirmar la
-              compra.
+              ACTIVO, sin THC y sin precio de venta. El precio ingresado se
+              usará como precio unitario de compra.
             </Typography>
           </Box>
 

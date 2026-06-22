@@ -30,9 +30,7 @@ import {
 } from "@/api/productsApi";
 import { useProducts } from "@/hooks/products/useProducts";
 
-import ProductFormModal, {
-  ProductFormSubmitPayload,
-} from "./ProductFormModal";
+import ProductFormModal, { ProductFormSubmitPayload } from "./ProductFormModal";
 import { ProductCard } from "./ProductCard";
 import { productsStyles } from "./products.styles";
 
@@ -255,9 +253,7 @@ export function ProductsContainer() {
   lógico, porque el backend expone endpoints
   distintos para cada responsabilidad.
   */
-  const handleSubmitProductForm = async (
-    payload: ProductFormSubmitPayload,
-  ) => {
+  const handleSubmitProductForm = async (payload: ProductFormSubmitPayload) => {
     if (productFormMode === "create") {
       const createdProduct = await createProduct(
         payload as CreateProductPayload,
@@ -384,17 +380,13 @@ export function ProductsContainer() {
     <Box component="main" sx={productsStyles.page}>
       <Container maxWidth={false} disableGutters>
         <Paper elevation={0} sx={productsStyles.panel}>
-          <Box sx={productsStyles.header}>
-            <Box sx={productsStyles.headerContent}>
-              <Typography variant="h4" sx={productsStyles.title}>
-                Productos
-              </Typography>
-
-              <Typography variant="body1" sx={productsStyles.subtitle}>
-                Gestioná el catálogo de productos del club
-              </Typography>
-            </Box>
-
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              mb: 2,
+            }}
+          >
             <Button
               variant="contained"
               startIcon={<AddRoundedIcon />}

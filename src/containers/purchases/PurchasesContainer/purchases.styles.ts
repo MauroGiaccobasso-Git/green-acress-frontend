@@ -288,14 +288,29 @@ export const purchasesStyles = {
     fontWeight: 750,
   },
 
+  /*
+  Layout del bloque Agregar semillas.
+
+  La columna del selector contiene también la acción de alta rápida,
+  por lo que los controles laterales deben alinearse arriba y no al centro.
+  Esto evita que Cantidad, Precio unitario y Agregar queden visualmente caídos.
+  */
   addItemGrid: {
     display: "grid",
     gridTemplateColumns: {
       xs: "1fr",
-      md: "minmax(0, 1.5fr) 120px 150px auto",
+      md: "minmax(360px, 1fr) 120px 150px 132px",
     },
-    gap: 1.35,
-    alignItems: "center",
+    gap: { xs: 1.15, md: 1.35 },
+    alignItems: "flex-start",
+
+    "& > .MuiTextField-root": {
+      alignSelf: "flex-start",
+    },
+
+    "& > .MuiButtonBase-root": {
+      alignSelf: "flex-start",
+    },
   },
 
   addItemButton: {
@@ -623,4 +638,4 @@ export const purchasesStyles = {
       m: 0,
     },
   },
-};
+} as const;
