@@ -31,11 +31,13 @@ import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 
 import { Product } from "@/api/productsApi";
+import { CreateProviderModal } from "@/components/CreateProviderModal";
+import { CreateSeedModal } from "@/components/CreateSeedModal";
+import { PurchaseSuccessModal } from "@/components/PurchaseSuccessModal";
 import { usePurchases } from "@/hooks/purchases/usePurchases";
 import { colors } from "@/theme/colors";
 
 import { purchasesStyles } from "./purchases.styles";
-import { CreateSeedModal } from "@/components/CreateSeedModal";
 
 type PurchaseItem = {
   product: Product;
@@ -52,10 +54,12 @@ export default function PurchasesContainer() {
     loading,
     submitting,
     creatingSeed,
+    creatingProvider,
     error,
     fetchPurchaseOptions,
     createPurchase,
     createSeedProduct,
+    createProvider,
     clearError,
     clearCreatedPurchase,
   } = usePurchases();
@@ -69,8 +73,12 @@ export default function PurchasesContainer() {
 
   const [items, setItems] = useState<PurchaseItem[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
-  const [successOpen, setSuccessOpen] = useState(false);
+  const [quickSuccessMessage, setQuickSuccessMessage] = useState<string | null>(
+    null,
+  );
   const [isCreateSeedModalOpen, setIsCreateSeedModalOpen] = useState(false);
+  const [isCreateProviderModalOpen, setIsCreateProviderModalOpen] =
+    useState(false);
 
   /*
   Carga inicial de proveedores y productos.
@@ -84,16 +92,6 @@ export default function PurchasesContainer() {
   useEffect(() => {
     fetchPurchaseOptions();
   }, [fetchPurchaseOptions]);
-
-  /*
-  Muestra feedback visual cuando backend confirma
-  el registro correcto de la compra.
-  */
-  useEffect(() => {
-    if (createdPurchase) {
-      setSuccessOpen(true);
-    }
-  }, [createdPurchase]);
 
   const activeProviders = useMemo(
     () => providers.filter((provider) => provider.estado === "ACTIVO"),
@@ -143,6 +141,26 @@ export default function PurchasesContainer() {
     [items],
   );
 
+  /*
+  Construye el resumen visual para el modal de compra exitosa
+  a partir de la respuesta real del backend.
+
+  El modal no calcula reglas de negocio:
+  únicamente presenta información ya confirmada.
+  */
+  const purchaseSuccessSummary = useMemo(() => {
+    const details = createdPurchase?.detalles ?? [];
+
+    return {
+      purchaseId: createdPurchase?.id ?? null,
+      providerName: createdPurchase?.proveedor?.nombre ?? "",
+      createdAt: createdPurchase?.fecha_creacion ?? null,
+      itemsCount: details.length,
+      totalUnits: details.reduce((acc, detail) => acc + detail.cantidad, 0),
+      totalAmount: details.reduce((acc, detail) => acc + detail.subtotal, 0),
+    };
+  }, [createdPurchase]);
+
   const canAddItem =
     Boolean(selectedProduct) && Number(quantity) > 0 && Number(unitPrice) > 0;
 
@@ -169,8 +187,20 @@ export default function PurchasesContainer() {
     setItems([]);
     resetItemForm();
     setFormError(null);
+    setQuickSuccessMessage(null);
     clearError();
     clearCreatedPurchase();
+  };
+
+  /*
+  Cierra el feedback de éxito utilizado para altas rápidas.
+
+  Se usa Snackbar para acciones auxiliares del flujo,
+  mientras que la compra confirmada mantiene un modal específico
+  por tratarse de una operación transaccional crítica.
+  */
+  const handleCloseQuickSuccess = () => {
+    setQuickSuccessMessage(null);
   };
 
   const handleAddItem = () => {
@@ -215,20 +245,48 @@ export default function PurchasesContainer() {
   /*
   Crea una semilla desde Compras y la selecciona automáticamente.
 
-  Esto evita que el administrador tenga que salir del flujo,
-  ir a Productos, crear la semilla y volver a cargar la compra.
+  La semilla creada no tiene precio de venta, porque las semillas
+  no se comercializan a socios dentro del alcance del sistema.
+
+  El precio unitario usado en la compra pertenece al detalle de compra,
+  no al catálogo de productos. Por eso se recibe separado desde el modal.
   */
-  const handleCreateSeed = async (
-    payload: Parameters<typeof createSeedProduct>[0],
-  ) => {
-    const createdSeed = await createSeedProduct(payload);
+  const handleCreateSeed = async ({
+    productPayload,
+    purchaseUnitPrice,
+  }: {
+    productPayload: Parameters<typeof createSeedProduct>[0];
+    purchaseUnitPrice: number;
+  }) => {
+    const createdSeed = await createSeedProduct(productPayload);
 
     if (!createdSeed) return null;
 
     setSelectedProductId(String(createdSeed.id));
-    setUnitPrice(String(createdSeed.precio_venta_actual));
+    setUnitPrice(String(purchaseUnitPrice));
+    setQuickSuccessMessage("Semilla creada correctamente.");
 
     return createdSeed;
+  };
+
+  /*
+  Crea un proveedor desde Compras y lo selecciona automáticamente.
+
+  Esta alta rápida no reemplaza al futuro módulo completo
+  de Proveedores: solo permite continuar el flujo operativo
+  de registro de compra sin cambiar de pantalla.
+  */
+  const handleCreateProvider = async (
+    payload: Parameters<typeof createProvider>[0],
+  ) => {
+    const createdProvider = await createProvider(payload);
+
+    if (!createdProvider) return null;
+
+    setSelectedProviderId(String(createdProvider.id));
+    setQuickSuccessMessage("Proveedor creado correctamente.");
+
+    return createdProvider;
   };
 
   const handleRemoveItem = (indexToRemove: number) => {
@@ -266,6 +324,18 @@ export default function PurchasesContainer() {
     setObservations("");
     setItems([]);
     resetItemForm();
+  };
+
+  /*
+  Cierra el modal de éxito y refresca la información base
+  del módulo para reflejar stock y métricas actualizadas.
+
+  Se dispara luego de que el administrador visualiza
+  la confirmación de compra registrada.
+  */
+  const handleClosePurchaseSuccess = () => {
+    clearCreatedPurchase();
+    void fetchPurchaseOptions();
   };
 
   return (
@@ -312,13 +382,15 @@ export default function PurchasesContainer() {
 
           <Box>
             <Typography sx={purchasesStyles.statLabel}>
-              Compras del mes
+              Ítems agregados
             </Typography>
 
-            <Typography sx={purchasesStyles.statValue}>0</Typography>
+            <Typography sx={purchasesStyles.statValue}>
+              {items.length}
+            </Typography>
 
             <Typography sx={purchasesStyles.providerMeta}>
-              Sin compras aún
+              Detalle actual
             </Typography>
           </Box>
         </Box>
@@ -389,27 +461,65 @@ export default function PurchasesContainer() {
 
                 <Box sx={purchasesStyles.providerPanel}>
                   <Box sx={purchasesStyles.providerCard}>
-                    <FormControl fullWidth>
-                      <InputLabel id="provider-label">Proveedor *</InputLabel>
+                    <Box sx={{ minWidth: 0 }}>
+                      <FormControl fullWidth>
+                        <InputLabel id="provider-label">Proveedor *</InputLabel>
 
-                      <Select
-                        labelId="provider-label"
-                        label="Proveedor *"
-                        value={selectedProviderId}
-                        onChange={(event) =>
-                          setSelectedProviderId(event.target.value)
-                        }
+                        <Select
+                          labelId="provider-label"
+                          label="Proveedor *"
+                          value={selectedProviderId}
+                          onChange={(event) =>
+                            setSelectedProviderId(event.target.value)
+                          }
+                        >
+                          {activeProviders.map((provider) => (
+                            <MenuItem
+                              key={provider.id}
+                              value={String(provider.id)}
+                            >
+                              {provider.nombre}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.75,
+                          mt: 1,
+                        }}
                       >
-                        {activeProviders.map((provider) => (
-                          <MenuItem
-                            key={provider.id}
-                            value={String(provider.id)}
-                          >
-                            {provider.nombre}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                        <Typography
+                          sx={{
+                            color: colors.text.secondary,
+                            fontSize: 12,
+                            fontWeight: 500,
+                          }}
+                        >
+                          ¿No encontrás el proveedor?
+                        </Typography>
+
+                        <Button
+                          variant="text"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => setIsCreateProviderModalOpen(true)}
+                          sx={{
+                            minHeight: 28,
+                            px: 0.5,
+                            color: colors.brand.primary,
+                            fontSize: 12,
+                            fontWeight: 850,
+                            textTransform: "none",
+                          }}
+                        >
+                          Crear nuevo proveedor
+                        </Button>
+                      </Box>
+                    </Box>
 
                     <Box sx={purchasesStyles.selectedProviderBox}>
                       <Box sx={purchasesStyles.providerIcon}>
@@ -589,8 +699,7 @@ export default function PurchasesContainer() {
 
                       <Typography sx={purchasesStyles.detailProductMeta}>
                         Semilla {formatGenetics(selectedProduct.genetica)} ·
-                        Precio venta actual{" "}
-                        {formatCurrency(selectedProduct.precio_venta_actual)}
+                        Precio de venta no aplica
                       </Typography>
 
                       <Box sx={purchasesStyles.chipRow}>
@@ -853,6 +962,29 @@ export default function PurchasesContainer() {
         </Box>
       )}
 
+      <Snackbar
+        open={Boolean(quickSuccessMessage)}
+        autoHideDuration={3500}
+        onClose={handleCloseQuickSuccess}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          severity="success"
+          variant="filled"
+          onClose={handleCloseQuickSuccess}
+          sx={{ borderRadius: "12px", fontWeight: 800 }}
+        >
+          {quickSuccessMessage}
+        </Alert>
+      </Snackbar>
+
+      <CreateProviderModal
+        open={isCreateProviderModalOpen}
+        creating={creatingProvider}
+        onClose={() => setIsCreateProviderModalOpen(false)}
+        onCreate={handleCreateProvider}
+      />
+
       <CreateSeedModal
         open={isCreateSeedModalOpen}
         creating={creatingSeed}
@@ -860,19 +992,16 @@ export default function PurchasesContainer() {
         onCreate={handleCreateSeed}
       />
 
-      <Snackbar
-        open={successOpen}
-        autoHideDuration={4000}
-        onClose={() => setSuccessOpen(false)}
-      >
-        <Alert
-          severity="success"
-          onClose={() => setSuccessOpen(false)}
-          sx={{ width: "100%" }}
-        >
-          Compra registrada correctamente. El stock fue actualizado.
-        </Alert>
-      </Snackbar>
+      <PurchaseSuccessModal
+        open={Boolean(createdPurchase)}
+        purchaseId={purchaseSuccessSummary.purchaseId}
+        providerName={purchaseSuccessSummary.providerName}
+        createdAt={purchaseSuccessSummary.createdAt}
+        itemsCount={purchaseSuccessSummary.itemsCount}
+        totalUnits={purchaseSuccessSummary.totalUnits}
+        totalAmount={purchaseSuccessSummary.totalAmount}
+        onClose={handleClosePurchaseSuccess}
+      />
     </Box>
   );
 }

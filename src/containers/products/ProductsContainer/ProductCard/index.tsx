@@ -74,6 +74,8 @@ No realiza llamadas al backend.
 No administra modales.
 */
 export function ProductCard({ product, onEdit }: ProductCardProps) {
+  const isSeed = product.tipo === "SEMILLA";
+
   const stockTotal = product.stock?.cantidad_total ?? 0;
   const stockReserved = product.stock?.cantidad_reservada ?? 0;
   const stockAvailable = product.stock?.cantidad_disponible ?? 0;
@@ -163,15 +165,20 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
         <Divider sx={productsStyles.productDivider} />
 
         <Box sx={productsStyles.productStatsGrid}>
-          <Box sx={productsStyles.productStat}>
-            <Typography variant="caption" sx={productsStyles.productStatLabel}>
-              Precio
-            </Typography>
+          {!isSeed && (
+            <Box sx={productsStyles.productStat}>
+              <Typography
+                variant="caption"
+                sx={productsStyles.productStatLabel}
+              >
+                Precio
+              </Typography>
 
-            <Typography variant="body1" sx={productsStyles.productStatValue}>
-              {formatPrice(product.precio_venta_actual)}
-            </Typography>
-          </Box>
+              <Typography variant="body1" sx={productsStyles.productStatValue}>
+                {formatPrice(product.precio_venta_actual ?? 0)}
+              </Typography>
+            </Box>
+          )}
 
           <Box sx={productsStyles.productStat}>
             <Typography variant="caption" sx={productsStyles.productStatLabel}>
@@ -183,15 +190,20 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
             </Typography>
           </Box>
 
-          <Box sx={productsStyles.productStat}>
-            <Typography variant="caption" sx={productsStyles.productStatLabel}>
-              Reservado
-            </Typography>
+          {!isSeed && (
+            <Box sx={productsStyles.productStat}>
+              <Typography
+                variant="caption"
+                sx={productsStyles.productStatLabel}
+              >
+                Reservado
+              </Typography>
 
-            <Typography variant="body1" sx={productsStyles.productStatValue}>
-              {stockReserved} {unitLabel}
-            </Typography>
-          </Box>
+              <Typography variant="body1" sx={productsStyles.productStatValue}>
+                {stockReserved} {unitLabel}
+              </Typography>
+            </Box>
+          )}
 
           <Box
             sx={[

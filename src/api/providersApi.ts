@@ -27,6 +27,24 @@ export type Provider = {
 };
 
 /*
+Payload utilizado para registrar
+un nuevo proveedor desde frontend.
+
+El estado no se envía desde la UI:
+la regla de creación queda centralizada
+en backend.
+*/
+export type CreateProviderPayload = {
+  nombre: string;
+
+  contacto?: string | null;
+
+  telefono?: string | null;
+
+  email?: string | null;
+};
+
+/*
 Centraliza las operaciones HTTP
 relacionadas con proveedores.
 
@@ -45,5 +63,23 @@ export const providersApi = {
     const query = search ? `?search=${encodeURIComponent(search)}` : "";
 
     return httpClient<Provider[]>(`/proveedores${query}`);
+  },
+
+  /*
+  Registra un proveedor.
+
+  Se reutiliza desde el módulo de Proveedores
+  y desde el flujo de alta rápida en Compras.
+  */
+  async createProvider(payload: CreateProviderPayload): Promise<Provider> {
+    const response = await httpClient<{
+      message: string;
+      proveedor: Provider;
+    }>("/proveedores", {
+      method: "POST",
+      body: payload,
+    });
+
+    return response.proveedor;
   },
 };

@@ -52,7 +52,7 @@ export type Product = {
 
   unidad_medida: "GRAMOS" | "UNIDADES";
 
-  precio_venta_actual: number;
+  precio_venta_actual: number | null;
 
   estado: "ACTIVO" | "INACTIVO";
 
@@ -88,7 +88,7 @@ export type CreateProductPayload = {
 
   porcentaje_thc: number | null;
 
-  precio_venta_actual: number;
+  precio_venta_actual: number | null;
 };
 
 /*
@@ -114,7 +114,7 @@ export type UpdateProductPayload = {
 
   porcentaje_thc: number | null;
 
-  precio_venta_actual: number;
+  precio_venta_actual: number | null;
 };
 
 /*
