@@ -1,4 +1,12 @@
 import { colors } from "@/theme/colors";
+/*
+Estilos del modal de alta rápida de semillas.
+
+Mantiene la misma línea visual utilizada
+por CreateProviderModal para conservar una
+experiencia consistente dentro del flujo
+de Compras.
+*/
 
 export const createSeedModalStyles = {
   paper: {

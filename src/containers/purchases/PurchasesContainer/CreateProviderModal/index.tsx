@@ -16,7 +16,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 
-import { CreateProviderPayload, Provider } from "@/api/providersApi";
+import type { CreateProviderPayload, Provider } from "@/api/providersApi";
 
 import { createProviderModalStyles } from "./CreateProviderModal.styles";
 

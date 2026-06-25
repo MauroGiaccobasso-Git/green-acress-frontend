@@ -1,5 +1,5 @@
-import { Product } from "./productsApi";
-import { Provider } from "./providersApi";
+import type { Product } from "./productsApi";
+import type { Provider } from "./providersApi";
 import { httpClient } from "./httpClient";
 
 /*

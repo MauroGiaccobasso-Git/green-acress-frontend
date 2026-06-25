@@ -21,7 +21,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 
-import { CreateProductPayload, Product } from "@/api/productsApi";
+import type { CreateProductPayload, Product } from "@/api/productsApi";
 
 import { createSeedModalStyles } from "./CreateSeedModal.styles";
 
