@@ -63,7 +63,7 @@ const navigationSections = [
       {
         label: "Ventas",
         href: "/admin/sales",
-        disabled: true,
+        disabled: false,
         icon: <PointOfSaleOutlinedIcon fontSize="small" />,
       },
       {
