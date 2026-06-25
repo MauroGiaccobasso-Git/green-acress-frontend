@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Alert,
@@ -30,13 +30,13 @@ import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 
-import { Product } from "@/api/productsApi";
-import { CreateProviderModal } from "@/components/CreateProviderModal";
-import { CreateSeedModal } from "@/components/CreateSeedModal";
-import { PurchaseSuccessModal } from "@/components/PurchaseSuccessModal";
+import type { Product } from "@/api/productsApi";
 import { usePurchases } from "@/hooks/purchases/usePurchases";
 import { colors } from "@/theme/colors";
 
+import { CreateProviderModal } from "./CreateProviderModal";
+import { CreateSeedModal } from "./CreateSeedModal";
+import { PurchaseSuccessModal } from "./PurchaseSuccessModal";
 import { purchasesStyles } from "./purchases.styles";
 
 type PurchaseItem = {
@@ -64,18 +64,40 @@ export default function PurchasesContainer() {
     clearCreatedPurchase,
   } = usePurchases();
 
+  /*
+  Estado principal del formulario de compra.
+  Representa datos generales de la operación.
+  */
   const [selectedProviderId, setSelectedProviderId] = useState("");
   const [observations, setObservations] = useState("");
 
+  /*
+  Estado temporal para agregar una semilla al detalle.
+  No impacta backend hasta confirmar la compra.
+  */
   const [selectedProductId, setSelectedProductId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
 
+  /*
+  Detalle local de la compra en construcción.
+  El backend sigue siendo la fuente de verdad al confirmar.
+  */
   const [items, setItems] = useState<PurchaseItem[]>([]);
+
+  /*
+  Feedback visual del flujo.
+  Se separa error de formulario, error del hook y éxito auxiliar.
+  */
   const [formError, setFormError] = useState<string | null>(null);
   const [quickSuccessMessage, setQuickSuccessMessage] = useState<string | null>(
     null,
   );
+
+  /*
+  Estado de modales específicos del módulo.
+  El Container controla apertura/cierre y los modales reciben callbacks.
+  */
   const [isCreateSeedModalOpen, setIsCreateSeedModalOpen] = useState(false);
   const [isCreateProviderModalOpen, setIsCreateProviderModalOpen] =
     useState(false);
@@ -93,6 +115,10 @@ export default function PurchasesContainer() {
     fetchPurchaseOptions();
   }, [fetchPurchaseOptions]);
 
+  /*
+  Datos derivados para la pantalla.
+  Mantienen la UI simple y evitan recalcular filtros en cada render.
+  */
   const activeProviders = useMemo(
     () => providers.filter((provider) => provider.estado === "ACTIVO"),
     [providers],
@@ -115,6 +141,9 @@ export default function PurchasesContainer() {
     [products],
   );
 
+  /*
+  Entidades seleccionadas para mostrar resumen visual del formulario.
+  */
   const selectedProvider = useMemo(
     () =>
       activeProviders.find(
@@ -131,6 +160,10 @@ export default function PurchasesContainer() {
     [activeSeedProducts, selectedProductId],
   );
 
+  /*
+  Totales informativos del detalle local.
+  El backend recalcula y persiste la compra al confirmar.
+  */
   const total = useMemo(
     () => items.reduce((acc, item) => acc + item.subtotal, 0),
     [items],
@@ -161,36 +194,82 @@ export default function PurchasesContainer() {
     };
   }, [createdPurchase]);
 
+  /*
+  Flags de habilitación de acciones.
+  Evitan confirmaciones inválidas desde la interfaz sin reemplazar validaciones backend.
+  */
   const canAddItem =
     Boolean(selectedProduct) && Number(quantity) > 0 && Number(unitPrice) > 0;
 
   const canSubmit =
     Boolean(selectedProviderId) && items.length > 0 && !submitting;
 
-  const formatCurrency = (value: number) =>
-    `$ ${value.toLocaleString("es-UY", {
-      maximumFractionDigits: 0,
-    })}`;
+  /*
+  Helpers de presentación.
+  Se mantienen locales porque solo aplican a esta pantalla.
+  */
+  const formatCurrency = useCallback(
+    (value: number) =>
+      `$ ${value.toLocaleString("es-UY", {
+        maximumFractionDigits: 0,
+      })}`,
+    [],
+  );
 
-  const formatGenetics = (value: Product["genetica"]) =>
-    value.charAt(0) + value.slice(1).toLowerCase();
+  const formatGenetics = useCallback(
+    (value: Product["genetica"]) =>
+      value.charAt(0) + value.slice(1).toLowerCase(),
+    [],
+  );
 
-  const resetItemForm = () => {
+  /*
+  Helpers internos del formulario.
+  Centralizan limpieza de estados para evitar duplicación en handlers.
+  */
+  const resetItemForm = useCallback(() => {
     setSelectedProductId("");
     setQuantity("");
     setUnitPrice("");
-  };
+  }, []);
 
-  const handleResetForm = () => {
+  const resetPurchaseDraft = useCallback(() => {
     setSelectedProviderId("");
     setObservations("");
     setItems([]);
     resetItemForm();
+  }, [resetItemForm]);
+
+  /*
+  Handlers de acciones generales del formulario.
+  Mantienen al Container como orquestador de UI, sin llamadas HTTP directas.
+  */
+  const handleResetForm = useCallback(() => {
+    resetPurchaseDraft();
     setFormError(null);
     setQuickSuccessMessage(null);
     clearError();
     clearCreatedPurchase();
-  };
+  }, [clearCreatedPurchase, clearError, resetPurchaseDraft]);
+
+  /*
+  Handlers de modales específicos del módulo.
+  Los modales reciben estado y callbacks; no controlan el flujo principal.
+  */
+  const handleOpenCreateProviderModal = useCallback(() => {
+    setIsCreateProviderModalOpen(true);
+  }, []);
+
+  const handleCloseCreateProviderModal = useCallback(() => {
+    setIsCreateProviderModalOpen(false);
+  }, []);
+
+  const handleOpenCreateSeedModal = useCallback(() => {
+    setIsCreateSeedModalOpen(true);
+  }, []);
+
+  const handleCloseCreateSeedModal = useCallback(() => {
+    setIsCreateSeedModalOpen(false);
+  }, []);
 
   /*
   Cierra el feedback de éxito utilizado para altas rápidas.
@@ -199,11 +278,15 @@ export default function PurchasesContainer() {
   mientras que la compra confirmada mantiene un modal específico
   por tratarse de una operación transaccional crítica.
   */
-  const handleCloseQuickSuccess = () => {
+  const handleCloseQuickSuccess = useCallback(() => {
     setQuickSuccessMessage(null);
-  };
+  }, []);
 
-  const handleAddItem = () => {
+  /*
+  Agrega una semilla al detalle local.
+  Valida duplicados y valores mínimos antes de incorporar el ítem.
+  */
+  const handleAddItem = useCallback(() => {
     setFormError(null);
 
     if (!selectedProduct) {
@@ -240,7 +323,7 @@ export default function PurchasesContainer() {
     ]);
 
     resetItemForm();
-  };
+  }, [items, quantity, resetItemForm, selectedProduct, unitPrice]);
 
   /*
   Crea una semilla desde Compras y la selecciona automáticamente.
@@ -251,23 +334,26 @@ export default function PurchasesContainer() {
   El precio unitario usado en la compra pertenece al detalle de compra,
   no al catálogo de productos. Por eso se recibe separado desde el modal.
   */
-  const handleCreateSeed = async ({
-    productPayload,
-    purchaseUnitPrice,
-  }: {
-    productPayload: Parameters<typeof createSeedProduct>[0];
-    purchaseUnitPrice: number;
-  }) => {
-    const createdSeed = await createSeedProduct(productPayload);
+  const handleCreateSeed = useCallback(
+    async ({
+      productPayload,
+      purchaseUnitPrice,
+    }: {
+      productPayload: Parameters<typeof createSeedProduct>[0];
+      purchaseUnitPrice: number;
+    }) => {
+      const createdSeed = await createSeedProduct(productPayload);
 
-    if (!createdSeed) return null;
+      if (!createdSeed) return null;
 
-    setSelectedProductId(String(createdSeed.id));
-    setUnitPrice(String(purchaseUnitPrice));
-    setQuickSuccessMessage("Semilla creada correctamente.");
+      setSelectedProductId(String(createdSeed.id));
+      setUnitPrice(String(purchaseUnitPrice));
+      setQuickSuccessMessage("Semilla creada correctamente.");
 
-    return createdSeed;
-  };
+      return createdSeed;
+    },
+    [createSeedProduct],
+  );
 
   /*
   Crea un proveedor desde Compras y lo selecciona automáticamente.
@@ -276,26 +362,35 @@ export default function PurchasesContainer() {
   de Proveedores: solo permite continuar el flujo operativo
   de registro de compra sin cambiar de pantalla.
   */
-  const handleCreateProvider = async (
-    payload: Parameters<typeof createProvider>[0],
-  ) => {
-    const createdProvider = await createProvider(payload);
+  const handleCreateProvider = useCallback(
+    async (payload: Parameters<typeof createProvider>[0]) => {
+      const createdProvider = await createProvider(payload);
 
-    if (!createdProvider) return null;
+      if (!createdProvider) return null;
 
-    setSelectedProviderId(String(createdProvider.id));
-    setQuickSuccessMessage("Proveedor creado correctamente.");
+      setSelectedProviderId(String(createdProvider.id));
+      setQuickSuccessMessage("Proveedor creado correctamente.");
 
-    return createdProvider;
-  };
+      return createdProvider;
+    },
+    [createProvider],
+  );
 
-  const handleRemoveItem = (indexToRemove: number) => {
+  /*
+  Elimina un ítem del detalle local.
+  La eliminación solo afecta el borrador de compra en pantalla.
+  */
+  const handleRemoveItem = useCallback((indexToRemove: number) => {
     setItems((currentItems) =>
       currentItems.filter((_, index) => index !== indexToRemove),
     );
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  /*
+  Confirma la compra delegando la operación real al hook.
+  El hook encapsula API, loading, errores y respuesta del backend.
+  */
+  const handleSubmit = useCallback(async () => {
     setFormError(null);
 
     if (!selectedProviderId) {
@@ -320,11 +415,14 @@ export default function PurchasesContainer() {
 
     if (!purchase) return;
 
-    setSelectedProviderId("");
-    setObservations("");
-    setItems([]);
-    resetItemForm();
-  };
+    resetPurchaseDraft();
+  }, [
+    createPurchase,
+    items,
+    observations,
+    resetPurchaseDraft,
+    selectedProviderId,
+  ]);
 
   /*
   Cierra el modal de éxito y refresca la información base
@@ -333,10 +431,10 @@ export default function PurchasesContainer() {
   Se dispara luego de que el administrador visualiza
   la confirmación de compra registrada.
   */
-  const handleClosePurchaseSuccess = () => {
+  const handleClosePurchaseSuccess = useCallback(() => {
     clearCreatedPurchase();
     void fetchPurchaseOptions();
-  };
+  }, [clearCreatedPurchase, fetchPurchaseOptions]);
 
   return (
     <Box sx={purchasesStyles.page}>
@@ -463,11 +561,13 @@ export default function PurchasesContainer() {
                   <Box sx={purchasesStyles.providerCard}>
                     <Box sx={{ minWidth: 0 }}>
                       <FormControl fullWidth>
-                        <InputLabel id="provider-label">Proveedor *</InputLabel>
+                        <InputLabel id="provider-label">
+                          Seleccione proveedor
+                        </InputLabel>
 
                         <Select
                           labelId="provider-label"
-                          label="Proveedor *"
+                          label="Seleccione proveedor"
                           value={selectedProviderId}
                           onChange={(event) =>
                             setSelectedProviderId(event.target.value)
@@ -506,7 +606,7 @@ export default function PurchasesContainer() {
                           variant="text"
                           size="small"
                           startIcon={<AddIcon />}
-                          onClick={() => setIsCreateProviderModalOpen(true)}
+                          onClick={handleOpenCreateProviderModal}
                           sx={{
                             minHeight: 28,
                             px: 0.5,
@@ -582,11 +682,13 @@ export default function PurchasesContainer() {
                 <Box sx={purchasesStyles.addItemGrid}>
                   <Box sx={{ minWidth: 0 }}>
                     <FormControl fullWidth>
-                      <InputLabel id="seed-label">Semilla *</InputLabel>
+                      <InputLabel id="seed-label">
+                        Seleccione semilla
+                      </InputLabel>
 
                       <Select
                         labelId="seed-label"
-                        label="Semilla *"
+                        label="Seleccione semilla"
                         value={selectedProductId}
                         onChange={(event) =>
                           setSelectedProductId(event.target.value)
@@ -622,7 +724,7 @@ export default function PurchasesContainer() {
                         variant="text"
                         size="small"
                         startIcon={<AddIcon />}
-                        onClick={() => setIsCreateSeedModalOpen(true)}
+                        onClick={handleOpenCreateSeedModal}
                         sx={{
                           minHeight: 28,
                           px: 0.5,
@@ -981,14 +1083,14 @@ export default function PurchasesContainer() {
       <CreateProviderModal
         open={isCreateProviderModalOpen}
         creating={creatingProvider}
-        onClose={() => setIsCreateProviderModalOpen(false)}
+        onClose={handleCloseCreateProviderModal}
         onCreate={handleCreateProvider}
       />
 
       <CreateSeedModal
         open={isCreateSeedModalOpen}
         creating={creatingSeed}
-        onClose={() => setIsCreateSeedModalOpen(false)}
+        onClose={handleCloseCreateSeedModal}
         onCreate={handleCreateSeed}
       />
 

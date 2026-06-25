@@ -3,14 +3,18 @@
 import { useCallback, useState } from "react";
 
 import {
-  CreatePurchasePayload,
-  Purchase,
+  type CreatePurchasePayload,
+  type Purchase,
   purchasesApi,
 } from "@/api/purchasesApi";
-import { CreateProductPayload, Product, productsApi } from "@/api/productsApi";
 import {
-  CreateProviderPayload,
-  Provider,
+  type CreateProductPayload,
+  type Product,
+  productsApi,
+} from "@/api/productsApi";
+import {
+  type CreateProviderPayload,
+  type Provider,
   providersApi,
 } from "@/api/providersApi";
 
@@ -74,32 +78,34 @@ export function usePurchases() {
   const [createdPurchase, setCreatedPurchase] = useState<Purchase | null>(null);
 
   /*
-  Indica cuándo existe una solicitud
-  de carga en ejecución.
+  Loading general para cargar las opciones
+  necesarias del formulario de compras.
   */
   const [loading, setLoading] = useState(false);
 
   /*
-  Indica cuándo se está registrando
-  una compra.
+  Loading específico para el registro
+  de una compra.
   */
   const [submitting, setSubmitting] = useState(false);
 
   /*
-  Indica cuándo se está creando una
-  semilla desde el flujo de compras.
+  Loading específico para el alta rápida
+  de una semilla desde Compras.
   */
   const [creatingSeed, setCreatingSeed] = useState(false);
 
   /*
-  Indica cuándo se está creando un
-  proveedor desde el flujo de compras.
+  Loading específico para el alta rápida
+  de un proveedor desde Compras.
   */
   const [creatingProvider, setCreatingProvider] = useState(false);
 
   /*
-  Guarda errores producidos durante
-  operaciones del módulo.
+  Error operativo del módulo.
+
+  El container solo lo muestra o lo limpia.
+  No interpreta errores técnicos de APIs.
   */
   const [error, setError] = useState<string | null>(null);
 
@@ -253,17 +259,17 @@ export function usePurchases() {
   Permite limpiar errores desde
   la interfaz.
   */
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
   /*
   Permite limpiar la compra registrada
   luego de mostrar feedback al usuario.
   */
-  const clearCreatedPurchase = () => {
+  const clearCreatedPurchase = useCallback(() => {
     setCreatedPurchase(null);
-  };
+  }, []);
 
   return {
     providers,

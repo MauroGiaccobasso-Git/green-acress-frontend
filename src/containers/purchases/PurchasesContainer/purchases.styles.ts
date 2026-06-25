@@ -2,7 +2,21 @@ import { alpha, type Theme } from "@mui/material/styles";
 
 import { colors } from "@/theme/colors";
 
+/*
+Estilos principales del módulo Compras.
+
+Criterios:
+- mantener el diseño mobile first;
+- centralizar el layout y las secciones principales del container;
+- dejar los estilos específicos de cada modal dentro de su propio módulo;
+- evitar que PurchasesContainer mezcle definición visual con lógica;
+- conservar coherencia visual con el módulo Ventas sin forzar una copia literal.
+*/
+
 export const purchasesStyles = {
+  /*
+  Estructura general de la pantalla.
+  */
   page: {
     minHeight: "100%",
     mt: { xs: -1.5, md: -2.25 },
@@ -34,6 +48,9 @@ export const purchasesStyles = {
     lineHeight: 1.45,
   },
 
+  /*
+  Métricas superiores del módulo.
+  */
   headerStats: {
     display: "grid",
     gridTemplateColumns: {
@@ -106,6 +123,9 @@ export const purchasesStyles = {
     mt: 0.75,
   },
 
+  /*
+  Estados globales de carga y feedback.
+  */
   alert: {
     mb: 2,
     borderRadius: "12px",
@@ -132,6 +152,9 @@ export const purchasesStyles = {
     lineHeight: 1.55,
   },
 
+  /*
+  Layout principal: formulario operativo + resumen lateral.
+  */
   contentGrid: {
     display: "grid",
     gridTemplateColumns: {
@@ -194,6 +217,9 @@ export const purchasesStyles = {
     p: { xs: 2.25, md: 3 },
   },
 
+  /*
+  Encabezados reutilizados en las secciones del formulario.
+  */
   sectionHeader: {
     display: "flex",
     alignItems: "flex-start",
@@ -237,6 +263,9 @@ export const purchasesStyles = {
     },
   },
 
+  /*
+  Bloque de selección y resumen del proveedor.
+  */
   providerPanel: {
     display: "grid",
     gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
@@ -323,6 +352,9 @@ export const purchasesStyles = {
     boxShadow: "none",
   },
 
+  /*
+  Vista previa de la semilla seleccionada.
+  */
   seedPreview: {
     display: "grid",
     gridTemplateColumns: { xs: "1fr", sm: "94px 1fr" },
@@ -376,6 +408,9 @@ export const purchasesStyles = {
     mt: 0.25,
   },
 
+  /*
+  Detalle de compra y estado vacío.
+  */
   emptyState: {
     minHeight: 300,
     display: "flex",
@@ -464,6 +499,9 @@ export const purchasesStyles = {
     },
   },
 
+  /*
+  Resumen lateral de la compra.
+  */
   summaryProviderCard: {
     minHeight: 86,
     display: "flex",
@@ -607,6 +645,9 @@ export const purchasesStyles = {
     },
   },
 
+  /*
+  Acciones principales del flujo.
+  */
   submitButton: {
     width: "100%",
     minHeight: 54,
