@@ -3,11 +3,11 @@
 import { useCallback, useState } from "react";
 
 import {
-  CreateProductPayload,
-  Product,
+  type CreateProductPayload,
+  type Product,
   productsApi,
-  UpdateProductPayload,
-  UpdateProductStatusPayload,
+  type UpdateProductPayload,
+  type UpdateProductStatusPayload,
 } from "@/api/productsApi";
 
 /*
@@ -46,8 +46,7 @@ export function useProducts() {
   para renderizar cards, tablas
   o cualquier representación visual.
   */
-  const [products, setProducts] =
-    useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   /*
   Indica cuándo existe una solicitud
@@ -61,8 +60,7 @@ export function useProducts() {
 
   - mostrar mensajes de carga
   */
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   /*
   Guarda mensajes de error producidos
@@ -72,39 +70,28 @@ export function useProducts() {
   para renderizar mensajes amigables
   para el usuario.
   */
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   /*
   Función reutilizable encargada
   de consultar productos.
   */
-  const fetchProducts =
-    useCallback(
-      async (
-        search?: string
-      ): Promise<void> => {
-        try {
-          setLoading(true);
-          setError(null);
+  const fetchProducts = useCallback(async (search?: string): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
 
-          const data =
-            await productsApi
-              .getProducts(search);
+      const data = await productsApi.getProducts(search);
 
-          setProducts(data);
-        } catch (error) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error al cargar productos"
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+      setProducts(data);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Error al cargar productos",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   /*
   Función reutilizable encargada
@@ -119,39 +106,31 @@ export function useProducts() {
   Las validaciones definitivas
   permanecen en el backend.
   */
-  const createProduct =
-    useCallback(
-      async (
-        payload: CreateProductPayload
-      ): Promise<Product | null> => {
-        try {
-          setLoading(true);
-          setError(null);
+  const createProduct = useCallback(
+    async (payload: CreateProductPayload): Promise<Product | null> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-          const createdProduct =
-            await productsApi
-              .createProduct(payload);
+        const createdProduct = await productsApi.createProduct(payload);
 
-          setProducts((currentProducts) => [
-            createdProduct,
-            ...currentProducts,
-          ]);
+        setProducts((currentProducts) => [createdProduct, ...currentProducts]);
 
-          return createdProduct;
-        } catch (error) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error al registrar producto"
-          );
+        return createdProduct;
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Error al registrar producto",
+        );
 
-          return null;
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   /*
   Función reutilizable encargada
@@ -162,46 +141,41 @@ export function useProducts() {
   La activación o inactivación se
   gestiona mediante updateProductStatus.
   */
-  const updateProduct =
-    useCallback(
-      async (
-        productId: number,
-        payload: UpdateProductPayload
-      ): Promise<Product | null> => {
-        try {
-          setLoading(true);
-          setError(null);
+  const updateProduct = useCallback(
+    async (
+      productId: number,
+      payload: UpdateProductPayload,
+    ): Promise<Product | null> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-          const updatedProduct =
-            await productsApi
-              .updateProduct(
-                productId,
-                payload
-              );
+        const updatedProduct = await productsApi.updateProduct(
+          productId,
+          payload,
+        );
 
-          setProducts((currentProducts) =>
-            currentProducts.map((product) =>
-              product.id === productId
-                ? updatedProduct
-                : product
-            )
-          );
+        setProducts((currentProducts) =>
+          currentProducts.map((product) =>
+            product.id === productId ? updatedProduct : product,
+          ),
+        );
 
-          return updatedProduct;
-        } catch (error) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error al actualizar producto"
-          );
+        return updatedProduct;
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar producto",
+        );
 
-          return null;
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   /*
   Función reutilizable encargada
@@ -213,46 +187,41 @@ export function useProducts() {
   respetando la baja lógica definida
   para el módulo.
   */
-  const updateProductStatus =
-    useCallback(
-      async (
-        productId: number,
-        payload: UpdateProductStatusPayload
-      ): Promise<Product | null> => {
-        try {
-          setLoading(true);
-          setError(null);
+  const updateProductStatus = useCallback(
+    async (
+      productId: number,
+      payload: UpdateProductStatusPayload,
+    ): Promise<Product | null> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-          const updatedProduct =
-            await productsApi
-              .updateProductStatus(
-                productId,
-                payload
-              );
+        const updatedProduct = await productsApi.updateProductStatus(
+          productId,
+          payload,
+        );
 
-          setProducts((currentProducts) =>
-            currentProducts.map((product) =>
-              product.id === productId
-                ? updatedProduct
-                : product
-            )
-          );
+        setProducts((currentProducts) =>
+          currentProducts.map((product) =>
+            product.id === productId ? updatedProduct : product,
+          ),
+        );
 
-          return updatedProduct;
-        } catch (error) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error al actualizar estado del producto"
-          );
+        return updatedProduct;
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar estado del producto",
+        );
 
-          return null;
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   return {
     products,

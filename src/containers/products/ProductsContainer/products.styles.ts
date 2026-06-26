@@ -649,29 +649,12 @@ export const productsStyles = {
     borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
   },
 
-  filterDialog: {
-    borderRadius: "5px",
-  },
-
   filterDialogTitle: {
     color: colors.text.primary,
     fontSize: 19,
     fontWeight: 650,
     letterSpacing: "-0.025em",
     lineHeight: 1.2,
-  },
-
-  filterDialogActions: {
-    px: 3,
-    pb: 3,
-    pt: 1,
-    justifyContent: "space-between",
-  },
-
-  filterModalContent: {
-    display: "grid",
-    gap: 3,
-    pt: 1,
   },
 
   filterSection: {
