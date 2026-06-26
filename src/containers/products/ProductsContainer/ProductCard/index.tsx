@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { Product } from "@/api/productsApi";
+import type { Product } from "@/api/productsApi";
 
 import { productsStyles } from "../products.styles";
 

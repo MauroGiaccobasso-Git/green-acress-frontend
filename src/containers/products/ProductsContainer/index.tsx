@@ -16,7 +16,6 @@ import {
   Container,
   InputAdornment,
   Paper,
-  Popover,
   Snackbar,
   TextField,
   Typography,
@@ -24,13 +23,15 @@ import {
 } from "@mui/material";
 
 import {
-  CreateProductPayload,
-  Product,
-  UpdateProductPayload,
+  type CreateProductPayload,
+  type Product,
+  type UpdateProductPayload,
 } from "@/api/productsApi";
 import { useProducts } from "@/hooks/products/useProducts";
-
-import ProductFormModal, { ProductFormSubmitPayload } from "./ProductFormModal";
+import { ProductFiltersModal } from "./ProductFiltersModal";
+import ProductFormModal, {
+  type ProductFormSubmitPayload,
+} from "./ProductFormModal";
 import { ProductCard } from "./ProductCard";
 import { productsStyles } from "./products.styles";
 
@@ -544,154 +545,15 @@ export function ProductsContainer() {
         </Paper>
       </Container>
 
-      <Popover
+      <ProductFiltersModal
         open={filterPopoverOpen}
         anchorEl={filterAnchorEl}
+        filters={filters}
         onClose={handleCloseFilterPopover}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
-        }}
-        slotProps={{
-          paper: {
-            sx: productsStyles.filterPopoverPaper,
-          },
-        }}
-      >
-        <Box sx={productsStyles.filterPopoverContent}>
-          <Box sx={productsStyles.filterPopoverHeader}>
-            <Typography variant="h6" sx={productsStyles.filterDialogTitle}>
-              Filtros de productos
-            </Typography>
-          </Box>
-
-          <Box sx={productsStyles.filterSection}>
-            <Box sx={productsStyles.filterSectionHeader}>
-              <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
-                Tipo de producto
-              </Typography>
-
-              <Typography
-                variant="caption"
-                sx={productsStyles.filterSectionHelp}
-              >
-                Filtrar por tipo de producto.
-              </Typography>
-            </Box>
-
-            <Box sx={productsStyles.modalChipGroup}>
-              {["TODOS", "FLOR", "SEMILLA"].map((type) => (
-                <Chip
-                  key={type}
-                  label={formatLabel(type)}
-                  onClick={() =>
-                    setFilters((currentFilters) => ({
-                      ...currentFilters,
-                      type,
-                    }))
-                  }
-                  sx={
-                    filters.type === type
-                      ? productsStyles.activeFilterChip
-                      : productsStyles.filterChip
-                  }
-                />
-              ))}
-            </Box>
-          </Box>
-
-          <Box sx={productsStyles.filterSection}>
-            <Box sx={productsStyles.filterSectionHeader}>
-              <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
-                Estado
-              </Typography>
-
-              <Typography
-                variant="caption"
-                sx={productsStyles.filterSectionHelp}
-              >
-                Filtrar por estado del producto.
-              </Typography>
-            </Box>
-
-            <Box sx={productsStyles.modalChipGroup}>
-              {["TODOS", "ACTIVO", "INACTIVO"].map((status) => (
-                <Chip
-                  key={status}
-                  label={formatLabel(status)}
-                  onClick={() =>
-                    setFilters((currentFilters) => ({
-                      ...currentFilters,
-                      status,
-                    }))
-                  }
-                  sx={
-                    filters.status === status
-                      ? productsStyles.activeFilterChip
-                      : productsStyles.filterChip
-                  }
-                />
-              ))}
-            </Box>
-          </Box>
-
-          <Box sx={productsStyles.filterSection}>
-            <Box sx={productsStyles.filterSectionHeader}>
-              <Typography variant="subtitle2" sx={productsStyles.filterTitle}>
-                Genética
-              </Typography>
-
-              <Typography
-                variant="caption"
-                sx={productsStyles.filterSectionHelp}
-              >
-                Filtrar por genética del producto.
-              </Typography>
-            </Box>
-
-            <Box sx={productsStyles.modalChipGroup}>
-              {["TODOS", "INDICA", "SATIVA", "HIBRIDA"].map((genetics) => (
-                <Chip
-                  key={genetics}
-                  label={formatLabel(genetics)}
-                  onClick={() =>
-                    setFilters((currentFilters) => ({
-                      ...currentFilters,
-                      genetics,
-                    }))
-                  }
-                  sx={
-                    filters.genetics === genetics
-                      ? productsStyles.activeFilterChip
-                      : productsStyles.filterChip
-                  }
-                />
-              ))}
-            </Box>
-          </Box>
-
-          <Box sx={productsStyles.filterFooter}>
-            <Button
-              sx={productsStyles.filterClearButton}
-              onClick={handleClearFilters}
-            >
-              Limpiar
-            </Button>
-
-            <Button
-              variant="contained"
-              sx={productsStyles.filterApplyButton}
-              onClick={handleCloseFilterPopover}
-            >
-              Aplicar
-            </Button>
-          </Box>
-        </Box>
-      </Popover>
+        onClearFilters={handleClearFilters}
+        onChangeFilters={setFilters}
+        formatLabel={formatLabel}
+      />
 
       <ProductFormModal
         open={productModalOpen}

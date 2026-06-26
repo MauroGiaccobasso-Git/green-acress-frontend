@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { FormEvent, useState } from "react";
 
-import {
+import type {
   CreateProductPayload,
   Product,
   UpdateProductPayload,
@@ -212,6 +212,12 @@ function getFieldError(
   return undefined;
 }
 
+/*
+Componente interno que contiene el formulario real.
+
+Se renderiza con una key desde el modal para reiniciar correctamente
+el estado local al alternar entre alta y edición.
+*/
 function ProductFormContent({
   open,
   mode,

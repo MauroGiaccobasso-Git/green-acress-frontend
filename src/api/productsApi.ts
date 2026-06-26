@@ -177,7 +177,15 @@ relacionadas con productos.
 Los componentes no deben realizar
 llamadas directas a la API.
 */
+
 export const productsApi = {
+  /*
+  Obtiene el listado administrativo de productos.
+
+  Si se recibe un término de búsqueda, se envía
+  como query param para que el backend aplique
+  el filtrado correspondiente.
+  */
   async getProducts(search?: string): Promise<Product[]> {
     const query = search ? `?search=${encodeURIComponent(search)}` : "";
 
