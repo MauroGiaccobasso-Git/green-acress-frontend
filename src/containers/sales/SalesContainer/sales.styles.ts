@@ -18,6 +18,16 @@ const subtleBlue = "#F4FAFF";
 const subtleWarning = "#FFF9EE";
 const softError = "#FDE8E6";
 
+/*
+Columnas del historial de ventas.
+
+Se centralizan para que encabezado y filas usen exactamente
+la misma estructura visual, evitando desfasajes entre títulos
+y contenido.
+*/
+const salesHistoryColumns =
+  "minmax(150px, 1.2fr) minmax(150px, 1.05fr) minmax(78px, 0.65fr) minmax(90px, 0.7fr) minmax(122px, 0.85fr) minmax(142px, 0.95fr)";
+
 export const salesStyles = {
   root: {
     width: "100%",
@@ -855,7 +865,7 @@ export const salesStyles = {
       md: "grid",
     },
 
-    gridTemplateColumns: "1.15fr 1fr 0.55fr 0.65fr 0.55fr 0.65fr",
+    gridTemplateColumns: salesHistoryColumns,
 
     px: 2.2,
     py: 1.05,
@@ -863,11 +873,26 @@ export const salesStyles = {
     borderBottom: `1px solid ${colors.border.default}`,
 
     "& .MuiTypography-root": {
+      minWidth: 0,
       fontSize: 11.5,
       fontWeight: 750,
       color: colors.text.secondary,
       textTransform: "uppercase",
       letterSpacing: "0.045em",
+    },
+
+    /*
+    Alineación explícita por columna para que el encabezado
+    coincida visualmente con el contenido de cada venta.
+    */
+    "& > :nth-child(3), & > :nth-child(4), & > :nth-child(5)": {
+      justifySelf: "center",
+      textAlign: "center",
+    },
+
+    "& > :nth-child(6)": {
+      justifySelf: "start",
+      textAlign: "left",
     },
   },
   salesTableBody: {
@@ -880,7 +905,7 @@ export const salesStyles = {
 
     gridTemplateColumns: {
       xs: "1fr",
-      md: "1.15fr 1fr 0.55fr 0.65fr 0.55fr 0.65fr",
+      md: salesHistoryColumns,
     },
 
     alignItems: "center",
@@ -890,6 +915,24 @@ export const salesStyles = {
 
     borderBottom: `1px solid ${colors.border.default}`,
     transition: "background-color 160ms ease",
+
+    "& > *": {
+      minWidth: 0,
+    },
+
+    /*
+    Las columnas numéricas y de estado se centran para evitar
+    la sensación de tabla desfasada. La columna Acciones queda
+    alineada al inicio y con ancho suficiente para ojo + acción.
+    */
+    "& > :nth-child(3), & > :nth-child(4), & > :nth-child(5)": {
+      justifySelf: "center",
+      textAlign: "center",
+    },
+
+    "& > :nth-child(6)": {
+      justifySelf: "stretch",
+    },
 
     "&:hover": {
       bgcolor: "#FAFCFB",
@@ -931,14 +974,19 @@ export const salesStyles = {
 
   saleDate: {
     display: "flex",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 0.5,
     color: colors.text.secondary,
+    lineHeight: 1.25,
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 
   inlineIcon: {
+    mt: "2px",
     fontSize: 15,
     color: colors.text.muted,
+    flexShrink: 0,
   },
 
   saleMember: {
@@ -997,15 +1045,19 @@ export const salesStyles = {
   },
 
   saleActions: {
+    width: "100%",
+    minWidth: 0,
     display: "flex",
     alignItems: "center",
-    gap: 0.75,
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
+    gap: 0.5,
+    flexWrap: "nowrap",
   },
 
   viewButton: {
     width: 38,
     height: 38,
+    flexShrink: 0,
     border: `1px solid ${colors.border.default}`,
     color: colors.text.primary,
     transition: "all 160ms ease",
@@ -1023,6 +1075,7 @@ export const salesStyles = {
     fontWeight: 700,
     color: colors.state.error,
     minWidth: 72,
+    flexShrink: 0,
     px: 1,
 
     "&:hover": {
@@ -1049,7 +1102,6 @@ export const salesStyles = {
     color: colors.text.primary,
     mb: 0.5,
   },
-
 
   /*
   Estilos del modal de detalle de venta.
@@ -1353,7 +1405,6 @@ export const salesStyles = {
     },
   },
 
-
   /* =========================================================
      MODAL DE FILTROS DE VENTAS
   ========================================================= */
@@ -1391,13 +1442,22 @@ export const salesStyles = {
 
   salesFiltersContent: {
     px: { xs: 2.25, md: 2.8 },
-    py: { xs: 2.1, md: 2.4 },
+    pt: { xs: 2.35, md: 2.65 },
+    pb: { xs: 2.1, md: 2.4 },
     bgcolor: colors.background.surface,
   },
 
   salesFiltersSection: {
     display: "grid",
     gap: 1,
+
+    /*
+    Evita que el primer label del modal quede visualmente
+    pegado al divisor del encabezado.
+    */
+    "&:first-of-type": {
+      mt: 0.35,
+    },
   },
 
   salesFiltersLabel: {
