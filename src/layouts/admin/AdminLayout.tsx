@@ -57,7 +57,7 @@ const navigationSections = [
       {
         label: "Stock",
         href: "/admin/stock",
-        disabled: true,
+        disabled: false,
         icon: <Inventory2OutlinedIcon fontSize="small" />,
       },
       {
