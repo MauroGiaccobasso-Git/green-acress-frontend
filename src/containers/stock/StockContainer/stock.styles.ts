@@ -428,63 +428,6 @@ export const stockStyles = {
     color: colors.text.secondary,
   },
 
-  /*
-  Personalización visual del paginador MUI usado en tablas principales.
-
-  La lógica de paginación permanece en el componente y en el backend;
-  este bloque únicamente adapta la apariencia para mantener el estándar
-  premium del panel administrativo.
-  */
-  tablePagination: {
-    "& .MuiPagination-ul": {
-      gap: 1.05,
-      alignItems: "center",
-    },
-
-    "& .MuiPaginationItem-root": {
-      minWidth: 38,
-      height: 38,
-      borderRadius: "10px",
-      border: `1px solid ${colors.border.default}`,
-      color: colors.text.primary,
-      backgroundColor: colors.background.surface,
-      fontSize: 13.2,
-      fontWeight: 700,
-      margin: 0,
-      transition: "all 160ms ease",
-    },
-
-    "& .MuiPaginationItem-root:hover": {
-      borderColor: colors.border.strong,
-      backgroundColor: colors.background.soft,
-    },
-
-    "& .MuiPaginationItem-root.Mui-selected": {
-      color: colors.text.inverse,
-      backgroundColor: colors.brand.primary,
-      borderColor: colors.brand.primary,
-      boxShadow: "0 10px 20px rgba(47, 111, 70, 0.22)",
-    },
-
-    "& .MuiPaginationItem-root.Mui-selected:hover": {
-      backgroundColor: colors.brand.primary,
-      borderColor: colors.brand.primary,
-    },
-
-    "& .MuiPaginationItem-previousNext": {
-      color: colors.text.primary,
-      backgroundColor: colors.background.surface,
-    },
-
-    "& .MuiPaginationItem-previousNext.Mui-disabled": {
-      opacity: 0.42,
-    },
-
-    "& .MuiSvgIcon-root": {
-      fontSize: 19,
-    },
-  },
-
   paginationMock: {
     display: "flex",
     gap: 1,

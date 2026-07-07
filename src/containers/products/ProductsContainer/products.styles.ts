@@ -42,7 +42,7 @@ export const productsStyles = {
   title: {
     color: colors.text.primary,
     fontSize: { xs: 28, md: 32 },
-    fontWeight: 650,
+    fontWeight: 700,
     letterSpacing: "-0.035em",
     lineHeight: 1.1,
     mb: 0.75,
@@ -194,7 +194,7 @@ export const productsStyles = {
   },
 
   activeFiltersClearButton: {
-    minHeight: 34,
+    minHeight: 30,
     px: 1.25,
     borderRadius: "5px",
     color: colors.brand.primary,
@@ -305,10 +305,14 @@ export const productsStyles = {
     display: "grid",
     gridTemplateColumns: {
       xs: "1fr",
-      md: "repeat(2, 1fr)",
-      xl: "repeat(3, 1fr)",
+      sm: "repeat(2, minmax(0, 1fr))",
+      lg: "repeat(3, minmax(0, 1fr))",
+      xl: "repeat(4, minmax(0, 1fr))",
+      "@media (min-width: 1800px)": {
+        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+      },
     },
-    gap: 2.5,
+    gap: { xs: 1.4, md: 1.6 },
     alignItems: "stretch",
   },
 
@@ -320,7 +324,7 @@ export const productsStyles = {
   */
   productCard: {
     overflow: "hidden",
-    borderRadius: "15px",
+    borderRadius: "14px",
     bgcolor: colors.background.surface,
     border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
     boxShadow: "none",
@@ -328,18 +332,19 @@ export const productsStyles = {
       "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease",
 
     "&:hover": {
-      transform: "translateY(-3px)",
+      transform: "translateY(-2px)",
       borderColor: (theme: Theme) => alpha(theme.palette.primary.main, 0.25),
       boxShadow: (theme: Theme) =>
-        `0 16px 32px ${alpha(theme.palette.common.black, 0.07)}`,
+        `0 12px 28px ${alpha(theme.palette.common.black, 0.065)}`,
     },
   },
 
   productImageWrapper: {
     position: "relative",
     height: {
-      xs: 170,
-      md: 184,
+      xs: 132,
+      sm: 138,
+      md: 142,
     },
     overflow: "hidden",
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
@@ -412,10 +417,10 @@ export const productsStyles = {
 
   editProductButton: {
     position: "absolute",
-    right: 12,
-    bottom: 12,
-    width: 40,
-    height: 40,
+    right: 10,
+    bottom: 10,
+    width: 34,
+    height: 34,
     borderRadius: "100px",
     color: colors.text.primary,
     bgcolor: (theme: Theme) => alpha(theme.palette.background.paper, 0.92),
@@ -435,10 +440,16 @@ export const productsStyles = {
   },
 
   productCardContent: {
-    p: 2.15,
+    p: {
+      xs: 1.45,
+      md: 1.55,
+    },
 
     "&:last-child": {
-      pb: 2.15,
+      pb: {
+        xs: 1.45,
+        md: 1.55,
+      },
     },
   },
 
@@ -454,29 +465,36 @@ export const productsStyles = {
     display: "grid",
     gridTemplateColumns: "1fr auto",
     alignItems: "start",
-    gap: 1,
+    gap: 0.9,
     minWidth: 0,
-    mb: 1,
+    mb: 0.65,
   },
 
   productHeaderChips: {
     display: "flex",
     alignItems: "center",
-    gap: 0.75,
+    gap: 0.55,
     flexWrap: "wrap",
     justifyContent: "flex-end",
   },
 
   productName: {
     color: colors.text.primary,
-    fontSize: 18,
-    fontWeight: 600,
+    fontSize: {
+      xs: 16,
+      md: 16.5,
+    },
+    fontWeight: 700,
     letterSpacing: "-0.02em",
-    lineHeight: 1.2,
+    lineHeight: 1.15,
+    display: "-webkit-box",
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
 
   productGeneticsChip: {
-    height: 24,
+    height: 22,
     borderRadius: "5px",
     fontWeight: 500,
     color: colors.brand.primary,
@@ -485,7 +503,7 @@ export const productsStyles = {
   },
 
   productActiveChip: {
-    height: 24,
+    height: 22,
     borderRadius: "5px",
     fontWeight: 500,
     color: colors.text.inverse,
@@ -498,9 +516,9 @@ export const productsStyles = {
   },
 
   productInactiveChip: {
-    height: 24,
+    height: 22,
     borderRadius: "5px",
-    fontSize: "0.72rem",
+    fontSize: "0.70rem",
     fontWeight: 700,
     color: colors.state.error,
     bgcolor: (theme: Theme) => alpha(theme.palette.error.main, 0.12),
@@ -510,42 +528,48 @@ export const productsStyles = {
 
   productDescription: {
     color: colors.text.secondary,
-    fontSize: 14,
+    fontSize: 12.5,
     fontWeight: 400,
-    lineHeight: 1.55,
-    minHeight: 44,
+    lineHeight: 1.35,
+    minHeight: 30,
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
 
   productChipGroup: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 0.8,
-    mt: 2,
-    mb: 2,
+    gap: 0.55,
+    mt: 0.9,
+    mb: 0.9,
   },
 
   productInfoChip: {
-    height: 28,
+    height: 22,
     borderRadius: "5px",
-    fontWeight: 500,
+    fontSize: "0.70rem",
+    fontWeight: 600,
     bgcolor: (theme: Theme) => alpha(theme.palette.text.primary, 0.055),
     textTransform: "capitalize",
   },
 
   productDivider: {
-    my: 2,
+    my: 0.9,
   },
 
   productStatsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(2, 1fr)",
     gap: 0,
+    mt: 0.35,
   },
 
   productStat: {
-    minHeight: 72,
-    py: 1.25,
-    pr: 1.5,
+    minHeight: 46,
+    py: 0.6,
+    pr: 1.15,
     borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
 
     "&:nth-of-type(odd)": {
@@ -553,28 +577,29 @@ export const productsStyles = {
     },
 
     "&:nth-of-type(even)": {
-      pl: 1.5,
+      pl: 1.15,
     },
   },
 
   productStatLabel: {
     display: "block",
     color: colors.text.secondary,
+    fontSize: 11.5,
     fontWeight: 400,
-    mb: 0.5,
+    mb: 0.35,
   },
 
   productStatValue: {
     color: colors.text.primary,
-    fontSize: 15,
-    fontWeight: 600,
-    lineHeight: 1.25,
+    fontSize: 13.5,
+    fontWeight: 700,
+    lineHeight: 1.2,
   },
 
   productAvailableStat: {
-    minHeight: 72,
-    py: 1.25,
-    pl: 1.5,
+    minHeight: 46,
+    py: 0.6,
+    pl: 1.15,
   },
 
   productLowStock: {
@@ -588,14 +613,15 @@ export const productsStyles = {
   productAvailableLabel: {
     display: "block",
     color: colors.text.secondary,
+    fontSize: 11.5,
     fontWeight: 400,
-    mb: 0.5,
+    mb: 0.35,
   },
 
   productAvailableValue: {
     color: colors.brand.primary,
-    fontSize: 17,
-    fontWeight: 650,
+    fontSize: 14.5,
+    fontWeight: 700,
     lineHeight: 1.15,
   },
 
@@ -652,7 +678,7 @@ export const productsStyles = {
   filterDialogTitle: {
     color: colors.text.primary,
     fontSize: 19,
-    fontWeight: 650,
+    fontWeight: 700,
     letterSpacing: "-0.025em",
     lineHeight: 1.2,
   },

@@ -32,14 +32,9 @@ import {
 } from "@mui/material";
 
 import { Sale } from "@/api/salesApi";
-import { useProducts } from "@/hooks/products/useProducts";
 import { useSales } from "@/hooks/sales/useSales";
-import { useSocios } from "@/hooks/socios/useSocios";
 import { SaleDetailModal } from "./SaleDetailModal";
-import {
-  SalesFiltersModal,
-  SalesStatusFilter,
-} from "./SalesFiltersModal";
+import { SalesFiltersModal, SalesStatusFilter } from "./SalesFiltersModal";
 
 import { salesStyles } from "./sales.styles";
 
@@ -83,7 +78,7 @@ Container principal del módulo de ventas.
 Responsabilidades:
 - renderizar la interfaz administrativa de ventas;
 - manejar estado local del formulario;
-- conectar la UI con hooks especializados;
+- conectar la UI con el hook orquestador del módulo;
 - aplicar validaciones preventivas de experiencia de usuario;
 - delegar persistencia, auditoría, stock y reglas legales definitivas al backend.
 
@@ -92,35 +87,42 @@ No realiza llamadas HTTP directas.
 No contiene reglas críticas definitivas de negocio.
 */
 export default function SalesContainer() {
+  /*
+  useSales centraliza las operaciones del módulo:
+
+  - historial de ventas;
+  - detalle de venta;
+  - registro y anulación;
+  - socios activos;
+  - flores activas.
+
+  El container consume datos listos para renderizar
+  y no coordina hooks de otros módulos.
+  */
   const {
     sales,
+    selectedSale,
+
+    socios,
+    products,
+
     loadingSales,
+    loadingOptions,
+    loadingDetail,
     savingSale,
     cancellingSale,
+
     error,
+
     fetchSales,
+    fetchSaleOptions,
+    fetchSaleById,
     createSale,
     cancelSale,
-    clearError,
-    selectedSale,
-    loadingDetail,
-    fetchSaleById,
+
     setSelectedSale,
+    clearError,
   } = useSales();
-
-  const {
-    socios,
-    loading: loadingSocios,
-    error: sociosError,
-    fetchSocios,
-  } = useSocios();
-
-  const {
-    products,
-    loading: loadingProducts,
-    error: productsError,
-    fetchProducts,
-  } = useProducts();
 
   const [selectedMemberId, setSelectedMemberId] = useState<number | "">("");
   const [selectedFlowerId, setSelectedFlowerId] = useState<number | "">("");
@@ -155,39 +157,31 @@ export default function SalesContainer() {
 
   const [saleDetails, setSaleDetails] = useState<LocalSaleDetail[]>([]);
   /*
-Carga la información necesaria para inicializar
-la pantalla de ventas.
+  Carga la información necesaria para inicializar
+  la pantalla de ventas.
 
-Se solicita:
-- historial de ventas;
-- listado de productos;
-- listado de socios.
-
-Cada hook encapsula la comunicación con el backend,
-manteniendo el container libre de llamadas HTTP directas.
-*/
+  useSales actúa como hook orquestador del módulo:
+  obtiene el historial y también las opciones necesarias
+  para el formulario, manteniendo el container sin
+  dependencias directas de hooks de otros dominios.
+  */
   useEffect(() => {
     void fetchSales();
-    void fetchProducts();
-    void fetchSocios();
-  }, [fetchSales, fetchProducts, fetchSocios]);
+    void fetchSaleOptions();
+  }, [fetchSales, fetchSaleOptions]);
 
   /*
   Obtiene las flores disponibles para registrar una venta.
 
-  El hook useProducts devuelve todos los productos del sistema.
+  useSales ya solicita al backend productos tipo FLOR
+  en estado ACTIVO mediante getProductOptions.
 
-  La pantalla de Ventas solamente permite comercializar
-  flores que cumplan simultáneamente las siguientes reglas:
+  Este filtro local solo conserva reglas visuales del formulario:
+  - precio de venta definido;
+  - stock disponible mayor a cero.
 
-  - pertenecer al tipo FLOR;
-  - encontrarse ACTIVAS;
-  - tener precio de venta definido;
-  - disponer de stock disponible.
-
-  useMemo evita recalcular este filtrado en cada render,
-  ejecutándolo únicamente cuando cambia el listado de
-  productos recibido desde el backend.
+  La validación definitiva de producto, stock y límite legal
+  continúa siendo responsabilidad del backend.
   */
   const availableFlowers = useMemo(
     () =>
@@ -204,9 +198,9 @@ manteniendo el container libre de llamadas HTTP directas.
   /*
   Obtiene los socios habilitados para registrar ventas.
 
-  La venta presencial solo puede asociarse a socios
-  en estado ACTIVO. La validación definitiva permanece
-  en backend.
+  useSales ya expone socios activos. Se mantiene este
+  useMemo como capa defensiva de UI para preservar
+  el contrato visual del formulario.
   */
   const activeSocios = useMemo(
     () => socios.filter((socio) => socio.estado === "ACTIVO"),
@@ -494,10 +488,10 @@ manteniendo el container libre de llamadas HTTP directas.
       handleClearForm();
 
       /*
-      Refresca productos e historial para que la pantalla
-      quede alineada con la operación persistida en backend.
+      Refresca el historial respetando los filtros activos.
+      Las opciones del formulario se actualizan desde useSales
+      luego de registrar la operación.
       */
-      void fetchProducts();
       void fetchSales(getCurrentSalesFilters());
     }
   };
@@ -513,11 +507,10 @@ manteniendo el container libre de llamadas HTTP directas.
 
     if (cancelledSale) {
       /*
-      Refresca productos e historial para reflejar
-      la anulación y restitución de stock realizada
-      por backend.
+      Refresca el historial respetando los filtros activos.
+      Las opciones del formulario se actualizan desde useSales
+      luego de anular la operación.
       */
-      void fetchProducts();
       void fetchSales(getCurrentSalesFilters());
     }
   };
@@ -530,17 +523,6 @@ manteniendo el container libre de llamadas HTTP directas.
         </Alert>
       )}
 
-      {productsError && (
-        <Alert severity="error" sx={salesStyles.errorBox}>
-          {productsError}
-        </Alert>
-      )}
-
-      {sociosError && (
-        <Alert severity="error" sx={salesStyles.errorBox}>
-          {sociosError}
-        </Alert>
-      )}
 
       {formError && (
         <Alert
@@ -602,13 +584,13 @@ manteniendo el container libre de llamadas HTTP directas.
                       Seleccionar socio
                     </MenuItem>
 
-                    {loadingSocios && (
+                    {loadingOptions && (
                       <MenuItem value="" disabled>
                         Cargando socios...
                       </MenuItem>
                     )}
 
-                    {!loadingSocios &&
+                    {!loadingOptions &&
                       activeSocios.map((socio) => (
                         <MenuItem key={socio.id} value={socio.id}>
                           <Box sx={salesStyles.memberOption}>
@@ -709,13 +691,13 @@ manteniendo el container libre de llamadas HTTP directas.
                       Seleccionar producto
                     </MenuItem>
 
-                    {loadingProducts && (
+                    {loadingOptions && (
                       <MenuItem value="" disabled>
                         Cargando flores...
                       </MenuItem>
                     )}
 
-                    {!loadingProducts &&
+                    {!loadingOptions &&
                       availableFlowers.map((flower) => (
                         <MenuItem key={flower.id} value={flower.id}>
                           <Box sx={salesStyles.productOption}>

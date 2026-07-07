@@ -109,31 +109,31 @@ export function SalesFiltersModal({
           <Typography sx={salesStyles.salesFiltersLabel}>Fecha</Typography>
 
           <Box sx={salesStyles.salesFiltersDateGrid}>
-            <TextField
-              label="Desde"
-              type="date"
-              value={fromDate}
-              onChange={(event) => onFromDateChange(event.target.value)}
-              sx={salesStyles.salesFiltersDateInput}
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-            />
+            <Box sx={salesStyles.salesFiltersDateField}>
+              <Typography sx={salesStyles.salesFiltersDateLabel}>
+                Desde
+              </Typography>
 
-            <TextField
-              label="Hasta"
-              type="date"
-              value={toDate}
-              onChange={(event) => onToDateChange(event.target.value)}
-              sx={salesStyles.salesFiltersDateInput}
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-            />
+              <TextField
+                type="date"
+                value={fromDate}
+                onChange={(event) => onFromDateChange(event.target.value)}
+                sx={salesStyles.salesFiltersDateInput}
+              />
+            </Box>
+
+            <Box sx={salesStyles.salesFiltersDateField}>
+              <Typography sx={salesStyles.salesFiltersDateLabel}>
+                Hasta
+              </Typography>
+
+              <TextField
+                type="date"
+                value={toDate}
+                onChange={(event) => onToDateChange(event.target.value)}
+                sx={salesStyles.salesFiltersDateInput}
+              />
+            </Box>
           </Box>
         </Box>
       </DialogContent>

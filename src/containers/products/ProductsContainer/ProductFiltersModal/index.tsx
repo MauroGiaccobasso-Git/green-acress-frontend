@@ -1,11 +1,18 @@
 import { Box, Button, Chip, Popover, Typography } from "@mui/material";
 
+import { type Product } from "@/api/productsApi";
 import { productsStyles } from "../products.styles";
 
-type ProductFilters = {
-  type: string;
-  status: string;
-  genetics: string;
+export type ProductTypeFilter = "TODOS" | Product["tipo"];
+
+export type ProductStatusFilter = "TODOS" | Product["estado"];
+
+export type ProductGeneticsFilter = "TODOS" | Product["genetica"];
+
+export type ProductFilters = {
+  type: ProductTypeFilter;
+  status: ProductStatusFilter;
+  genetics: ProductGeneticsFilter;
 };
 
 type ProductFiltersModalProps = {
@@ -18,11 +25,20 @@ type ProductFiltersModalProps = {
   formatLabel: (value?: string | null) => string;
 };
 
-const productTypeOptions = ["TODOS", "FLOR", "SEMILLA"];
+const productTypeOptions: ProductTypeFilter[] = ["TODOS", "FLOR", "SEMILLA"];
 
-const productStatusOptions = ["TODOS", "ACTIVO", "INACTIVO"];
+const productStatusOptions: ProductStatusFilter[] = [
+  "TODOS",
+  "ACTIVO",
+  "INACTIVO",
+];
 
-const productGeneticsOptions = ["TODOS", "INDICA", "SATIVA", "HIBRIDA"];
+const productGeneticsOptions: ProductGeneticsFilter[] = [
+  "TODOS",
+  "INDICA",
+  "SATIVA",
+  "HIBRIDA",
+];
 
 /*
 Popover de filtros del módulo Productos.

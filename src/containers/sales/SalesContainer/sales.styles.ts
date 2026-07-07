@@ -14,7 +14,6 @@ Criterios:
 const panelShadow = "0 18px 40px rgba(16, 41, 28, 0.055)";
 const sectionShadow = "0 10px 28px rgba(16, 41, 28, 0.035)";
 const subtleGreen = "#F7FCF8";
-const subtleBlue = "#F4FAFF";
 const subtleWarning = "#FFF9EE";
 const softError = "#FDE8E6";
 
@@ -1456,7 +1455,7 @@ export const salesStyles = {
     pegado al divisor del encabezado.
     */
     "&:first-of-type": {
-      mt: 0.35,
+      mt: 1,
     },
   },
 
@@ -1466,8 +1465,8 @@ export const salesStyles = {
     color: colors.text.secondary,
     textTransform: "uppercase",
     letterSpacing: "0.045em",
+    mb: 0.75,
   },
-
   salesFiltersSelect: {
     borderRadius: "16px",
     bgcolor: colors.background.soft,
@@ -1501,6 +1500,18 @@ export const salesStyles = {
     gap: 1.25,
   },
 
+  salesFiltersDateField: {
+    display: "grid",
+    gap: 0.75,
+  },
+
+  salesFiltersDateLabel: {
+    color: colors.text.secondary,
+    fontWeight: 800,
+    fontSize: "0.85rem",
+    lineHeight: 1,
+  },
+
   salesFiltersDateInput: {
     "& .MuiOutlinedInput-root": {
       borderRadius: "16px",
@@ -1517,13 +1528,6 @@ export const salesStyles = {
         borderColor: colors.brand.primary,
         borderWidth: 1,
       },
-    },
-    "& .MuiInputLabel-root": {
-      color: colors.text.secondary,
-      fontWeight: 700,
-    },
-    "& .MuiInputLabel-root.Mui-focused": {
-      color: colors.brand.primary,
     },
   },
 
