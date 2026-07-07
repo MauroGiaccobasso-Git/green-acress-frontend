@@ -1,14 +1,23 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import {
   type CreateProductPayload,
+  type GetProductsParams,
   type Product,
+  type ProductsPagination,
   productsApi,
   type UpdateProductPayload,
   type UpdateProductStatusPayload,
 } from "@/api/productsApi";
+
+const DEFAULT_PRODUCTS_PAGINATION: ProductsPagination = {
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 0,
+};
 
 /*
 Hook especializado encargado de administrar
@@ -20,6 +29,8 @@ Su responsabilidad es:
 - solicitar productos al backend
 
 - almacenar productos cargados
+
+- administrar filtros y paginación backend
 
 - administrar loading
 
@@ -49,6 +60,28 @@ export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
 
   /*
+  Almacena información de paginación
+  devuelta por backend.
+
+  La paginación no se calcula en frontend
+  para evitar trabajar sobre listados
+  incompletos o inconsistentes.
+  */
+  const [pagination, setPagination] = useState<ProductsPagination>(
+    DEFAULT_PRODUCTS_PAGINATION,
+  );
+
+  /*
+  Conserva los últimos parámetros utilizados
+  para poder refrescar el listado luego de
+  altas, ediciones o cambios de estado.
+  */
+  const lastFetchParamsRef = useRef<GetProductsParams>({
+    page: 1,
+    limit: 10,
+  });
+
+  /*
   Indica cuándo existe una solicitud
   en ejecución.
 
@@ -75,23 +108,49 @@ export function useProducts() {
   /*
   Función reutilizable encargada
   de consultar productos.
+
+  Recibe búsqueda, filtros y paginación
+  para delegar la consulta real al backend.
   */
-  const fetchProducts = useCallback(async (search?: string): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchProducts = useCallback(
+    async (params: GetProductsParams = {}): Promise<void> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const data = await productsApi.getProducts(search);
+        const normalizedParams: GetProductsParams = {
+          search: params.search,
+          tipo: params.tipo,
+          estado: params.estado,
+          genetica: params.genetica,
+          page: params.page ?? 1,
+          limit: params.limit ?? 10,
+        };
 
-      setProducts(data);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Error al cargar productos",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        lastFetchParamsRef.current = normalizedParams;
+
+        const response = await productsApi.getProducts(normalizedParams);
+
+        setProducts(response.data);
+        setPagination(response.pagination);
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Error al cargar productos",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  /*
+  Refresca el listado utilizando los últimos
+  filtros y parámetros de paginación aplicados.
+  */
+  const refreshProducts = useCallback(async (): Promise<void> => {
+    await fetchProducts(lastFetchParamsRef.current);
+  }, [fetchProducts]);
 
   /*
   Función reutilizable encargada
@@ -99,8 +158,7 @@ export function useProducts() {
 
   El hook delega la comunicación
   HTTP en productsApi y luego
-  agrega el producto creado al
-  estado local del listado.
+  refresca el listado desde backend.
 
   No contiene reglas de negocio.
   Las validaciones definitivas
@@ -114,7 +172,10 @@ export function useProducts() {
 
         const createdProduct = await productsApi.createProduct(payload);
 
-        setProducts((currentProducts) => [createdProduct, ...currentProducts]);
+        await fetchProducts({
+          ...lastFetchParamsRef.current,
+          page: 1,
+        });
 
         return createdProduct;
       } catch (error) {
@@ -129,7 +190,7 @@ export function useProducts() {
         setLoading(false);
       }
     },
-    [],
+    [fetchProducts],
   );
 
   /*
@@ -155,11 +216,7 @@ export function useProducts() {
           payload,
         );
 
-        setProducts((currentProducts) =>
-          currentProducts.map((product) =>
-            product.id === productId ? updatedProduct : product,
-          ),
-        );
+        await refreshProducts();
 
         return updatedProduct;
       } catch (error) {
@@ -174,7 +231,7 @@ export function useProducts() {
         setLoading(false);
       }
     },
-    [],
+    [refreshProducts],
   );
 
   /*
@@ -201,11 +258,7 @@ export function useProducts() {
           payload,
         );
 
-        setProducts((currentProducts) =>
-          currentProducts.map((product) =>
-            product.id === productId ? updatedProduct : product,
-          ),
-        );
+        await refreshProducts();
 
         return updatedProduct;
       } catch (error) {
@@ -220,14 +273,16 @@ export function useProducts() {
         setLoading(false);
       }
     },
-    [],
+    [refreshProducts],
   );
 
   return {
     products,
+    pagination,
     loading,
     error,
     fetchProducts,
+    refreshProducts,
     createProduct,
     updateProduct,
     updateProductStatus,

@@ -650,15 +650,17 @@ export default function PurchasesContainer() {
                     </Box>
                   </Box>
 
-                  <TextField
-                    label="Observaciones"
-                    value={observations}
-                    onChange={(event) => setObservations(event.target.value)}
-                    placeholder="Agregá una observación administrativa opcional"
-                    multiline
-                    minRows={4}
-                    fullWidth
-                  />
+                  <Box sx={purchasesStyles.observationsColumn}>
+                    <TextField
+                      label="Observaciones"
+                      value={observations}
+                      onChange={(event) => setObservations(event.target.value)}
+                      placeholder="Agregá una observación administrativa opcional"
+                      multiline
+                      fullWidth
+                      sx={purchasesStyles.observationsInput}
+                    />
+                  </Box>
                 </Box>
               </CardContent>
             </Card>

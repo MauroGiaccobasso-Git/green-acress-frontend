@@ -130,6 +130,69 @@ export type UpdateProductStatusPayload = {
 };
 
 /*
+Representa la paginación administrativa
+devuelta por el backend para listados.
+
+Permite que el frontend no calcule
+paginación localmente sobre datos parciales.
+*/
+export type ProductsPagination = {
+  page: number;
+
+  limit: number;
+
+  total: number;
+
+  totalPages: number;
+};
+
+/*
+Representa los parámetros disponibles
+para consultar productos desde la API.
+
+La búsqueda, los filtros y la paginación
+se delegan al backend para mantener
+consistencia con el resto de módulos
+administrativos.
+*/
+export type GetProductsParams = {
+  search?: string;
+
+  tipo?: "FLOR" | "SEMILLA";
+
+  estado?: "ACTIVO" | "INACTIVO";
+
+  genetica?: "INDICA" | "SATIVA" | "HIBRIDA";
+
+  page?: number;
+
+  limit?: number;
+};
+
+/*
+Representa los parámetros disponibles
+para consultar productos como opciones
+de formularios operativos.
+
+Se reutilizan los mismos filtros del backend,
+pero el consumo esperado es una colección
+simple para selects y flujos auxiliares.
+*/
+export type GetProductOptionsParams = Omit<GetProductsParams, "page" | "limit"> & {
+  limit?: number;
+};
+
+/*
+Representa la respuesta paginada del
+listado administrativo de productos.
+*/
+export type GetProductsResponse = {
+  data: Product[];
+
+  pagination: ProductsPagination;
+};
+
+/*
 Representa la respuesta devuelta por backend
 al registrar un producto.
 
@@ -171,25 +234,91 @@ type UpdateProductStatusResponse = {
 };
 
 /*
+Construye query params comunes para consultas
+de productos.
+
+Evita duplicar lógica entre listados paginados
+y opciones de formularios.
+*/
+const buildProductsQueryParams = (params: GetProductsParams = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.search) {
+    searchParams.set("search", params.search);
+  }
+
+  if (params.tipo) {
+    searchParams.set("tipo", params.tipo);
+  }
+
+  if (params.estado) {
+    searchParams.set("estado", params.estado);
+  }
+
+  if (params.genetica) {
+    searchParams.set("genetica", params.genetica);
+  }
+
+  if (params.page) {
+    searchParams.set("page", String(params.page));
+  }
+
+  if (params.limit) {
+    searchParams.set("limit", String(params.limit));
+  }
+
+  return searchParams.toString();
+};
+
+/*
 Centraliza las operaciones HTTP
 relacionadas con productos.
 
 Los componentes no deben realizar
 llamadas directas a la API.
 */
-
 export const productsApi = {
   /*
   Obtiene el listado administrativo de productos.
 
-  Si se recibe un término de búsqueda, se envía
-  como query param para que el backend aplique
-  el filtrado correspondiente.
+  La búsqueda, los filtros y la paginación
+  se envían como query params para que
+  el backend aplique la consulta real
+  sobre la base de datos antes de paginar.
   */
-  async getProducts(search?: string): Promise<Product[]> {
-    const query = search ? `?search=${encodeURIComponent(search)}` : "";
+  async getProducts(
+    params: GetProductsParams = {},
+  ): Promise<GetProductsResponse> {
+    const query = buildProductsQueryParams(params);
 
-    return httpClient<Product[]>(`/productos${query}`);
+    return httpClient<GetProductsResponse>(
+      `/productos${query ? `?${query}` : ""}`,
+    );
+  },
+
+  /*
+  Obtiene productos como colección simple
+  para formularios operativos.
+
+  Debe usarse en módulos como Compras,
+  Ventas o Reservas cuando se necesitan
+  opciones para selects y no un listado
+  administrativo paginado.
+  */
+  async getProductOptions(
+    params: GetProductOptionsParams = {},
+  ): Promise<Product[]> {
+    const query = buildProductsQueryParams({
+      ...params,
+      page: 1,
+      limit: params.limit ?? 50,
+    });
+
+    const response = await httpClient<GetProductsResponse>(
+      `/productos${query ? `?${query}` : ""}`,
+    );
+
+    return response.data;
   },
 
   /*

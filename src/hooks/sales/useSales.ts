@@ -1,17 +1,26 @@
 import { useCallback, useState } from "react";
 
 import {
-  CreateSalePayload,
-  Sale,
-  SalesFilters,
+  type Product,
+  productsApi,
+} from "@/api/productsApi";
+import {
+  type CreateSalePayload,
+  type Sale,
+  type SalesFilters,
   salesApi,
 } from "@/api/salesApi";
+import {
+  type Socio,
+  sociosApi,
+} from "@/api/sociosApi";
 
 /*
 Hook principal del módulo de ventas.
 
 Responsabilidades:
 - cargar historial de ventas;
+- cargar socios y flores activas para el formulario;
 - consultar detalle de venta;
 - registrar venta directa presencial;
 - anular venta registrada;
@@ -20,14 +29,37 @@ Responsabilidades:
 No contiene JSX.
 No conoce detalles visuales.
 No llama a httpClient directamente.
-No decide cuándo se carga la información inicial:
-esa responsabilidad queda en el container.
+
+El hook actúa como orquestador del módulo:
+centraliza las APIs necesarias para que el
+container no coordine dependencias cruzadas.
 */
 export function useSales() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
 
+  /*
+  Socios disponibles para registrar ventas.
+
+  El módulo de ventas solo debe operar con
+  socios activos, por lo que se normaliza
+  la colección antes de exponerla al container.
+  */
+  const [socios, setSocios] = useState<Socio[]>([]);
+
+  /*
+  Productos tipo FLOR obtenidos desde backend.
+
+  Ventas solo opera con flores activas.
+  La consulta utiliza getProductOptions porque
+  el formulario necesita una colección simple
+  para selects, no un listado administrativo
+  paginado.
+  */
+  const [products, setProducts] = useState<Product[]>([]);
+
   const [loadingSales, setLoadingSales] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingSale, setSavingSale] = useState(false);
   const [cancellingSale, setCancellingSale] = useState(false);
@@ -41,6 +73,43 @@ export function useSales() {
   */
   const clearError = useCallback(() => {
     setError(null);
+  }, []);
+
+  /*
+  Carga socios y flores activas necesarios
+  para construir el formulario de venta.
+
+  Ambas consultas se ejecutan en paralelo
+  para reducir tiempos de espera.
+  */
+  const fetchSaleOptions = useCallback(async (): Promise<void> => {
+    try {
+      setLoadingOptions(true);
+      setError(null);
+
+      const [sociosData, productsData] = await Promise.all([
+        sociosApi.getSocios(),
+        productsApi.getProductOptions({
+          tipo: "FLOR",
+          estado: "ACTIVO",
+          limit: 50,
+        }),
+      ]);
+
+      setSocios(
+        sociosData.filter((socio) => socio.estado === "ACTIVO"),
+      );
+
+      setProducts(productsData);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "No se pudieron cargar los datos para ventas.",
+      );
+    } finally {
+      setLoadingOptions(false);
+    }
   }, []);
 
   /*
@@ -110,6 +179,7 @@ export function useSales() {
         const createdSale = await salesApi.createSale(payload);
 
         await fetchSales();
+        await fetchSaleOptions();
 
         return createdSale;
       } catch (err) {
@@ -124,7 +194,7 @@ export function useSales() {
         setSavingSale(false);
       }
     },
-    [fetchSales],
+    [fetchSales, fetchSaleOptions],
   );
 
   /*
@@ -142,6 +212,7 @@ export function useSales() {
         const cancelledSale = await salesApi.cancelSale(saleId);
 
         await fetchSales();
+        await fetchSaleOptions();
 
         setSelectedSale((currentSale) =>
           currentSale?.id === saleId ? cancelledSale : currentSale,
@@ -160,14 +231,18 @@ export function useSales() {
         setCancellingSale(false);
       }
     },
-    [fetchSales],
+    [fetchSales, fetchSaleOptions],
   );
 
   return {
     sales,
     selectedSale,
 
+    socios,
+    products,
+
     loadingSales,
+    loadingOptions,
     loadingDetail,
     savingSale,
     cancellingSale,
@@ -175,6 +250,7 @@ export function useSales() {
     error,
 
     fetchSales,
+    fetchSaleOptions,
     fetchSaleById,
     createSale,
     cancelSale,

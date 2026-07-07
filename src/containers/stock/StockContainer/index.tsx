@@ -22,7 +22,6 @@ import {
   Chip,
   CircularProgress,
   InputAdornment,
-  Pagination,
   TextField,
   Typography,
 } from "@mui/material";
@@ -34,6 +33,7 @@ import {
   StockMovementFilters,
 } from "@/api/stockApi";
 import { useStock } from "@/hooks/stock/useStock";
+import { AppPagination } from "@/components/common/Pagination";
 
 import { stockStyles } from "./stock.styles";
 
@@ -937,15 +937,11 @@ export default function StockContainer() {
                     productos
                   </Typography>
 
-                  {stockPagination.totalPages > 1 && (
-                    <Pagination
-                      page={stockPagination.page}
-                      count={stockPagination.totalPages}
-                      size="small"
-                      onChange={(_, page) => changeStockPage(page)}
-                      sx={stockStyles.tablePagination}
-                    />
-                  )}
+                  <AppPagination
+                    page={stockPagination.page}
+                    totalPages={stockPagination.totalPages}
+                    onChange={changeStockPage}
+                  />
                 </Box>
               </>
             )}

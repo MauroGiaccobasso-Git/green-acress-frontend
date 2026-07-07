@@ -279,6 +279,33 @@ export const purchasesStyles = {
     gap: 1.5,
   },
 
+  /*
+Campo de observaciones administrativas
+del bloque Datos de la compra.
+
+Acompaña visualmente la altura de la
+columna del proveedor para evitar
+desbalance dentro del panel.
+*/
+  observationsInput: {
+    flex: 1,
+
+    "& .MuiInputBase-root": {
+      height: "100%",
+      alignItems: "flex-start",
+    },
+
+    "& .MuiInputBase-inputMultiline": {
+      height: "100% !important",
+      overflow: "auto !important",
+    },
+  },
+
+  observationsColumn: {
+    display: "flex",
+    minWidth: 0,
+  },
+
   selectedProviderBox: {
     minHeight: 108,
     display: "flex",
