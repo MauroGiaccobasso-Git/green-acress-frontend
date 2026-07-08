@@ -350,6 +350,70 @@ export const productsStyles = {
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
   },
 
+  productTypeSeedBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    zIndex: 4,
+
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 0.45,
+
+    minHeight: 25,
+    px: 1.05,
+    py: 0.35,
+
+    borderRadius: "10px",
+
+    bgcolor: colors.product.seedBadgeSurface,
+    border: `1px solid ${colors.product.seedBorder}`,
+
+    color: colors.brand.primary,
+
+    boxShadow: (theme: Theme) =>
+      `0 6px 14px ${alpha(theme.palette.primary.main, 0.1)}`,
+  },
+
+  productTypeFlowerBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    zIndex: 4,
+
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 0.45,
+
+    minHeight: 25,
+    px: 1.05,
+    py: 0.35,
+
+    borderRadius: "10px",
+
+    bgcolor: colors.product.flowerBadgeSurface,
+    border: `1px solid ${colors.product.flowerBorder}`,
+
+    color: colors.brand.primary,
+
+    boxShadow: (theme: Theme) =>
+      `0 6px 14px ${alpha(theme.palette.common.black, 0.08)}`,
+  },
+
+  productTypeBadgeIcon: {
+    fontSize: 15,
+    color: "inherit",
+  },
+
+  productTypeBadgeText: {
+    color: "inherit",
+    fontSize: 11,
+    fontWeight: 700,
+    lineHeight: 1,
+  },
+
   productImage: {
     width: "100%",
     height: "100%",
@@ -375,6 +439,51 @@ export const productsStyles = {
     alignItems: "center",
     justifyContent: "center",
     bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
+  },
+
+  productSeedFallback: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 0.35,
+    bgcolor: colors.product.seedSurface,
+    borderBottom: `1px solid ${colors.product.seedBorder}`,
+  },
+
+  productSeedIllustration: {
+    width: 82,
+    height: 82,
+    mb: 0.35,
+    borderRadius: "50%",
+    border: `1.5px dashed ${colors.product.seedBorder}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    bgcolor: colors.product.seedBadgeSurface,
+  },
+
+  productSeedFallbackIcon: {
+    fontSize: 46,
+    color: colors.brand.primary,
+  },
+
+  productSeedFallbackText: {
+    color: colors.brand.primary,
+    fontSize: 13,
+    fontWeight: 700,
+    letterSpacing: "0.01em",
+    lineHeight: 1.1,
+  },
+
+  productSeedFallbackSubtext: {
+    color: colors.text.secondary,
+    fontSize: 11,
+    fontWeight: 500,
+    lineHeight: 1.2,
   },
 
   productImageText: {

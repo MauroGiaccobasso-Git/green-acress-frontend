@@ -551,6 +551,19 @@ export default function StockContainer() {
     await applyMovementFilters(nextFilters);
   };
 
+  /*
+  Renderiza la representación visual del producto dentro del inventario.
+
+  Criterio UX:
+  - si existe imagen cargada, se muestra la imagen real del producto;
+  - si el producto es SEMILLA y no tiene imagen, se muestra el ícono
+    institucional de semilla utilizado en el resto del sistema;
+  - si el producto es FLOR y no tiene imagen, se mantiene el ícono
+    genérico de inventario para comunicar ausencia de fotografía.
+
+  Esto permite diferenciar semillas de flores sin imagen dentro del
+  listado mixto de Stock, manteniendo consistencia con Productos y Compras.
+  */
   const renderProductImage = (item: StockItem) => {
     if (item.producto.imagen_url) {
       return (
@@ -560,6 +573,14 @@ export default function StockContainer() {
           alt={`Imagen de ${item.producto.nombre}`}
           sx={stockStyles.productImage}
         />
+      );
+    }
+
+    if (item.producto.tipo === "SEMILLA") {
+      return (
+        <Box sx={stockStyles.productPlaceholder}>
+          <SpaOutlinedIcon fontSize="small" />
+        </Box>
       );
     }
 
