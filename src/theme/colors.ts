@@ -39,4 +39,22 @@ export const colors = {
     error: "#B42318",
     disabled: "#9AA8A0",
   },
+
+  /*
+  Tokens reutilizables para representaciones
+  visuales de productos.
+
+  Permiten mantener una identidad consistente
+  entre Productos, Compras, Stock, Reservas
+  y futuros módulos que muestren productos.
+  */
+  product: {
+    seedSurface: "#F7FCF8",
+    seedBadgeSurface: "#F2FBF5",
+    seedBorder: "#9FCFAE",
+
+    flowerSurface: "#FFFFFF",
+    flowerBadgeSurface: "#FFFFFF",
+    flowerBorder: "#D8E4DA",
+  },
 } as const;

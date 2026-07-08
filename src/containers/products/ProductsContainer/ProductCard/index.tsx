@@ -1,4 +1,6 @@
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import LocalFloristOutlinedIcon from "@mui/icons-material/LocalFloristOutlined";
+import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 import {
   Box,
   Card,
@@ -60,6 +62,92 @@ const getAvailabilityLevel = (availableStock: number) => {
 };
 
 /*
+Renderiza la representación visual principal del producto.
+
+Criterio UX:
+- si existe imagen cargada, se muestra la imagen real;
+- si el producto es SEMILLA y no tiene imagen, se muestra una
+  representación visual intencional del sistema;
+- si el producto es FLOR y no tiene imagen, se mantiene el estado
+  informativo "Sin imagen".
+
+De esta forma la ausencia de fotografía en semillas no se comunica
+como un error o dato faltante, sino como una decisión propia del dominio.
+*/
+const renderProductImage = (product: Product, isSeed: boolean) => {
+  if (product.imagen_url) {
+    return (
+      <Box
+        component="img"
+        src={product.imagen_url}
+        alt={product.nombre}
+        sx={productsStyles.productImage}
+      />
+    );
+  }
+
+  if (isSeed) {
+    return (
+      <Box sx={productsStyles.productSeedFallback}>
+        <Box sx={productsStyles.productSeedIllustration}>
+          <SpaOutlinedIcon sx={productsStyles.productSeedFallbackIcon} />
+        </Box>
+
+        <Typography
+          variant="caption"
+          sx={productsStyles.productSeedFallbackText}
+        >
+          Semilla
+        </Typography>
+
+        <Typography
+          variant="caption"
+          sx={productsStyles.productSeedFallbackSubtext}
+        ></Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={productsStyles.productImageFallback}>
+      <Typography variant="caption" sx={productsStyles.productImageText}>
+        Sin imagen
+      </Typography>
+    </Box>
+  );
+};
+
+/*
+Badge visual del tipo de producto.
+
+Se construye como elemento propio y no como Chip de MUI
+para mantener control fino del diseño visual del catálogo.
+
+Permite diferenciar rápidamente productos tipo FLOR y SEMILLA
+sin depender únicamente de la imagen o del contenido textual
+inferior de la card.
+*/
+const renderProductTypeBadge = (isSeed: boolean) => {
+  const Icon = isSeed ? SpaOutlinedIcon : LocalFloristOutlinedIcon;
+
+  return (
+    <Box
+      sx={
+        isSeed
+          ? productsStyles.productTypeSeedBadge
+          : productsStyles.productTypeFlowerBadge
+      }
+    >
+      <Icon sx={productsStyles.productTypeBadgeIcon} />
+
+      <Typography variant="caption" sx={productsStyles.productTypeBadgeText}>
+        {isSeed ? "Semilla" : "Flor"}
+      </Typography>
+    </Box>
+  );
+};
+
+/*
 Card visual de producto.
 
 Responsabilidades:
@@ -86,22 +174,11 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
   return (
     <Card sx={productsStyles.productCard}>
       <Box sx={productsStyles.productImageWrapper}>
-        {product.imagen_url ? (
-          <Box
-            component="img"
-            src={product.imagen_url}
-            alt={product.nombre}
-            sx={productsStyles.productImage}
-          />
-        ) : (
-          <Box sx={productsStyles.productImageFallback}>
-            <Typography variant="caption" sx={productsStyles.productImageText}>
-              Sin imagen
-            </Typography>
-          </Box>
-        )}
+        {renderProductTypeBadge(isSeed)}
 
-        <Box sx={productsStyles.imageOverlay} />
+        {renderProductImage(product, isSeed)}
+
+        {!isSeed && <Box sx={productsStyles.imageOverlay} />}
 
         <Tooltip title="Editar producto" arrow>
           <IconButton

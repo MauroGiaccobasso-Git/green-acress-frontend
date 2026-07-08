@@ -222,6 +222,10 @@ export default function PurchasesContainer() {
     [],
   );
 
+  const formatStatus = useCallback((value: Product["estado"]) => {
+    return value.charAt(0) + value.slice(1).toLowerCase();
+  }, []);
+
   /*
   Helpers internos del formulario.
   Centralizan limpieza de estados para evitar duplicación en handlers.
@@ -792,7 +796,7 @@ export default function PurchasesContainer() {
                       />
                     ) : (
                       <Box sx={purchasesStyles.seedFallback}>
-                        {selectedProduct.nombre.charAt(0)}
+                        <SpaOutlinedIcon fontSize="large" />
                       </Box>
                     )}
 
@@ -828,7 +832,7 @@ export default function PurchasesContainer() {
                         />
 
                         <Chip
-                          label={selectedProduct.estado}
+                          label={formatStatus(selectedProduct.estado)}
                           size="small"
                           sx={purchasesStyles.softChip}
                         />
