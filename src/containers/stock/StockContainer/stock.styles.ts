@@ -13,8 +13,45 @@ Criterios:
 
 const subtleGreen = "#F3FAF5";
 const subtleBlue = "#F3F8FF";
-const subtleOrange = "#FFF4E8";
 const subtleRed = "#FDEDEC";
+
+/*
+Paleta semántica del historial de movimientos.
+
+Los colores representan el efecto de cada operación
+sobre el inventario y se reutilizan tanto en el listado
+como en la referencia rápida del modal.
+*/
+const movementSemanticColors = {
+  purchase: {
+    foreground: "#2E7D32",
+    background: "#E8F5E9",
+  },
+  sale: {
+    foreground: "#C62828",
+    background: "#FFEBEE",
+  },
+  reversedSale: {
+    foreground: "#1565C0",
+    background: "#E3F2FD",
+  },
+  manualAdjustment: {
+    foreground: "#475569",
+    background: "#F1F5F9",
+  },
+  confirmedReservation: {
+    foreground: "#6941C6",
+    background: "#F1EAFE",
+  },
+  cancelledReservation: {
+    foreground: "#00796B",
+    background: "#E0F2F1",
+  },
+  expiredReservation: {
+    foreground: "#ED6C02",
+    background: "#FFF4E5",
+  },
+};
 
 export const stockStyles = {
   root: {
@@ -354,6 +391,11 @@ export const stockStyles = {
     fontWeight: 620,
   },
 
+  cellValueDanger: {
+    color: colors.state.error,
+    fontWeight: 620,
+  },
+
   cellSubtext: {
     mt: 1.65,
     fontSize: 11.2,
@@ -609,14 +651,45 @@ export const stockStyles = {
     },
   },
 
-  movementIconBlue: {
-    backgroundColor: subtleBlue,
-    color: "#2563EB",
+  /*
+  Variantes semánticas reutilizables para el historial.
+
+  Se mantienen centralizadas en styles para evitar
+  colores dispersos dentro de componentes visuales.
+  */
+  movementIconPurchase: {
+    backgroundColor: movementSemanticColors.purchase.background,
+    color: movementSemanticColors.purchase.foreground,
   },
 
-  movementIconOrange: {
-    backgroundColor: subtleOrange,
-    color: "#EA580C",
+  movementIconSale: {
+    backgroundColor: movementSemanticColors.sale.background,
+    color: movementSemanticColors.sale.foreground,
+  },
+
+  movementIconReversedSale: {
+    backgroundColor: movementSemanticColors.reversedSale.background,
+    color: movementSemanticColors.reversedSale.foreground,
+  },
+
+  movementIconManualAdjustment: {
+    backgroundColor: movementSemanticColors.manualAdjustment.background,
+    color: movementSemanticColors.manualAdjustment.foreground,
+  },
+
+  movementIconConfirmedReservation: {
+    backgroundColor: movementSemanticColors.confirmedReservation.background,
+    color: movementSemanticColors.confirmedReservation.foreground,
+  },
+
+  movementIconCancelledReservation: {
+    backgroundColor: movementSemanticColors.cancelledReservation.background,
+    color: movementSemanticColors.cancelledReservation.foreground,
+  },
+
+  movementIconExpiredReservation: {
+    backgroundColor: movementSemanticColors.expiredReservation.background,
+    color: movementSemanticColors.expiredReservation.foreground,
   },
 
   movementTitle: {
@@ -741,6 +814,110 @@ export const stockStyles = {
     mt: 0,
     fontSize: 12.8,
     lineHeight: 1.72,
+  },
+
+  /*
+  Referencia rápida del significado visual de cada movimiento.
+
+  Se muestra al pie del modal para reducir la carga cognitiva
+  del administrador y mantener una lectura consistente entre
+  icono, color y efecto sobre el inventario.
+  */
+  movementQuickReference: {
+    mt: 2,
+    p: { xs: 1.5, sm: 1.75 },
+    borderRadius: "12px",
+    backgroundColor: colors.background.soft,
+    border: `1px solid ${colors.border.default}`,
+  },
+
+  movementQuickReferenceTitle: {
+    mb: 1.35,
+    fontSize: 12.8,
+    fontWeight: 800,
+    color: colors.text.primary,
+    lineHeight: 1.2,
+  },
+
+  movementQuickReferenceGrid: {
+    display: "grid",
+    gridTemplateColumns: {
+      xs: "1fr",
+      sm: "repeat(2, minmax(0, 1fr))",
+      md: "repeat(4, minmax(0, 1fr))",
+    },
+    gap: 1.1,
+  },
+
+  movementQuickReferenceItem: {
+    minWidth: 0,
+    display: "grid",
+    gridTemplateColumns: "36px minmax(0, 1fr)",
+    alignItems: "center",
+    gap: 1,
+  },
+
+  movementQuickReferenceIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: "9px",
+    display: "grid",
+    placeItems: "center",
+    flexShrink: 0,
+
+    "& svg": {
+      fontSize: 20,
+    },
+  },
+
+  movementQuickReferenceLabel: {
+    fontSize: 11.7,
+    fontWeight: 750,
+    color: colors.text.primary,
+    lineHeight: 1.2,
+  },
+
+  movementQuickReferenceHint: {
+    mt: 0.25,
+    fontSize: 10.8,
+    fontWeight: 450,
+    color: colors.text.secondary,
+    lineHeight: 1.25,
+  },
+
+  movementReferencePurchase: {
+    backgroundColor: movementSemanticColors.purchase.background,
+    color: movementSemanticColors.purchase.foreground,
+  },
+
+  movementReferenceSale: {
+    backgroundColor: movementSemanticColors.sale.background,
+    color: movementSemanticColors.sale.foreground,
+  },
+
+  movementReferenceReversedSale: {
+    backgroundColor: movementSemanticColors.reversedSale.background,
+    color: movementSemanticColors.reversedSale.foreground,
+  },
+
+  movementReferenceManualAdjustment: {
+    backgroundColor: movementSemanticColors.manualAdjustment.background,
+    color: movementSemanticColors.manualAdjustment.foreground,
+  },
+
+  movementReferenceConfirmedReservation: {
+    backgroundColor: movementSemanticColors.confirmedReservation.background,
+    color: movementSemanticColors.confirmedReservation.foreground,
+  },
+
+  movementReferenceCancelledReservation: {
+    backgroundColor: movementSemanticColors.cancelledReservation.background,
+    color: movementSemanticColors.cancelledReservation.foreground,
+  },
+
+  movementReferenceExpiredReservation: {
+    backgroundColor: movementSemanticColors.expiredReservation.background,
+    color: movementSemanticColors.expiredReservation.foreground,
   },
 
   emptyState: {
