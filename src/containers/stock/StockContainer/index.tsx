@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-import CheckIcon from "@mui/icons-material/Check";
+import EventBusyRoundedIcon from "@mui/icons-material/EventBusyRounded";
+import LockOpenRoundedIcon from "@mui/icons-material/LockOpenRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import MoveToInboxRoundedIcon from "@mui/icons-material/MoveToInboxRounded";
+import OutboxRoundedIcon from "@mui/icons-material/OutboxRounded";
+import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import EditIcon from "@mui/icons-material/Edit";
-import UndoIcon from "@mui/icons-material/Undo";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FilterListOutlinedIcon from "@mui/icons-material/FilterListOutlined";
 import GrassOutlinedIcon from "@mui/icons-material/GrassOutlined";
@@ -59,8 +62,9 @@ const movementTypeLabels: Record<string, string> = {
   INGRESO: "Ingreso",
   EGRESO: "Egreso",
   AJUSTE: "Ajuste",
-  RESERVA: "Reserva",
-  LIBERACION_RESERVA: "Liberación de reserva",
+  RESERVA: "Reserva confirmada",
+  RESERVA_CANCELADA: "Reserva cancelada",
+  RESERVA_VENCIDA: "Reserva vencida",
 };
 
 const referenceTypeLabels: Record<string, string> = {
@@ -70,6 +74,71 @@ const referenceTypeLabels: Record<string, string> = {
   AJUSTE_MANUAL: "Ajuste manual",
   RESERVA: "Reserva",
 };
+
+type ReservationMovementVariant =
+  | "CONFIRMADA"
+  | "CANCELADA"
+  | "VENCIDA"
+  | "LIBERADA";
+
+/*
+Identifica el significado funcional de un movimiento
+asociado a una reserva.
+
+Cada evento del ciclo de vida de una reserva posee
+su propio tipo de movimiento de stock, evitando
+inferencias a partir de observaciones técnicas.
+*/
+function getReservationMovementVariant(
+  movement: StockMovement,
+): ReservationMovementVariant | null {
+  if (movement.referencia_tipo !== "RESERVA") {
+    return null;
+  }
+
+  switch (movement.tipo) {
+    case "RESERVA":
+      return "CONFIRMADA";
+
+    case "RESERVA_CANCELADA":
+      return "CANCELADA";
+
+    case "RESERVA_VENCIDA":
+      return "VENCIDA";
+
+    default:
+      return null;
+  }
+}
+
+/*
+Traduce el movimiento técnico de reserva a una etiqueta
+operativa clara para el administrador.
+*/
+function getMovementLabel(movement: StockMovement) {
+  const reservationVariant = getReservationMovementVariant(movement);
+
+  if (reservationVariant === "CONFIRMADA") {
+    return "Reserva confirmada";
+  }
+
+  if (reservationVariant === "CANCELADA") {
+    return "Reserva cancelada";
+  }
+
+  if (reservationVariant === "VENCIDA") {
+    return "Reserva vencida";
+  }
+
+  if (reservationVariant === "LIBERADA") {
+    return "Liberación de reserva";
+  }
+
+  return movement.referencia_tipo
+    ? (referenceTypeLabels[movement.referencia_tipo] ??
+        movement.referencia_tipo)
+    : (movementTypeLabels[movement.tipo] ?? movement.tipo);
+}
 
 /*
 Tiempo de espera aplicado al buscador dinámico.
@@ -103,6 +172,7 @@ const emptyMovementFilterForm: StockMovementFilters = {
   search: "",
   tipo: undefined,
   referenciaTipo: undefined,
+  eventoReserva: undefined,
   fechaDesde: undefined,
   fechaHasta: undefined,
 };
@@ -132,12 +202,25 @@ function formatTime(value: string) {
   }).format(new Date(value));
 }
 
+/*
+Define el signo visual según el efecto real del movimiento
+sobre el stock disponible o físico.
+
+- INGRESO suma stock físico.
+- RESERVA_CANCELADA y RESERVA_VENCIDA liberan stock disponible.
+- EGRESO y RESERVA descuentan disponibilidad.
+- AJUSTE conserva el signo persistido en la cantidad.
+*/
 function getMovementQuantityPrefix(movement: StockMovement) {
-  if (movement.tipo === "INGRESO") {
+  if (
+    movement.tipo === "INGRESO" ||
+    movement.tipo === "RESERVA_CANCELADA" ||
+    movement.tipo === "RESERVA_VENCIDA"
+  ) {
     return "+";
   }
 
-  if (movement.tipo === "EGRESO") {
+  if (movement.tipo === "EGRESO" || movement.tipo === "RESERVA") {
     return "-";
   }
 
@@ -347,6 +430,7 @@ export default function StockContainer() {
     search: filters.search?.trim() || "",
     tipo: undefined,
     referenciaTipo: filters.referenciaTipo,
+    eventoReserva: filters.eventoReserva,
     fechaDesde: filters.fechaDesde,
     fechaHasta: filters.fechaHasta,
   });
@@ -596,6 +680,7 @@ export default function StockContainer() {
     value: number,
     unit: "GRAMOS" | "UNIDADES",
     highlight = false,
+    danger = false,
   ) => {
     return (
       <Box>
@@ -605,6 +690,7 @@ export default function StockContainer() {
           sx={{
             ...stockStyles.cellValue,
             ...(highlight ? stockStyles.cellValueAvailable : {}),
+            ...(danger ? stockStyles.cellValueDanger : {}),
           }}
         >
           {formatQuantity(value, unit)}
@@ -616,51 +702,151 @@ export default function StockContainer() {
   };
 
   /*
-  Define el icono visual de cada movimiento según
-  la operación de negocio que originó el cambio.
+  Define una iconografía moderna y consistente según
+  el efecto real de cada operación sobre el inventario.
+
+  Se utilizan exclusivamente iconos Rounded de MUI:
+  - entrada de stock;
+  - salida de stock;
+  - reversión;
+  - intervención administrativa;
+  - bloqueo, liberación y vencimiento de reservas.
   */
   const renderMovementIcon = (movement: StockMovement) => {
+    const reservationVariant = getReservationMovementVariant(movement);
+
+    if (reservationVariant === "CONFIRMADA") {
+      return <LockRoundedIcon fontSize="small" />;
+    }
+
+    if (
+      reservationVariant === "CANCELADA" ||
+      reservationVariant === "LIBERADA"
+    ) {
+      return <LockOpenRoundedIcon fontSize="small" />;
+    }
+
+    if (reservationVariant === "VENCIDA") {
+      return <EventBusyRoundedIcon fontSize="small" />;
+    }
+
     switch (movement.referencia_tipo) {
       case "COMPRA":
-        return <CheckIcon fontSize="small" />;
+        return <MoveToInboxRoundedIcon fontSize="small" />;
 
       case "VENTA":
-        return <AttachMoneyIcon fontSize="small" />;
+        return <OutboxRoundedIcon fontSize="small" />;
 
       case "ANULACION_VENTA":
-        return <UndoIcon fontSize="small" />;
+        return <UndoRoundedIcon fontSize="small" />;
 
       case "AJUSTE_MANUAL":
-        return <EditIcon fontSize="small" />;
+        return <TuneRoundedIcon fontSize="small" />;
 
       default:
-        return <EditIcon fontSize="small" />;
+        return <TuneRoundedIcon fontSize="small" />;
     }
   };
 
   /*
-  Aplica el color semántico del movimiento:
-  compra en rojo por salida de dinero, venta en verde
-  por ingreso de dinero, venta anulada en azul por reversión
-  y ajuste manual en naranja por intervención administrativa.
+  Aplica una paleta semántica universal y consistente:
+
+  - verde: entrada de stock;
+  - rojo: salida de stock;
+  - azul: reversión;
+  - gris pizarra: intervención administrativa;
+  - violeta: stock bloqueado por reserva;
+  - verde azulado: stock liberado por cancelación;
+  - naranja: vencimiento automático;
+  - gris: liberaciones históricas sin motivo clasificable.
   */
-  const getMovementIconStyle = (movement: StockMovement) => {
+  const getMovementVisualStyle = (movement: StockMovement) => {
+    const reservationVariant = getReservationMovementVariant(movement);
+
+    if (reservationVariant === "CONFIRMADA") {
+      return {
+        icon: {
+          backgroundColor: "#F1EAFE",
+          color: "#6941C6",
+        },
+        quantityColor: "#6941C6",
+      };
+    }
+
+    if (reservationVariant === "CANCELADA") {
+      return {
+        icon: {
+          backgroundColor: "#E0F2F1",
+          color: "#00796B",
+        },
+        quantityColor: "#00796B",
+      };
+    }
+
+    if (reservationVariant === "VENCIDA") {
+      return {
+        icon: {
+          backgroundColor: "#FFF4E5",
+          color: "#ED6C02",
+        },
+        quantityColor: "#ED6C02",
+      };
+    }
+
+    if (reservationVariant === "LIBERADA") {
+      return {
+        icon: {
+          backgroundColor: "#F1F5F9",
+          color: "#64748B",
+        },
+        quantityColor: "#64748B",
+      };
+    }
+
     if (movement.referencia_tipo === "COMPRA") {
       return {
-        backgroundColor: "#FDE8E6",
-        color: "#B42318",
+        icon: {
+          backgroundColor: "#E8F5E9",
+          color: "#2E7D32",
+        },
+        quantityColor: "#2E7D32",
+      };
+    }
+
+    if (movement.referencia_tipo === "VENTA") {
+      return {
+        icon: {
+          backgroundColor: "#FFEBEE",
+          color: "#C62828",
+        },
+        quantityColor: "#C62828",
       };
     }
 
     if (movement.referencia_tipo === "ANULACION_VENTA") {
-      return stockStyles.movementIconBlue;
+      return {
+        icon: {
+          backgroundColor: "#E3F2FD",
+          color: "#1565C0",
+        },
+        quantityColor: "#1565C0",
+      };
     }
 
     if (movement.referencia_tipo === "AJUSTE_MANUAL") {
-      return stockStyles.movementIconOrange;
+      return {
+        icon: {
+          backgroundColor: "#F1F5F9",
+          color: "#475569",
+        },
+        quantityColor: "#475569",
+      };
     }
 
-    return {};
+    return {
+      icon: {},
+      quantityColor: undefined,
+    };
   };
 
   const renderStockRow = (item: StockItem) => {
@@ -701,6 +887,8 @@ export default function StockContainer() {
           "Total",
           item.cantidad_total,
           item.producto.unidad_medida,
+          false,
+          item.cantidad_total === 0,
         )}
 
         {renderQuantityCell(
@@ -752,12 +940,14 @@ export default function StockContainer() {
   };
 
   const renderMovementItem = (movement: StockMovement, index: number) => {
-    const isNegative = movement.tipo === "EGRESO" || movement.cantidad < 0;
+    const isNegative =
+      movement.tipo === "EGRESO" ||
+      movement.tipo === "RESERVA" ||
+      movement.cantidad < 0;
+
     const prefix = getMovementQuantityPrefix(movement);
-    const referenceLabel = movement.referencia_tipo
-      ? (referenceTypeLabels[movement.referencia_tipo] ??
-        movement.referencia_tipo)
-      : (movementTypeLabels[movement.tipo] ?? movement.tipo);
+    const movementLabel = getMovementLabel(movement);
+    const movementVisualStyle = getMovementVisualStyle(movement);
 
     return (
       <Box
@@ -767,7 +957,7 @@ export default function StockContainer() {
         <Box
           sx={{
             ...stockStyles.movementIcon,
-            ...getMovementIconStyle(movement),
+            ...movementVisualStyle.icon,
           }}
         >
           {renderMovementIcon(movement)}
@@ -775,7 +965,7 @@ export default function StockContainer() {
 
         <Box>
           <Typography sx={stockStyles.movementTitle}>
-            {referenceLabel}
+            {movementLabel}
           </Typography>
 
           <Typography sx={stockStyles.movementProduct}>
@@ -791,11 +981,14 @@ export default function StockContainer() {
 
         <Box sx={stockStyles.movementSide}>
           <Typography
-            sx={
-              isNegative
+            sx={{
+              ...(isNegative
                 ? stockStyles.movementQuantityNegative
-                : stockStyles.movementQuantityPositive
-            }
+                : stockStyles.movementQuantityPositive),
+              ...(movementVisualStyle.quantityColor
+                ? { color: movementVisualStyle.quantityColor }
+                : {}),
+            }}
           >
             {prefix}
             {formatQuantity(movement.cantidad, movement.producto.unidad_medida)}
@@ -1002,7 +1195,8 @@ export default function StockContainer() {
                 </Typography>
 
                 <Typography sx={stockStyles.emptyText}>
-                  Los ingresos, egresos y ajustes aparecerán en esta sección.
+                  Los ingresos, egresos, reservas y ajustes aparecerán en esta
+                  sección.
                 </Typography>
               </Box>
             ) : (

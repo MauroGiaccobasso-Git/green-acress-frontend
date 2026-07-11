@@ -116,6 +116,50 @@ export type StockFilters = {
 };
 
 /*
+Tipos de movimiento soportados por el historial
+específico de inventario.
+
+Incluye movimientos físicos de ingreso y egreso,
+ajustes administrativos y operaciones vinculadas
+al ciclo de vida de las reservas.
+*/
+export type StockMovementType =
+  | "INGRESO"
+  | "EGRESO"
+  | "AJUSTE"
+  | "RESERVA"
+  | "RESERVA_CANCELADA"
+  | "RESERVA_VENCIDA";
+
+/*
+Tipos de referencia funcional que permiten
+identificar el origen de cada movimiento de stock.
+
+La referencia RESERVA agrupa tanto el bloqueo
+como la liberación del stock comprometido.
+*/
+export type StockMovementReferenceType =
+  | "COMPRA"
+  | "VENTA"
+  | "ANULACION_VENTA"
+  | "AJUSTE_MANUAL"
+  | "RESERVA";
+
+/*
+Eventos funcionales de reserva disponibles
+como criterio de filtrado administrativo.
+
+Estos valores no representan nuevos tipos
+persistidos en MovimientoStock. Funcionan como
+un contrato semántico que el backend traduce
+a los campos técnicos existentes.
+*/
+export type StockReservationEventType =
+  | "CONFIRMADA"
+  | "CANCELADA"
+  | "VENCIDA";
+
+/*
 Filtros administrativos disponibles para
 consultar el historial específico de
 movimientos de inventario.
@@ -128,9 +172,11 @@ volúmenes de movimientos manualmente.
 export type StockMovementFilters = {
   search?: string;
 
-  tipo?: "INGRESO" | "EGRESO" | "AJUSTE";
+  tipo?: StockMovementType;
 
-  referenciaTipo?: "COMPRA" | "VENTA" | "ANULACION_VENTA" | "AJUSTE_MANUAL";
+  referenciaTipo?: StockMovementReferenceType;
+
+  eventoReserva?: StockReservationEventType;
 
   fechaDesde?: string;
 
@@ -150,16 +196,11 @@ export type StockMovement = {
 
   producto: StockProduct;
 
-  tipo: "INGRESO" | "EGRESO" | "AJUSTE";
+  tipo: StockMovementType;
 
   cantidad: number;
 
-  referencia_tipo:
-    | "COMPRA"
-    | "VENTA"
-    | "ANULACION_VENTA"
-    | "AJUSTE_MANUAL"
-    | null;
+  referencia_tipo: StockMovementReferenceType | null;
 
   referencia_id: number | null;
 
@@ -329,6 +370,10 @@ export const stockApi = {
       params.append("referencia_tipo", filters.referenciaTipo);
     }
 
+    if (filters.eventoReserva) {
+      params.append("evento_reserva", filters.eventoReserva);
+    }
+
     if (filters.fechaDesde) {
       params.append("fecha_desde", filters.fechaDesde);
     }
@@ -363,12 +408,6 @@ export const stockApi = {
   La validación de reglas de negocio
   continúa siendo responsabilidad del backend.
   */
-  /*
-Realiza un ajuste manual de stock.
-
-La validación de reglas de negocio
-continúa siendo responsabilidad del backend.
-*/
   async adjustStock(
     productId: number,
     payload: AdjustStockPayload,

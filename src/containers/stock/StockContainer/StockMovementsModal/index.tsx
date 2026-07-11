@@ -101,25 +101,43 @@ export default function StockMovementsModal({
               <TextField
                 select
                 label="Tipo de operación"
-                value={movementFiltersForm.referenciaTipo ?? ""}
-                onChange={(event) =>
+                value={
+                  movementFiltersForm.eventoReserva ??
+                  movementFiltersForm.referenciaTipo ??
+                  ""
+                }
+                onChange={(event) => {
+                  const value = event.target.value;
+
                   onFiltersChange({
                     ...movementFiltersForm,
                     tipo: undefined,
-                    referenciaTipo: event.target.value
-                      ? (event.target
-                          .value as StockMovementFilters["referenciaTipo"])
-                      : undefined,
-                  })
-                }
+                    referenciaTipo:
+                      value === "AJUSTE_MANUAL" ||
+                      value === "COMPRA" ||
+                      value === "VENTA" ||
+                      value === "ANULACION_VENTA"
+                        ? (value as StockMovementFilters["referenciaTipo"])
+                        : undefined,
+                    eventoReserva:
+                      value === "CANCELADA" ||
+                      value === "CONFIRMADA" ||
+                      value === "VENCIDA"
+                        ? (value as StockMovementFilters["eventoReserva"])
+                        : undefined,
+                  });
+                }}
                 size="small"
                 fullWidth
               >
                 <MenuItem value="">Todas</MenuItem>
+                <MenuItem value="AJUSTE_MANUAL">Ajuste manual</MenuItem>
                 <MenuItem value="COMPRA">Compra</MenuItem>
+                <MenuItem value="CANCELADA">Reserva cancelada</MenuItem>
+                <MenuItem value="CONFIRMADA">Reserva confirmada</MenuItem>
+                <MenuItem value="VENCIDA">Reserva vencida</MenuItem>
                 <MenuItem value="VENTA">Venta</MenuItem>
                 <MenuItem value="ANULACION_VENTA">Venta anulada</MenuItem>
-                <MenuItem value="AJUSTE_MANUAL">Ajuste manual</MenuItem>
               </TextField>
             </Box>
 
