@@ -69,7 +69,7 @@ const navigationSections = [
       {
         label: "Reservas",
         href: "/admin/reservations",
-        disabled: true,
+        disabled: false,
         icon: <EventAvailableOutlinedIcon fontSize="small" />,
       },
       {
