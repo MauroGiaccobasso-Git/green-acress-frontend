@@ -11,7 +11,7 @@ import {
   salesApi,
 } from "@/api/salesApi";
 import {
-  type Socio,
+  type SocioVentaOption,
   sociosApi,
 } from "@/api/sociosApi";
 
@@ -41,11 +41,10 @@ export function useSales() {
   /*
   Socios disponibles para registrar ventas.
 
-  El módulo de ventas solo debe operar con
-  socios activos, por lo que se normaliza
-  la colección antes de exponerla al container.
+  El backend devuelve únicamente los socios
+  habilitados para participar en una venta.
   */
-  const [socios, setSocios] = useState<Socio[]>([]);
+  const [socios, setSocios] = useState<SocioVentaOption[]>([]);
 
   /*
   Productos tipo FLOR obtenidos desde backend.
@@ -88,7 +87,7 @@ export function useSales() {
       setError(null);
 
       const [sociosData, productsData] = await Promise.all([
-        sociosApi.getSocios(),
+        sociosApi.getSociosOpcionesVenta(),
         productsApi.getProductOptions({
           tipo: "FLOR",
           estado: "ACTIVO",
@@ -96,9 +95,7 @@ export function useSales() {
         }),
       ]);
 
-      setSocios(
-        sociosData.filter((socio) => socio.estado === "ACTIVO"),
-      );
+      setSocios(sociosData.socios);
 
       setProducts(productsData);
     } catch (err) {
