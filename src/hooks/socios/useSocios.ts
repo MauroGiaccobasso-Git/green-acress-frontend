@@ -2,7 +2,10 @@
 
 import { useCallback, useState } from "react";
 
-import { Socio, sociosApi } from "@/api/sociosApi";
+import {
+  type Socio,
+  sociosApi,
+} from "@/api/sociosApi";
 
 /*
 Hook especializado encargado de administrar
@@ -40,8 +43,7 @@ export function useSocios() {
   para renderizar selects, tablas
   o cualquier representación visual.
   */
-  const [socios, setSocios] =
-    useState<Socio[]>([]);
+  const [socios, setSocios] = useState<Socio[]>([]);
 
   /*
   Indica cuándo existe una solicitud
@@ -55,8 +57,7 @@ export function useSocios() {
 
   - mostrar mensajes de carga
   */
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   /*
   Guarda mensajes de error producidos
@@ -66,39 +67,33 @@ export function useSocios() {
   para renderizar mensajes amigables
   para el usuario.
   */
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   /*
   Función reutilizable encargada
   de consultar socios.
   */
-  const fetchSocios =
-    useCallback(
-      async (
-        search?: string
-      ): Promise<void> => {
-        try {
-          setLoading(true);
-          setError(null);
+  const fetchSocios = useCallback(
+    async (search?: string): Promise<void> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-          const data =
-            await sociosApi
-              .getSocios(search);
+        const data = await sociosApi.getSocios(search);
 
-          setSocios(data);
-        } catch (error) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error al cargar socios"
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+        setSocios(data.socios);
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Error al cargar socios",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   return {
     socios,

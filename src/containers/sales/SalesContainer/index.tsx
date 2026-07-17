@@ -202,10 +202,7 @@ export default function SalesContainer() {
   useMemo como capa defensiva de UI para preservar
   el contrato visual del formulario.
   */
-  const activeSocios = useMemo(
-    () => socios.filter((socio) => socio.estado === "ACTIVO"),
-    [socios],
-  );
+  const activeSocios = socios;
 
   const selectedMember = activeSocios.find(
     (socio) => socio.id === selectedMemberId,
@@ -523,7 +520,6 @@ export default function SalesContainer() {
         </Alert>
       )}
 
-
       {formError && (
         <Alert
           severity="error"
@@ -607,12 +603,6 @@ export default function SalesContainer() {
                                 CI: {socio.documento}
                               </Typography>
                             </Box>
-
-                            <Chip
-                              label={socio.estado}
-                              size="small"
-                              sx={salesStyles.activeChip}
-                            />
                           </Box>
                         </MenuItem>
                       ))}
