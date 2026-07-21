@@ -10,6 +10,7 @@ import {
 import {
   type CreateProductPayload,
   type Product,
+  type PurchaseProductOption,
   productsApi,
 } from "@/api/productsApi";
 import {
@@ -26,7 +27,7 @@ Su responsabilidad es:
 
 - obtener proveedores
 
-- obtener semillas activas
+- obtener semillas habilitadas para compras
 
 - registrar compras
 
@@ -54,14 +55,13 @@ export function usePurchases() {
   const [providers, setProviders] = useState<Provider[]>([]);
 
   /*
-  Productos tipo SEMILLA obtenidos desde backend.
+  Productos habilitados para registrar compras.
 
-  El módulo de compras solo opera con semillas,
-  por lo que la consulta se realiza mediante
-  getProductOptions: una colección simple para
-  selects y no un listado administrativo paginado.
+  El backend aplica las reglas correspondientes
+  y devuelve un contrato operativo reducido
+  para el formulario de compras.
   */
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<PurchaseProductOption[]>([]);
 
   const [createdPurchase, setCreatedPurchase] = useState<Purchase | null>(null);
 
@@ -73,7 +73,7 @@ export function usePurchases() {
   const [error, setError] = useState<string | null>(null);
 
   /*
-  Obtiene proveedores y semillas activas
+  Obtiene proveedores y semillas habilitadas
   necesarias para construir el formulario.
 
   Ambas consultas se ejecutan en paralelo
@@ -86,11 +86,7 @@ export function usePurchases() {
 
       const [providersData, productsData] = await Promise.all([
         providersApi.getProviders(),
-        productsApi.getProductOptions({
-          tipo: "SEMILLA",
-          estado: "ACTIVO",
-          limit: 50,
-        }),
+        productsApi.getPurchaseProductOptions(),
       ]);
 
       setProviders(providersData);
@@ -130,6 +126,16 @@ export function usePurchases() {
     [],
   );
 
+  /*
+  Crea una nueva semilla desde el flujo de compras.
+
+  createProduct devuelve el contrato administrativo
+  completo del producto creado.
+
+  Después de crearla, se vuelve a consultar el endpoint
+  operativo de compras para mantener products alineado
+  con PurchaseProductOption y evitar mezclar contratos.
+  */
   const createSeedProduct = useCallback(
     async (payload: CreateProductPayload): Promise<Product | null> => {
       try {
@@ -137,8 +143,9 @@ export function usePurchases() {
         setError(null);
 
         const createdProduct = await productsApi.createProduct(payload);
+        const purchaseProducts = await productsApi.getPurchaseProductOptions();
 
-        setProducts((currentProducts) => [createdProduct, ...currentProducts]);
+        setProducts(purchaseProducts);
 
         return createdProduct;
       } catch (error) {

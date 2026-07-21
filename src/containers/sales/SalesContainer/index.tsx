@@ -171,29 +171,16 @@ export default function SalesContainer() {
   }, [fetchSales, fetchSaleOptions]);
 
   /*
-  Obtiene las flores disponibles para registrar una venta.
+  Productos habilitados para registrar una venta.
 
-  useSales ya solicita al backend productos tipo FLOR
-  en estado ACTIVO mediante getProductOptions.
+  useSales ya consume el endpoint operativo específico
+  de ventas, por lo que el backend devuelve únicamente
+  flores activas, con precio y stock disponible.
 
-  Este filtro local solo conserva reglas visuales del formulario:
-  - precio de venta definido;
-  - stock disponible mayor a cero.
-
-  La validación definitiva de producto, stock y límite legal
-  continúa siendo responsabilidad del backend.
+  El container recibe datos listos para renderizar
+  y no replica filtros ni reglas del dominio.
   */
-  const availableFlowers = useMemo(
-    () =>
-      products.filter(
-        (product) =>
-          product.tipo === "FLOR" &&
-          product.estado === "ACTIVO" &&
-          product.precio_venta_actual !== null &&
-          (product.stock?.cantidad_disponible ?? 0) > 0,
-      ),
-    [products],
-  );
+  const availableFlowers = products;
 
   /*
   Obtiene los socios habilitados para registrar ventas.
@@ -224,7 +211,7 @@ export default function SalesContainer() {
   al carrito de esta venta.
   */
   const selectedFlowerAvailableStock =
-    (selectedFlower?.stock?.cantidad_disponible ?? 0) -
+    (selectedFlower?.stockDisponible ?? 0) -
     selectedFlowerReservedQuantity;
 
   const totalGrams = useMemo(
@@ -369,7 +356,7 @@ export default function SalesContainer() {
       return;
     }
 
-    if (!selectedFlower || selectedFlower.precio_venta_actual === null) {
+    if (!selectedFlower) {
       setFormError("Seleccioná una flor antes de agregarla a la venta.");
       return;
     }
@@ -399,7 +386,7 @@ export default function SalesContainer() {
       return;
     }
 
-    const unitPrice = selectedFlower.precio_venta_actual;
+    const unitPrice = selectedFlower.precio;
 
     const existingDetail = saleDetails.find(
       (detail) => detail.productId === selectedFlower.id,

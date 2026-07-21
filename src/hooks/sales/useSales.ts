@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
 import {
-  type Product,
+  type SaleProductOption,
   productsApi,
 } from "@/api/productsApi";
 import {
@@ -20,7 +20,7 @@ Hook principal del módulo de ventas.
 
 Responsabilidades:
 - cargar historial de ventas;
-- cargar socios y flores activas para el formulario;
+- cargar socios y flores habilitadas para el formulario;
 - consultar detalle de venta;
 - registrar venta directa presencial;
 - anular venta registrada;
@@ -47,15 +47,13 @@ export function useSales() {
   const [socios, setSocios] = useState<SocioVentaOption[]>([]);
 
   /*
-  Productos tipo FLOR obtenidos desde backend.
+  Productos habilitados para registrar ventas.
 
-  Ventas solo opera con flores activas.
-  La consulta utiliza getProductOptions porque
-  el formulario necesita una colección simple
-  para selects, no un listado administrativo
-  paginado.
+  El backend aplica las reglas de negocio
+  correspondientes y devuelve un contrato
+  operativo reducido para el formulario.
   */
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<SaleProductOption[]>([]);
 
   const [loadingSales, setLoadingSales] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
@@ -75,7 +73,7 @@ export function useSales() {
   }, []);
 
   /*
-  Carga socios y flores activas necesarios
+  Carga socios y productos habilitados
   para construir el formulario de venta.
 
   Ambas consultas se ejecutan en paralelo
@@ -88,11 +86,7 @@ export function useSales() {
 
       const [sociosData, productsData] = await Promise.all([
         sociosApi.getSociosOpcionesVenta(),
-        productsApi.getProductOptions({
-          tipo: "FLOR",
-          estado: "ACTIVO",
-          limit: 50,
-        }),
+        productsApi.getSaleProductOptions(),
       ]);
 
       setSocios(sociosData.socios);

@@ -64,6 +64,54 @@ export type Product = {
 };
 
 /*
+Representa una opción de producto
+disponible para registrar ventas.
+
+El contrato contiene únicamente los
+datos necesarios para el flujo operativo.
+
+Las reglas de elegibilidad del producto
+son aplicadas por el backend.
+*/
+export type SaleProductOption = {
+  id: number;
+
+  nombre: string;
+
+  porcentaje_thc: number;
+
+  precio: number;
+
+  stockDisponible: number;
+};
+
+/*
+Representa una opción de producto
+disponible para registrar compras.
+
+El backend devuelve semillas activas
+e inactivas porque ambas pueden utilizarse
+para registrar ingresos de stock.
+
+El estado se expone para que la interfaz
+pueda diferenciarlas visualmente sin
+impedir su selección.
+*/
+export type PurchaseProductOption = {
+  id: number;
+
+  nombre: string;
+
+  estado: "ACTIVO" | "INACTIVO";
+
+  genetica: "INDICA" | "SATIVA" | "HIBRIDA";
+
+  imagen: string | null;
+
+  stock: number;
+};
+
+/*
 Representa los campos necesarios
 para registrar un nuevo producto.
 
@@ -170,19 +218,6 @@ export type GetProductsParams = {
 };
 
 /*
-Representa los parámetros disponibles
-para consultar productos como opciones
-de formularios operativos.
-
-Se reutilizan los mismos filtros del backend,
-pero el consumo esperado es una colección
-simple para selects y flujos auxiliares.
-*/
-export type GetProductOptionsParams = Omit<GetProductsParams, "page" | "limit"> & {
-  limit?: number;
-};
-
-/*
 Representa la respuesta paginada del
 listado administrativo de productos.
 */
@@ -190,6 +225,26 @@ export type GetProductsResponse = {
   data: Product[];
 
   pagination: ProductsPagination;
+};
+
+/*
+Representa la respuesta devuelta por backend
+al consultar productos disponibles para Ventas.
+*/
+type SaleProductOptionsResponse = {
+  message: string;
+
+  productos: SaleProductOption[];
+};
+
+/*
+Representa la respuesta devuelta por backend
+al consultar productos disponibles para Compras.
+*/
+type PurchaseProductOptionsResponse = {
+  message: string;
+
+  productos: PurchaseProductOption[];
 };
 
 /*
@@ -234,11 +289,12 @@ type UpdateProductStatusResponse = {
 };
 
 /*
-Construye query params comunes para consultas
-de productos.
+Construye query params para el listado
+administrativo de productos.
 
-Evita duplicar lógica entre listados paginados
-y opciones de formularios.
+La búsqueda, los filtros y la paginación
+se mantienen exclusivamente dentro
+del caso de uso administrativo.
 */
 const buildProductsQueryParams = (params: GetProductsParams = {}) => {
   const searchParams = new URLSearchParams();
@@ -297,28 +353,35 @@ export const productsApi = {
   },
 
   /*
-  Obtiene productos como colección simple
-  para formularios operativos.
+  Obtiene los productos habilitados
+  para registrar ventas.
 
-  Debe usarse en módulos como Compras,
-  Ventas o Reservas cuando se necesitan
-  opciones para selects y no un listado
-  administrativo paginado.
+  El backend aplica las reglas de negocio
+  y devuelve un contrato operativo reducido,
+  sin depender del listado administrativo.
   */
-  async getProductOptions(
-    params: GetProductOptionsParams = {},
-  ): Promise<Product[]> {
-    const query = buildProductsQueryParams({
-      ...params,
-      page: 1,
-      limit: params.limit ?? 50,
-    });
-
-    const response = await httpClient<GetProductsResponse>(
-      `/productos${query ? `?${query}` : ""}`,
+  async getSaleProductOptions(): Promise<SaleProductOption[]> {
+    const response = await httpClient<SaleProductOptionsResponse>(
+      "/productos/opciones-venta",
     );
 
-    return response.data;
+    return response.productos;
+  },
+
+  /*
+  Obtiene todas las semillas disponibles
+  como opciones para registrar compras.
+
+  El backend devuelve semillas activas
+  e inactivas junto con su estado para
+  permitir su diferenciación visual.
+  */
+  async getPurchaseProductOptions(): Promise<PurchaseProductOption[]> {
+    const response = await httpClient<PurchaseProductOptionsResponse>(
+      "/productos/opciones-compra",
+    );
+
+    return response.productos;
   },
 
   /*

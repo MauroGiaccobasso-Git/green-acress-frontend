@@ -369,6 +369,38 @@ desbalance dentro del panel.
     },
   },
 
+  /*
+  Encabezados de agrupación del selector de semillas.
+
+  Las filas mantienen el mismo diseño del resto de los Select.
+  El color se aplica únicamente a las cabeceras para comunicar
+  el estado sin sobrecargar visualmente cada opción.
+  */
+  seedGroupHeader: {
+    minHeight: 38,
+    display: "flex",
+    alignItems: "center",
+    px: 2,
+    py: 0.75,
+    fontSize: 11,
+    fontWeight: 850,
+    letterSpacing: "0.055em",
+    lineHeight: 1.2,
+    textTransform: "uppercase",
+    borderTop: `1px solid ${colors.border.default}`,
+    borderBottom: `1px solid ${colors.border.default}`,
+  },
+
+  seedGroupHeaderActive: {
+    color: colors.brand.primary,
+    bgcolor: colors.brand.primaryLight,
+  },
+
+  seedGroupHeaderInactive: {
+    color: (theme: Theme) => theme.palette.warning.dark,
+    bgcolor: (theme: Theme) => alpha(theme.palette.warning.main, 0.12),
+  },
+
   addItemButton: {
     minHeight: 52,
     px: 2.4,
