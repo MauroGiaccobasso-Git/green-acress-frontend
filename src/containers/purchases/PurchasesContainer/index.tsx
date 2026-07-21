@@ -14,6 +14,7 @@ import {
   IconButton,
   InputAdornment,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Snackbar,
@@ -30,7 +31,7 @@ import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 
-import type { Product } from "@/api/productsApi";
+import type { PurchaseProductOption } from "@/api/productsApi";
 import { usePurchases } from "@/hooks/purchases/usePurchases";
 import { colors } from "@/theme/colors";
 
@@ -40,7 +41,7 @@ import { PurchaseSuccessModal } from "./PurchaseSuccessModal";
 import { purchasesStyles } from "./purchases.styles";
 
 type PurchaseItem = {
-  product: Product;
+  product: PurchaseProductOption;
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
@@ -133,12 +134,22 @@ export default function PurchasesContainer() {
   Si se decide reabastecer semillas inactivas desde UI,
   este filtro debe ajustarse de forma consciente.
   */
+  /*
+  El endpoint operativo ya devuelve únicamente
+  semillas habilitadas para compras.
+
+  No es necesario replicar filtros en frontend.
+  */
+  const seedProducts = products;
+
   const activeSeedProducts = useMemo(
-    () =>
-      products.filter(
-        (product) => product.tipo === "SEMILLA" && product.estado === "ACTIVO",
-      ),
-    [products],
+    () => seedProducts.filter((product) => product.estado === "ACTIVO"),
+    [seedProducts],
+  );
+
+  const inactiveSeedProducts = useMemo(
+    () => seedProducts.filter((product) => product.estado === "INACTIVO"),
+    [seedProducts],
   );
 
   /*
@@ -154,10 +165,10 @@ export default function PurchasesContainer() {
 
   const selectedProduct = useMemo(
     () =>
-      activeSeedProducts.find(
+      seedProducts.find(
         (product) => product.id === Number(selectedProductId),
       ),
-    [activeSeedProducts, selectedProductId],
+    [seedProducts, selectedProductId],
   );
 
   /*
@@ -217,14 +228,10 @@ export default function PurchasesContainer() {
   );
 
   const formatGenetics = useCallback(
-    (value: Product["genetica"]) =>
+    (value: PurchaseProductOption["genetica"]) =>
       value.charAt(0) + value.slice(1).toLowerCase(),
     [],
   );
-
-  const formatStatus = useCallback((value: Product["estado"]) => {
-    return value.charAt(0) + value.slice(1).toLowerCase();
-  }, []);
 
   /*
   Helpers internos del formulario.
@@ -466,11 +473,11 @@ export default function PurchasesContainer() {
 
           <Box>
             <Typography sx={purchasesStyles.statLabel}>
-              Semillas activas
+              Semillas disponibles
             </Typography>
 
             <Typography sx={purchasesStyles.statValue}>
-              {activeSeedProducts.length}
+              {seedProducts.length}
             </Typography>
 
             <Typography sx={purchasesStyles.providerMeta}>
@@ -680,7 +687,7 @@ export default function PurchasesContainer() {
                     </Typography>
 
                     <Typography sx={purchasesStyles.sectionDescription}>
-                      Solo se muestran productos activos de tipo semilla.
+                      Se muestran semillas activas e inactivas disponibles para registrar compras.
                     </Typography>
                   </Box>
                 </Box>
@@ -700,7 +707,35 @@ export default function PurchasesContainer() {
                           setSelectedProductId(event.target.value)
                         }
                       >
+                        {activeSeedProducts.length > 0 && (
+                          <ListSubheader
+                            sx={[
+                              purchasesStyles.seedGroupHeader,
+                              purchasesStyles.seedGroupHeaderActive,
+                            ]}
+                          >
+                            Semillas activas
+                          </ListSubheader>
+                        )}
+
                         {activeSeedProducts.map((product) => (
+                          <MenuItem key={product.id} value={String(product.id)}>
+                            {product.nombre}
+                          </MenuItem>
+                        ))}
+
+                        {inactiveSeedProducts.length > 0 && (
+                          <ListSubheader
+                            sx={[
+                              purchasesStyles.seedGroupHeader,
+                              purchasesStyles.seedGroupHeaderInactive,
+                            ]}
+                          >
+                            Semillas inactivas
+                          </ListSubheader>
+                        )}
+
+                        {inactiveSeedProducts.map((product) => (
                           <MenuItem key={product.id} value={String(product.id)}>
                             {product.nombre}
                           </MenuItem>
@@ -787,10 +822,10 @@ export default function PurchasesContainer() {
 
                 {selectedProduct && (
                   <Box sx={purchasesStyles.seedPreview}>
-                    {selectedProduct.imagen_url ? (
+                    {selectedProduct.imagen ? (
                       <Box
                         component="img"
-                        src={selectedProduct.imagen_url}
+                        src={selectedProduct.imagen}
                         alt={selectedProduct.nombre}
                         sx={purchasesStyles.seedImage}
                       />
@@ -824,15 +859,7 @@ export default function PurchasesContainer() {
                         />
 
                         <Chip
-                          label={`Stock ${
-                            selectedProduct.stock?.cantidad_disponible ?? 0
-                          } unidades`}
-                          size="small"
-                          sx={purchasesStyles.softChip}
-                        />
-
-                        <Chip
-                          label={formatStatus(selectedProduct.estado)}
+                          label={`Stock ${selectedProduct.stock} unidades`}
                           size="small"
                           sx={purchasesStyles.softChip}
                         />
@@ -1112,4 +1139,4 @@ export default function PurchasesContainer() {
       />
     </Box>
   );
-}
+} 
