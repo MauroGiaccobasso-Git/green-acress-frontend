@@ -62,6 +62,16 @@ una solicitud HTTP por cada tecla ingresada.
 const SEARCH_DEBOUNCE_MS = 400;
 
 /*
+Ventana temporal utilizada para destacar reservas
+confirmadas próximas a vencer.
+
+"Por vencer" no representa un nuevo estado del dominio:
+es una condición visual derivada del estado CONFIRMADA
+y del tiempo restante hasta la fecha límite de retiro.
+*/
+const EXPIRING_SOON_HOURS = 24;
+
+/*
 Estado limpio utilizado por el modal
 de filtros avanzados.
 
@@ -212,6 +222,44 @@ function formatRemainingTime(
   return `${minutes} min`;
 }
 
+/*
+Determina si una reserva confirmada se encuentra
+dentro de las próximas 24 horas de su vencimiento.
+
+Esta condición se utiliza únicamente para reforzar
+la prioridad operativa dentro del listado. El estado
+real de la reserva continúa siendo CONFIRMADA.
+*/
+function isReservationExpiringSoon(
+  reservation: ReservationSummary | Reservation,
+  currentTimestamp: number | null,
+) {
+  if (
+    currentTimestamp === null ||
+    reservation.estado !== "CONFIRMADA" ||
+    !reservation.fecha_limite_retiro
+  ) {
+    return false;
+  }
+
+  const expirationTimestamp = new Date(
+    reservation.fecha_limite_retiro,
+  ).getTime();
+
+  if (Number.isNaN(expirationTimestamp)) {
+    return false;
+  }
+
+  const remainingMilliseconds = expirationTimestamp - currentTimestamp;
+  const expiringSoonThreshold =
+    EXPIRING_SOON_HOURS * 60 * 60 * 1000;
+
+  return (
+    remainingMilliseconds > 0 &&
+    remainingMilliseconds <= expiringSoonThreshold
+  );
+}
+
 function getReservationStatusDescription(status: ReservationStatus) {
   switch (status) {
     case "CONFIRMADA":
@@ -294,6 +342,38 @@ function ReservationStatusChip({ status }: { status: ReservationStatus }) {
       }}
     />
   );
+}
+
+/*
+Representación contextual utilizada exclusivamente
+dentro del listado administrativo.
+
+Cuando una reserva CONFIRMADA vence dentro de las
+próximas 24 horas, se muestra "Por vencer" en naranja
+para facilitar el escaneo operativo. No modifica el estado
+real ni afecta el panel de detalle, historial o backend.
+*/
+function ReservationListStatusChip({
+  reservation,
+  currentTimestamp,
+}: {
+  reservation: ReservationSummary;
+  currentTimestamp: number | null;
+}) {
+  if (isReservationExpiringSoon(reservation, currentTimestamp)) {
+    return (
+      <Chip
+        label="Por vencer"
+        size="small"
+        sx={{
+          ...reservationsStyles.statusChip,
+          ...reservationsStyles.statusExpiring,
+        }}
+      />
+    );
+  }
+
+  return <ReservationStatusChip status={reservation.estado} />;
 }
 
 /* =========================================================
@@ -959,7 +1039,10 @@ export default function ReservationsContainer() {
                     Estado
                   </Typography>
 
-                  <ReservationStatusChip status={reservation.estado} />
+                  <ReservationListStatusChip
+                    reservation={reservation}
+                    currentTimestamp={currentTimestamp}
+                  />
                 </Box>
 
                 <Box sx={reservationsStyles.productList}>

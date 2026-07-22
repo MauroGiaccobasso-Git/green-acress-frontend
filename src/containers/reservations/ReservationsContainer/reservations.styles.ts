@@ -704,6 +704,18 @@ export const reservationsStyles = {
     backgroundColor: subtlePurple,
   },
 
+  /*
+  Condición visual aplicada únicamente en el listado
+  cuando una reserva CONFIRMADA vence dentro de 24 horas.
+
+  Reutiliza la misma paleta del KPI "Por vencer" para
+  mantener consistencia visual sin crear un estado nuevo.
+  */
+  statusExpiring: {
+    color: orange,
+    backgroundColor: subtleOrange,
+  },
+
   statusCompleted: {
     color: green,
     backgroundColor: subtleGreen,
