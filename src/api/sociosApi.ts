@@ -60,8 +60,12 @@ export const sociosApi = {
   },
 
   async getSociosOpcionesVenta(): Promise<GetSociosOpcionesVentaResponse> {
-    return httpClient<GetSociosOpcionesVentaResponse>(
-      "/socios/opciones-venta",
-    );
+    return httpClient<GetSociosOpcionesVentaResponse>("/socios/opciones-venta");
+  },
+
+  async aceptarConsentimiento(): Promise<{ message: string }> {
+    return httpClient<{ message: string }>("/socios/aceptar-consentimiento", {
+      method: "POST",
+    });
   },
 };

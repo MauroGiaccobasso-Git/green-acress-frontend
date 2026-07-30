@@ -15,23 +15,46 @@ import {
   Typography,
 } from "@mui/material";
 
-import { useAuth } from "@/hooks/auth/useAuth";
-import { useLogin } from "@/hooks/auth/useLogin";
+import { isMfaRequiredResponse } from "@/api/authApi";
+
 import { getAuthenticatedRedirectPath } from "@/features/auth/utils/authRedirect";
 
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useAuthentication } from "@/hooks/auth/useAuthentication";
+import { saveMfaChallenge } from "@/features/auth/utils/mfaChallengeStorage";
 import { loginStyles } from "./login.styles";
+
+/*
+==================================================
+CONTAINER DE LOGIN
+==================================================
+*/
 
 /*
 Container de la pantalla de login.
 
 Responsabilidades:
-- renderizar interfaz de autenticación;
-- administrar campos del formulario;
-- ejecutar flujo de login mediante useLogin;
-- redirigir usuario autenticado según rol.
 
-NO realiza llamadas directas al backend.
-NO contiene lógica interna de autenticación.
+- renderizar interfaz de autenticación
+
+- administrar campos del formulario
+
+- ejecutar flujo de login mediante useAuthentication
+
+- detectar si el backend requiere MFA
+
+- detectar cambio obligatorio de contraseña
+
+- redirigir usuarios autenticados según rol
+
+Este container NO realiza llamadas
+directas al backend.
+
+Este container NO guarda sesiones
+directamente.
+
+Este container NO contiene lógica
+interna de autenticación.
 */
 export default function LoginContainer() {
   /*
@@ -39,58 +62,194 @@ export default function LoginContainer() {
   del formulario de autenticación.
   */
   const [email, setEmail] = useState("");
+
   const [password, setPassword] = useState("");
 
   /*
   Router utilizado para redirigir
-  luego del login o si ya existe sesión.
+  luego del login o cuando ya existe
+  una sesión autenticada.
   */
   const router = useRouter();
 
   /*
   Obtiene la sesión actual desde
   el contexto global de autenticación.
+
+  isAuthReady permite esperar hasta que
+  AuthProvider termine de restaurar
+  la sesión persistida.
   */
-  const { user, token } = useAuth();
+  const { user, token, isAuthReady } = useAuth();
 
   /*
   Hook encargado del flujo real
   de autenticación contra backend.
+
+  El container únicamente consume
+  su resultado y decide cómo continuar
+  el flujo visual.
   */
-  const { handleLogin, isLoading, error } = useLogin();
+  const { handleLogin, isLoading, error, clearFeedback } = useAuthentication();
 
   /*
   Si ya existe una sesión activa,
   evita mostrar nuevamente el login
   y redirige según el rol del usuario.
+
+  No toma ninguna decisión hasta que
+  AuthProvider haya terminado de restaurar
+  la sesión persistida.
   */
   useEffect(() => {
+    if (!isAuthReady) {
+      return;
+    }
+
     if (!user || !token) {
+      return;
+    }
+
+    if (user.rol === "SOCIO" && user.requiereConsentimiento) {
+      router.replace("/consentimiento");
+
       return;
     }
 
     const redirectPath = getAuthenticatedRedirectPath(user.rol);
 
     router.replace(redirectPath);
-  }, [user, token, router]);
+  }, [isAuthReady, user, token, router]);
+
+  /*
+  Actualiza el campo email.
+
+  También limpia cualquier error anterior
+  para evitar mantener mensajes viejos
+  mientras el usuario corrige los datos.
+  */
+  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+
+    if (error) {
+      clearFeedback();
+    }
+  };
+
+  /*
+  Actualiza el campo contraseña.
+
+  También limpia cualquier error anterior
+  cuando el usuario modifica nuevamente
+  sus credenciales.
+  */
+  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(event.target.value);
+
+    if (error) {
+      clearFeedback();
+    }
+  };
 
   /*
   Maneja el envío del formulario
   y delega la autenticación real
-  al hook useLogin.
+  al hook useAuthentication.
   */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const response = await handleLogin(email, password);
 
-    if (response) {
-      const redirectPath = getAuthenticatedRedirectPath(response.usuario.rol);
+    /*
+Si backend solicita cambio obligatorio
+de contraseña temporal:
 
-      router.push(redirectPath);
+- todavía no existe una sesión completa;
+- el usuario debe completar el primer acceso;
+- se deriva al flujo correspondiente.
+
+El código funcional permite tomar
+la decisión sin depender del estado
+asíncrono de React.
+*/
+    if (
+      response &&
+      "code" in response &&
+      response.code === "AUTH_PASSWORD_CHANGE_REQUIRED"
+    ) {
+      router.push("/changePassword");
+
+      return;
     }
-  };
 
+    /*
+Cuando ocurre un error diferente,
+useAuthentication devuelve null
+y expone el mensaje correspondiente.
+*/
+    if (!response) {
+      return;
+    }
+
+    /*
+    Si backend requiere MFA,
+    las credenciales ya fueron
+    validadas correctamente.
+
+    Sin embargo, todavía no existe
+    una sesión autenticada definitiva.
+
+    Se guarda el desafío temporal
+    en sessionStorage y se deriva
+    al segundo paso del proceso
+    de autenticación.
+    */
+    if (
+      response &&
+      "requiereMfa" in response &&
+      isMfaRequiredResponse(response)
+    ) {
+      saveMfaChallenge({
+        mfaChallengeToken: response.mfaChallengeToken,
+        email: response.usuario.email,
+      });
+
+      router.push("/verifyMfa");
+
+      return;
+    }
+    /*
+En este punto solamente puede existir
+un login exitoso.
+
+Se valida explícitamente que exista
+usuario antes de continuar.
+
+Esto evita que TypeScript permita
+casos funcionales incompletos.
+*/
+    if (!("usuario" in response)) {
+      return;
+    }
+
+    /*
+En este punto el login fue completado
+y useAuthentication ya guardó la sesión
+mediante AuthProvider.
+
+Se redirige según el rol autenticado.
+*/
+    if (response.usuario.rol === "SOCIO" && response.requiereConsentimiento) {
+      router.push("/consentimiento");
+
+      return;
+    }
+
+    const redirectPath = getAuthenticatedRedirectPath(response.usuario.rol);
+
+    router.push(redirectPath);
+  };
   return (
     <Box component="main" sx={loginStyles.page}>
       <Container maxWidth={false} sx={loginStyles.container}>
@@ -142,7 +301,7 @@ export default function LoginContainer() {
                 fullWidth
                 autoComplete="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={handleEmailChange}
                 disabled={isLoading}
                 sx={loginStyles.input}
               />
@@ -166,7 +325,7 @@ export default function LoginContainer() {
                 fullWidth
                 autoComplete="current-password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={handlePasswordChange}
                 disabled={isLoading}
                 sx={loginStyles.input}
               />
@@ -188,7 +347,11 @@ export default function LoginContainer() {
               {isLoading ? "Ingresando..." : "Iniciar sesión"}
             </Button>
 
-            <Link href="#" underline="none" sx={loginStyles.forgotPasswordLink}>
+            <Link
+              href="/forgotPassword"
+              underline="none"
+              sx={loginStyles.forgotPasswordLink}
+            >
               ¿Olvidaste tu contraseña?
             </Link>
 
