@@ -15,11 +15,9 @@ Se centralizan en constantes para evitar:
 Si algún día se cambia el nombre de una clave,
 se modifica en un solo lugar.
 */
-const AUTH_USER_KEY =
-  "green_acres_user";
+const AUTH_USER_KEY = "green_acres_user";
 
-const AUTH_TOKEN_KEY =
-  "green_acres_token";
+const AUTH_TOKEN_KEY = "green_acres_token";
 
 /*
 Representa la información mínima
@@ -38,6 +36,8 @@ Solamente guardamos lo necesario para:
 
 - mostrar información básica
 
+- conocer el estado actual del MFA
+
 Este tipo debe mantenerse alineado
 con la respuesta enviada por backend
 durante el login.
@@ -47,16 +47,14 @@ export type StoredAuthUser = {
 
   email: string;
 
-  rol:
-    | "ADMIN"
-    | "SOCIO";
+  rol: "ADMIN" | "SOCIO";
 
-  estado:
-    | "ACTIVO"
-    | "INACTIVO"
-    | "BLOQUEADO";
+  estado: "ACTIVO" | "INACTIVO" | "BLOQUEADO";
+
+  requiereConsentimiento: boolean;
+
+  mfaHabilitado: boolean;
 };
-
 /*
 Representa la parte mínima del JWT
 que necesitamos leer desde frontend.
@@ -119,27 +117,20 @@ Esto NO valida la firma del token.
 Sólo sirve para leer información
 localmente, como la fecha de expiración.
 */
-const decodeJwtPayload = (
-  token: string
-): JwtPayload | null => {
-
+const decodeJwtPayload = (token: string): JwtPayload | null => {
   try {
-
     /*
     Obtenemos la segunda parte
     del token JWT.
     */
-    const payload =
-      token.split(".")[1];
+    const payload = token.split(".")[1];
 
     /*
     Si no existe payload,
     el token no tiene formato válido.
     */
     if (!payload) {
-
       return null;
-
     }
 
     /*
@@ -148,21 +139,15 @@ const decodeJwtPayload = (
     JSON.parse convierte el texto
     decodificado en objeto JavaScript.
     */
-    return JSON.parse(
-      atob(payload)
-    ) as JwtPayload;
-
+    return JSON.parse(atob(payload)) as JwtPayload;
   } catch {
-
     /*
     Si ocurre cualquier error,
     consideramos que el token
     no puede ser interpretado.
     */
     return null;
-
   }
-
 };
 
 /*
@@ -179,16 +164,12 @@ Si el token:
 
 entonces se considera inválido.
 */
-const isTokenExpired = (
-  token: string
-): boolean => {
-
+const isTokenExpired = (token: string): boolean => {
   /*
   Decodificamos el payload
   para leer la expiración.
   */
-  const payload =
-    decodeJwtPayload(token);
+  const payload = decodeJwtPayload(token);
 
   /*
   Si no existe exp, no confiamos
@@ -196,9 +177,7 @@ const isTokenExpired = (
   vencido.
   */
   if (!payload?.exp) {
-
     return true;
-
   }
 
   /*
@@ -209,15 +188,13 @@ const isTokenExpired = (
 
   Por eso dividimos entre 1000.
   */
-  const currentTimeInSeconds =
-    Math.floor(Date.now() / 1000);
+  const currentTimeInSeconds = Math.floor(Date.now() / 1000);
 
   /*
   Si exp es menor o igual al tiempo
   actual, el token ya venció.
   */
   return payload.exp <= currentTimeInSeconds;
-
 };
 
 /*
@@ -235,10 +212,8 @@ Antes de devolverlo valida:
 Si el token está vencido,
 se limpia toda la sesión.
 */
-export const getStoredToken =
-  (): string | null => {
-
-    /*
+export const getStoredToken = (): string | null => {
+  /*
     Evita acceder a localStorage
     fuera del navegador.
 
@@ -246,47 +221,39 @@ export const getStoredToken =
     del lado servidor, donde window
     no existe.
     */
-    if (typeof window === "undefined") {
+  if (typeof window === "undefined") {
+    return null;
+  }
 
-      return null;
-
-    }
-
-    /*
+  /*
     Leemos token persistido.
     */
-    const storedToken =
-      localStorage.getItem(AUTH_TOKEN_KEY);
+  const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
 
-    /*
+  /*
     Si no hay token guardado,
     no hay sesión restaurable.
     */
-    if (!storedToken) {
+  if (!storedToken) {
+    return null;
+  }
 
-      return null;
-
-    }
-
-    /*
+  /*
     Si el token está vencido
     o tiene formato inválido,
     limpiamos sesión y no lo devolvemos.
     */
-    if (isTokenExpired(storedToken)) {
+  if (isTokenExpired(storedToken)) {
+    clearSession();
 
-      clearSession();
+    return null;
+  }
 
-      return null;
-
-    }
-
-    /*
+  /*
     Token existente y vigente.
     */
-    return storedToken;
-
-  };
+  return storedToken;
+};
 
 /*
 Obtiene el usuario guardado
@@ -298,74 +265,57 @@ que exista un token vigente.
 Esto evita restaurar un usuario
 si la sesión real ya expiró.
 */
-export const getStoredUser =
-  (): StoredAuthUser | null => {
-
-    /*
+export const getStoredUser = (): StoredAuthUser | null => {
+  /*
     Evita acceder a localStorage
     fuera del navegador.
     */
-    if (typeof window === "undefined") {
+  if (typeof window === "undefined") {
+    return null;
+  }
 
-      return null;
-
-    }
-
-    /*
+  /*
     Validamos primero token.
 
     Si no hay token válido,
     no tiene sentido devolver usuario.
     */
-    const validToken =
-      getStoredToken();
+  const validToken = getStoredToken();
 
-    if (!validToken) {
+  if (!validToken) {
+    return null;
+  }
 
-      return null;
-
-    }
-
-    /*
+  /*
     Recuperamos usuario guardado.
     */
-    const storedUser =
-      localStorage.getItem(AUTH_USER_KEY);
+  const storedUser = localStorage.getItem(AUTH_USER_KEY);
 
-    /*
+  /*
     Si no existe usuario guardado,
     no hay sesión completa.
     */
-    if (!storedUser) {
+  if (!storedUser) {
+    return null;
+  }
 
-      return null;
-
-    }
-
-    try {
-
-      /*
+  try {
+    /*
       Convertimos JSON guardado
       en objeto usable por frontend.
       */
-      return JSON.parse(
-        storedUser
-      ) as StoredAuthUser;
-
-    } catch {
-
-      /*
+    return JSON.parse(storedUser) as StoredAuthUser;
+  } catch {
+    /*
       Si el JSON está corrupto
       o no puede parsearse,
       limpiamos sesión completa.
       */
-      clearSession();
+    clearSession();
 
-      return null;
-
-    }
-
-  };
+    return null;
+  }
+};
 
 /*
 Guarda la sesión autenticada
@@ -378,26 +328,15 @@ Centralizar esta operación evita
 que containers, hooks o componentes
 manipulen localStorage directamente.
 */
-export const saveSession = (
-  user: StoredAuthUser,
-  token: string
-): void => {
-
+export const saveSession = (user: StoredAuthUser, token: string): void => {
   /*
   Guardamos usuario como JSON,
   porque localStorage sólo guarda texto.
   */
-  localStorage.setItem(
-    AUTH_USER_KEY,
-    JSON.stringify(user)
-  );
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
 
   /*
   Guardamos token JWT.
   */
-  localStorage.setItem(
-    AUTH_TOKEN_KEY,
-    token
-  );
-
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
 };

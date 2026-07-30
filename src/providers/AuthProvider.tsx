@@ -66,6 +66,21 @@ type AuthContextValue = {
   login: (user: StoredAuthUser, token: string) => void;
 
   /*
+  Actualiza parcialmente la información
+  del usuario autenticado.
+
+  Se utiliza cuando una acción del sistema
+  modifica información asociada a la sesión
+  actual sin requerir un nuevo login.
+
+  Ejemplo:
+  - aceptación de consentimiento informado
+  */
+  updateUser: (
+    user: Partial<StoredAuthUser>
+  ) => void;
+
+  /*
   Acción utilizada para cerrar sesión.
 
   Limpia:
@@ -73,6 +88,7 @@ type AuthContextValue = {
   - información persistida localmente
   */
   logout: () => void;
+  
 };
 
 /*
@@ -158,13 +174,13 @@ export default function AuthProvider({
   */
   useEffect(() => {
     /*
-  La restauración se difiere a una microtarea
-  para evitar setState sincrónico dentro del effect,
-  cumpliendo con la regla de ESLint de React.
+    La restauración se difiere a una microtarea
+    para evitar setState sincrónico dentro del effect,
+    cumpliendo con la regla de ESLint de React.
 
-  Esto mantiene la corrección del hydration mismatch
-  sin romper la persistencia de sesión.
-  */
+    Esto mantiene la corrección del hydration mismatch
+    sin romper la persistencia de sesión.
+    */
     queueMicrotask(() => {
       const storedUser = getStoredUser();
 
@@ -201,6 +217,48 @@ export default function AuthProvider({
     saveSession(user, token);
   };
 
+
+  /*
+  Actualiza parcialmente la información
+  del usuario autenticado.
+
+  Mantiene sincronizados:
+
+  - estado global React
+  - sesión persistida en localStorage
+
+  Esto permite reflejar cambios de sesión
+  sin obligar al usuario a autenticarse
+  nuevamente.
+
+  Ejemplo:
+  - aceptación de consentimiento informado
+  */
+  const updateUser = (
+    updatedFields: Partial<StoredAuthUser>
+  ) => {
+    setUser((currentUser) => {
+      if (!currentUser) {
+        return null;
+      }
+
+      const updatedUser = {
+        ...currentUser,
+        ...updatedFields,
+      };
+
+      saveSession(
+        updatedUser,
+        token ?? ""
+      );
+
+      return updatedUser;
+    });
+  };
+
+
+
+  
   /*
   Cierra sesión dentro del frontend.
 
@@ -226,7 +284,7 @@ export default function AuthProvider({
   /*
   Expone la información y acciones
   de autenticación a todos los componentes
-  hijos de la aplicación.
+  hijos.
 
   Cualquier componente dentro de este Provider
   puede acceder a estos datos usando useAuth.
@@ -238,6 +296,7 @@ export default function AuthProvider({
         token,
         isAuthReady,
         login,
+        updateUser,
         logout,
       }}
     >

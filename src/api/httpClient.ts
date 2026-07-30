@@ -4,6 +4,62 @@ import {
 } from "@/features/auth/utils/authStorage";
 
 /*
+Error HTTP tipado utilizado por
+todo el frontend.
+
+Permite conservar información
+relevante enviada por backend:
+
+- mensaje
+
+- código funcional
+
+- estado HTTP
+
+Esto evita depender de textos
+para resolver flujos como:
+
+- MFA
+
+- contraseña temporal
+
+- consentimiento pendiente
+
+- sesión expirada
+*/
+export class HttpError extends Error {
+  /*
+  Estado HTTP recibido
+  desde backend.
+  */
+
+  status: number;
+
+  /*
+  Código funcional opcional
+  enviado por backend.
+  */
+
+  code?: string;
+
+  constructor(
+    message: string,
+
+    status: number,
+
+    code?: string,
+  ) {
+    super(message);
+
+    this.name = "HttpError";
+
+    this.status = status;
+
+    this.code = code;
+  }
+}
+
+/*
 URL base utilizada para todas las
 comunicaciones realizadas hacia backend.
 
@@ -18,8 +74,7 @@ Centralizar esta URL evita:
 Si mañana backend cambia de puerto
 o se despliega, se modifica acá.
 */
-const API_BASE_URL =
-  "http://localhost:8080";
+const API_BASE_URL = "http://localhost:8080";
 
 /*
 Métodos HTTP soportados
@@ -33,12 +88,7 @@ Restringirlos mediante tipos evita:
 
 - strings mágicos repetidos
 */
-type HttpMethod =
-  | "GET"
-  | "POST"
-  | "PUT"
-  | "PATCH"
-  | "DELETE";
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /*
 Configuración opcional utilizada
@@ -48,7 +98,6 @@ Permite personalizar solicitudes
 sin repetir configuración.
 */
 type RequestOptions = {
-
   /*
   Método HTTP.
 
@@ -78,8 +127,127 @@ type RequestOptions = {
   */
 
   token?: string;
-
 };
+
+/*
+Respuesta de error esperada
+desde backend.
+
+El middleware global devuelve:
+
+{
+  message: string,
+  code: string
+}
+*/
+
+/*
+Convierte de forma segura
+la respuesta HTTP a JSON.
+
+No todas las respuestas necesariamente
+incluyen contenido JSON válido.
+
+Este helper evita que response.json()
+genere un error secundario y oculte
+el error HTTP original.
+*/
+async function parseJsonResponse(response: Response): Promise<unknown> {
+  /*
+  Respuestas sin contenido
+  no deben intentar parsearse.
+  */
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  /*
+  Lee primero la respuesta
+  como texto.
+
+  Esto permite controlar
+  cuerpos vacíos o inválidos.
+  */
+
+  const responseText = await response.text();
+
+  /*
+  Si no existe contenido,
+  devuelve null.
+  */
+
+  if (!responseText) {
+    return null;
+  }
+
+  /*
+  Intenta convertir el contenido
+  recibido a JSON.
+  */
+
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    /*
+    Si backend devuelve contenido
+    no JSON, se conserva como texto.
+
+    Esto evita perder completamente
+    la información recibida.
+    */
+
+    return responseText;
+  }
+}
+
+/*
+Determina si una respuesta
+puede tratarse como objeto.
+
+Se utiliza para leer de forma segura:
+
+- message
+
+- code
+*/
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/*
+Extrae el mensaje de error
+recibido desde backend.
+
+Si backend no devuelve uno válido,
+utiliza un mensaje genérico.
+*/
+function getErrorMessage(data: unknown): string {
+  if (isRecord(data) && typeof data.message === "string") {
+    return data.message;
+  }
+
+  if (typeof data === "string" && data.trim()) {
+    return data;
+  }
+
+  return "Error en solicitud";
+}
+
+/*
+Extrae el código funcional
+recibido desde backend.
+
+Si no existe o no es válido,
+devuelve undefined.
+*/
+function getErrorCode(data: unknown): string | undefined {
+  if (isRecord(data) && typeof data.code === "string") {
+    return data.code;
+  }
+
+  return undefined;
+}
 
 /*
 Cliente HTTP reutilizable.
@@ -122,10 +290,8 @@ Backend
 export async function httpClient<T>(
   endpoint: string,
 
-  options: RequestOptions = {}
-
+  options: RequestOptions = {},
 ): Promise<T> {
-
   /*
   Extrae configuración recibida.
 
@@ -135,13 +301,11 @@ export async function httpClient<T>(
   */
 
   const {
-
     method = "GET",
 
     body,
 
     token,
-
   } = options;
 
   /*
@@ -159,11 +323,7 @@ export async function httpClient<T>(
   sin romper automatización.
   */
 
-  const authToken =
-
-    token ||
-
-    getStoredToken();
+  const authToken = token || getStoredToken();
 
   /*
   Ejecuta solicitud HTTP real.
@@ -185,26 +345,21 @@ export async function httpClient<T>(
   body
   */
 
-  const response =
-    await fetch(
+  const response = await fetch(
+    `${API_BASE_URL}${endpoint}`,
 
-      `${API_BASE_URL}${endpoint}`,
+    {
+      method,
 
-      {
-
-        method,
-
-        headers: {
-
-          /*
+      headers: {
+        /*
           Todas las solicitudes
           utilizan JSON.
           */
 
-          "Content-Type":
-            "application/json",
+        "Content-Type": "application/json",
 
-          /*
+        /*
           Agrega Authorization
           únicamente cuando existe token.
 
@@ -215,57 +370,64 @@ export async function httpClient<T>(
           Bearer xxxxxxxxx
           */
 
-          ...(authToken
+        ...(authToken
+          ? {
+              Authorization: `Bearer ${authToken}`,
+            }
+          : {}),
+      },
 
-            ? {
-
-                Authorization:
-                  `Bearer ${authToken}`,
-
-              }
-
-            : {}),
-
-        },
-
-        /*
+      /*
         Convierte body a JSON.
 
         Si no existe body,
         se envía undefined.
         */
 
-        body:
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    },
+  );
 
-          body
+  /*
+  Convierte la respuesta
+  a un valor usable.
 
-            ? JSON.stringify(body)
+  El parseo es seguro incluso si:
 
-            : undefined,
+  - la respuesta está vacía
 
-      }
+  - backend no devuelve JSON válido
 
-    );
+  - el endpoint responde 204
+  */
+
+  const data = await parseJsonResponse(response);
 
   /*
   Manejo centralizado
   de sesión expirada.
 
-  Si backend devuelve 401:
+  Sólo se limpia la sesión cuando:
 
-  - limpiar sesión
+  - backend devuelve 401
 
-  - redirigir login
+  - la solicitud utilizó un token
 
-  - detener flujo
+  Esto evita romper endpoints públicos
+  de autenticación como:
+
+  - login
+
+  - recuperación de contraseña
+
+  - verificación MFA
+
+  En esos casos un 401 representa
+  un error funcional del flujo,
+  no necesariamente una sesión vencida.
   */
 
-  if (
-
-    response.status === 401
-
-  ) {
-
+  if (response.status === 401 && authToken) {
     clearSession();
 
     /*
@@ -273,54 +435,43 @@ export async function httpClient<T>(
     en navegador.
     */
 
-    if (
-
-      typeof window !== "undefined"
-
-    ) {
-
+    if (typeof window !== "undefined") {
       window.location.href = "/";
-
     }
 
-    throw new Error(
-      "Sesión expirada o no autorizada"
+    throw new HttpError(
+      getErrorMessage(data) || "Sesión expirada o no autorizada",
+
+      response.status,
+
+      getErrorCode(data),
     );
-
   }
-
-  /*
-  Convierte respuesta
-  JSON a objeto usable.
-  */
-
-  const data =
-    await response.json();
 
   /*
   Manejo común de errores backend.
 
   Si backend respondió error:
 
-  usar mensaje backend
+  - conserva message
 
-  o mensaje genérico.
+  - conserva code
+
+  - conserva status HTTP
+
+  Esto permite que hooks y containers
+  resuelvan flujos funcionales
+  sin comparar textos.
   */
 
-  if (
+  if (!response.ok) {
+    throw new HttpError(
+      getErrorMessage(data),
 
-    !response.ok
+      response.status,
 
-  ) {
-
-    throw new Error(
-
-      data.message ||
-
-      "Error en solicitud"
-
+      getErrorCode(data),
     );
-
   }
 
   /*
@@ -339,6 +490,5 @@ export async function httpClient<T>(
   etc
   */
 
-  return data;
-
+  return data as T;
 }

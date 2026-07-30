@@ -115,7 +115,7 @@ const navigationSections = [
       {
         label: "Configuración",
         href: "/admin/settings",
-        disabled: true,
+        disabled: false,
         icon: <SettingsOutlinedIcon fontSize="small" />,
       },
     ],
