@@ -75,7 +75,7 @@ const navigationSections = [
       {
         label: "Socios",
         href: "/admin/members",
-        disabled: true,
+        disabled: false,
         icon: <GroupOutlinedIcon fontSize="small" />,
       },
     ],
