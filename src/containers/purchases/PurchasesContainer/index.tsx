@@ -117,15 +117,6 @@ export default function PurchasesContainer() {
   }, [fetchPurchaseOptions]);
 
   /*
-  Datos derivados para la pantalla.
-  Mantienen la UI simple y evitan recalcular filtros en cada render.
-  */
-  const activeProviders = useMemo(
-    () => providers.filter((provider) => provider.estado === "ACTIVO"),
-    [providers],
-  );
-
-  /*
   Decisión UX actual:
   se muestran semillas activas para prevenir errores operativos.
 
@@ -153,21 +144,17 @@ export default function PurchasesContainer() {
   );
 
   /*
-  Entidades seleccionadas para mostrar resumen visual del formulario.
-  */
+Entidades seleccionadas para mostrar resumen visual del formulario.
+*/
   const selectedProvider = useMemo(
     () =>
-      activeProviders.find(
-        (provider) => provider.id === Number(selectedProviderId),
-      ),
-    [activeProviders, selectedProviderId],
+      providers.find((provider) => provider.id === Number(selectedProviderId)),
+    [providers, selectedProviderId],
   );
 
   const selectedProduct = useMemo(
     () =>
-      seedProducts.find(
-        (product) => product.id === Number(selectedProductId),
-      ),
+      seedProducts.find((product) => product.id === Number(selectedProductId)),
     [seedProducts, selectedProductId],
   );
 
@@ -459,7 +446,7 @@ export default function PurchasesContainer() {
             </Typography>
 
             <Typography sx={purchasesStyles.statValue}>
-              {activeProviders.length}
+              {providers.length}
             </Typography>
 
             <Typography sx={purchasesStyles.providerMeta}>
@@ -584,7 +571,7 @@ export default function PurchasesContainer() {
                             setSelectedProviderId(event.target.value)
                           }
                         >
-                          {activeProviders.map((provider) => (
+                          {providers.map((provider) => (
                             <MenuItem
                               key={provider.id}
                               value={String(provider.id)}
@@ -687,7 +674,8 @@ export default function PurchasesContainer() {
                     </Typography>
 
                     <Typography sx={purchasesStyles.sectionDescription}>
-                      Se muestran semillas activas e inactivas disponibles para registrar compras.
+                      Se muestran semillas activas e inactivas disponibles para
+                      registrar compras.
                     </Typography>
                   </Box>
                 </Box>
@@ -1139,4 +1127,4 @@ export default function PurchasesContainer() {
       />
     </Box>
   );
-} 
+}

@@ -86,7 +86,7 @@ const navigationSections = [
       {
         label: "Proveedores",
         href: "/admin/providers",
-        disabled: true,
+        disabled: false,
         icon: <LocalShippingOutlinedIcon fontSize="small" />,
       },
       {
