@@ -21,49 +21,44 @@ import {
 
 /*
 Hook especializado encargado de administrar
-la lógica relacionada al módulo de compras.
+la lógica operativa del módulo de Compras.
 
-Su responsabilidad es:
+Responsabilidades:
+- obtener proveedores activos disponibles para nuevas compras;
+- obtener semillas habilitadas para compras;
+- registrar compras;
+- crear semillas desde el flujo de compras;
+- crear proveedores desde el flujo de compras;
+- administrar estados de carga y errores.
 
-- obtener proveedores
+Este hook:
+- no renderiza componentes;
+- no construye interfaz;
+- no realiza solicitudes HTTP directas;
+- no contiene la gestión administrativa completa de proveedores.
 
-- obtener semillas habilitadas para compras
-
-- registrar compras
-
-- crear semillas desde el flujo de compras
-
-- crear proveedores desde el flujo de compras
-
-- administrar loading
-
-- administrar errores
-
-- exponer funciones reutilizables
-  para consumir desde containers
-
-Este hook NO renderiza componentes.
-
-Este hook NO construye interfaz.
-
-Este hook NO realiza fetch directo.
-
-Toda comunicación ocurre mediante
-las capas API.
+Toda comunicación ocurre mediante las capas API.
 */
 export function usePurchases() {
+  /*
+  Compras solamente necesita proveedores activos.
+
+  La gestión completa de proveedores, incluyendo
+  inactivos, edición y cambios de estado, pertenece
+  exclusivamente al módulo administrativo.
+  */
   const [providers, setProviders] = useState<Provider[]>([]);
 
   /*
   Productos habilitados para registrar compras.
 
-  El backend aplica las reglas correspondientes
-  y devuelve un contrato operativo reducido
-  para el formulario de compras.
+  Backend devuelve un contrato operativo reducido
+  específico para este flujo.
   */
   const [products, setProducts] = useState<PurchaseProductOption[]>([]);
 
-  const [createdPurchase, setCreatedPurchase] = useState<Purchase | null>(null);
+  const [createdPurchase, setCreatedPurchase] =
+    useState<Purchase | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -73,11 +68,13 @@ export function usePurchases() {
   const [error, setError] = useState<string | null>(null);
 
   /*
-  Obtiene proveedores y semillas habilitadas
-  necesarias para construir el formulario.
+  Obtiene las opciones necesarias para construir
+  el formulario de compra.
 
-  Ambas consultas se ejecutan en paralelo
-  para reducir tiempos de espera.
+  Ambas solicitudes se ejecutan en paralelo.
+
+  Los proveedores se solicitan ya filtrados como
+  ACTIVO para no duplicar reglas ni filtros en la UI.
   */
   const fetchPurchaseOptions = useCallback(async (): Promise<void> => {
     try {
@@ -85,7 +82,9 @@ export function usePurchases() {
       setError(null);
 
       const [providersData, productsData] = await Promise.all([
-        providersApi.getProviders(),
+        providersApi.getProviders({
+          estado: "ACTIVO",
+        }),
         productsApi.getPurchaseProductOptions(),
       ]);
 
@@ -95,27 +94,35 @@ export function usePurchases() {
       setError(
         error instanceof Error
           ? error.message
-          : "Error al cargar datos para compras",
+          : "Error al cargar los datos necesarios para la compra.",
       );
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /*
+  Registra una nueva compra.
+  */
   const createPurchase = useCallback(
-    async (payload: CreatePurchasePayload): Promise<Purchase | null> => {
+    async (
+      payload: CreatePurchasePayload,
+    ): Promise<Purchase | null> => {
       try {
         setSubmitting(true);
         setError(null);
 
-        const purchase = await purchasesApi.createPurchase(payload);
+        const purchase =
+          await purchasesApi.createPurchase(payload);
 
         setCreatedPurchase(purchase);
 
         return purchase;
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : "Error al registrar compra",
+          error instanceof Error
+            ? error.message
+            : "Error al registrar la compra.",
         );
 
         return null;
@@ -127,30 +134,34 @@ export function usePurchases() {
   );
 
   /*
-  Crea una nueva semilla desde el flujo de compras.
+  Crea una nueva semilla desde el flujo de Compras.
 
-  createProduct devuelve el contrato administrativo
-  completo del producto creado.
-
-  Después de crearla, se vuelve a consultar el endpoint
-  operativo de compras para mantener products alineado
-  con PurchaseProductOption y evitar mezclar contratos.
+  Después del alta se vuelve a consultar el endpoint
+  operativo para conservar el contrato
+  PurchaseProductOption y evitar mezclar modelos.
   */
   const createSeedProduct = useCallback(
-    async (payload: CreateProductPayload): Promise<Product | null> => {
+    async (
+      payload: CreateProductPayload,
+    ): Promise<Product | null> => {
       try {
         setCreatingSeed(true);
         setError(null);
 
-        const createdProduct = await productsApi.createProduct(payload);
-        const purchaseProducts = await productsApi.getPurchaseProductOptions();
+        const createdProduct =
+          await productsApi.createProduct(payload);
+
+        const purchaseProducts =
+          await productsApi.getPurchaseProductOptions();
 
         setProducts(purchaseProducts);
 
         return createdProduct;
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : "Error al crear la semilla",
+          error instanceof Error
+            ? error.message
+            : "Error al crear la semilla.",
         );
 
         return null;
@@ -161,25 +172,46 @@ export function usePurchases() {
     [],
   );
 
+  /*
+  Crea un proveedor completo desde el flujo de Compras.
+
+  Backend asigna el estado inicial ACTIVO.
+  El proveedor se incorpora localmente al listado y se
+  mantiene el orden alfabético utilizado por la pantalla.
+
+  La edición y el cambio de estado permanecen bajo
+  responsabilidad del módulo administrativo de Proveedores.
+  */
   const createProvider = useCallback(
-    async (payload: CreateProviderPayload): Promise<Provider | null> => {
+    async (
+      payload: CreateProviderPayload,
+    ): Promise<Provider | null> => {
       try {
         setCreatingProvider(true);
         setError(null);
 
-        const createdProvider = await providersApi.createProvider(payload);
+        const createdProvider =
+          await providersApi.createProvider(payload);
 
-        setProviders((currentProviders) => [
-          createdProvider,
-          ...currentProviders,
-        ]);
+        setProviders((currentProviders) =>
+          [...currentProviders, createdProvider].sort(
+            (firstProvider, secondProvider) =>
+              firstProvider.nombre.localeCompare(
+                secondProvider.nombre,
+                "es",
+                {
+                  sensitivity: "base",
+                },
+              ),
+          ),
+        );
 
         return createdProvider;
       } catch (error) {
         setError(
           error instanceof Error
             ? error.message
-            : "Error al crear el proveedor",
+            : "Error al crear el proveedor.",
         );
 
         return null;
@@ -202,15 +234,19 @@ export function usePurchases() {
     providers,
     products,
     createdPurchase,
+
     loading,
     submitting,
     creatingSeed,
     creatingProvider,
+
     error,
+
     fetchPurchaseOptions,
     createPurchase,
     createSeedProduct,
     createProvider,
+
     clearError,
     clearCreatedPurchase,
   };
