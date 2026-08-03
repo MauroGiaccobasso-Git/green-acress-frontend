@@ -109,7 +109,7 @@ const navigationSections = [
       {
         label: "Novedades",
         href: "/admin/news",
-        disabled: true,
+        disabled: false,
         icon: <ArticleOutlinedIcon fontSize="small" />,
       },
       {
