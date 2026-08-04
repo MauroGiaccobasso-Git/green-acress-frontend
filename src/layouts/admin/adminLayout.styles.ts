@@ -3,6 +3,7 @@ import { alpha, type Theme } from "@mui/material/styles";
 import { colors } from "@/theme/colors";
 
 const SIDEBAR_WIDTH = 222;
+const HEADER_HEIGHT = 78;
 
 export const styles = {
   page: {
@@ -11,24 +12,27 @@ export const styles = {
     bgcolor: colors.background.app,
   },
 
-  /*
-  Sidebar desktop permanente.
+  /* =========================================================
+     SIDEBAR DESKTOP
+  ========================================================= */
 
-  Replica la estructura del layout esperado:
-  marca superior, navegación agrupada por secciones
-  y usuario anclado al pie.
-  */
   desktopSidebar: (isOpen: boolean) => ({
-    display: { xs: "none", md: "flex" },
+    display: {
+      xs: "none",
+      md: "flex",
+    },
     position: "fixed",
     inset: "0 auto 0 0",
     width: SIDEBAR_WIDTH,
     minHeight: "100vh",
     flexDirection: "column",
     bgcolor: colors.background.surface,
-    borderRight: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+    borderRight: (theme: Theme) =>
+      `1px solid ${theme.palette.divider}`,
     zIndex: (theme: Theme) => theme.zIndex.drawer,
-    transform: isOpen ? "translateX(0)" : `translateX(-${SIDEBAR_WIDTH}px)`,
+    transform: isOpen
+      ? "translateX(0)"
+      : `translateX(-${SIDEBAR_WIDTH}px)`,
     transition: "transform 180ms ease",
   }),
 
@@ -40,9 +44,6 @@ export const styles = {
     px: 2.5,
   },
 
-  /*
-  Compatibilidad con versiones previas del layout.
-  */
   brand: {
     display: "flex",
     alignItems: "center",
@@ -62,27 +63,22 @@ export const styles = {
     },
   },
 
-  /*
-  El peso tipográfico proviene del theme.
-  Solamente ajustamos detalles visuales
-  específicos del layout.
-  */
   brandTitle: {
     color: colors.brand.primaryDark,
     lineHeight: 1,
     fontWeight: 700,
   },
 
-  /*
-  Mantiene una jerarquía visual más suave
-  debajo del nombre de la aplicación.
-  */
   brandSubtitle: {
     display: "block",
-    color: colors.text.secondary,
     mt: 0.35,
+    color: colors.text.secondary,
     fontWeight: 500,
   },
+
+  /* =========================================================
+     NAVEGACIÓN
+  ========================================================= */
 
   navigationSections: {
     display: "grid",
@@ -116,31 +112,32 @@ export const styles = {
     p: 0,
   },
 
-  /*
-  Compatibilidad con versión anterior del layout.
-  */
   desktopNavigation: {
-    display: { xs: "none", md: "flex" },
+    display: {
+      xs: "none",
+      md: "flex",
+    },
     alignItems: "center",
     gap: 0.5,
   },
 
-  /*
-  Compatibilidad con versión anterior del layout.
-  */
   navigationButton: (isActive: boolean) => ({
     minHeight: 44,
     px: 2,
     borderRadius: 999,
-    color: isActive ? colors.brand.primaryDark : colors.text.primary,
+    color: isActive
+      ? colors.brand.primaryDark
+      : colors.text.primary,
     bgcolor: isActive
-      ? (theme: Theme) => alpha(theme.palette.primary.main, 0.09)
+      ? (theme: Theme) =>
+          alpha(theme.palette.primary.main, 0.09)
       : "transparent",
     fontWeight: 700,
     textTransform: "none",
 
     "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.06),
     },
 
     "&.Mui-disabled": {
@@ -152,22 +149,28 @@ export const styles = {
     minHeight: 42,
     px: 1.25,
     borderRadius: 1.5,
-    color: isActive ? colors.brand.primaryDark : colors.text.primary,
+    color: isActive
+      ? colors.brand.primaryDark
+      : colors.text.primary,
     bgcolor: isActive
-      ? (theme: Theme) => alpha(theme.palette.primary.main, 0.075)
+      ? (theme: Theme) =>
+          alpha(theme.palette.primary.main, 0.075)
       : "transparent",
     textTransform: "none",
 
     "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.055),
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.055),
     },
 
     "&.Mui-selected": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.075),
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.075),
     },
 
     "&.Mui-selected:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.105),
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.105),
     },
 
     "&.Mui-disabled": {
@@ -176,7 +179,9 @@ export const styles = {
     },
 
     "& .MuiSvgIcon-root": {
-      color: isActive ? colors.brand.primary : colors.text.secondary,
+      color: isActive
+        ? colors.brand.primary
+        : colors.text.secondary,
       fontSize: 20,
     },
   }),
@@ -185,33 +190,30 @@ export const styles = {
     width: 28,
     minWidth: 28,
     height: 28,
+    mr: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    mr: 1,
   },
 
   navigationText: (isActive: boolean) => ({
-    color: isActive ? colors.brand.primaryDark : colors.text.primary,
+    color: isActive
+      ? colors.brand.primaryDark
+      : colors.text.primary,
     fontSize: 14,
     fontWeight: isActive ? 700 : 500,
   }),
 
-  /*
-  Compatibilidad con versión anterior del drawer mobile.
-  */
   mobileNavigationIcon: {
     display: "flex",
     alignItems: "center",
     mr: 1.5,
   },
 
-  /*
-  Bloque inferior del usuario.
+  /* =========================================================
+     USUARIO DEL SIDEBAR
+  ========================================================= */
 
-  Mantiene la acción de logout existente,
-  pero visualmente queda como perfil anclado al pie.
-  */
   sidebarUserArea: {
     mt: "auto",
     p: 1.5,
@@ -225,70 +227,12 @@ export const styles = {
     justifyContent: "flex-start",
     color: colors.text.primary,
     textTransform: "none",
-    borderTop: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+    borderTop: (theme: Theme) =>
+      `1px solid ${theme.palette.divider}`,
 
     "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.055),
-    },
-  },
-
-  mainShell: (isSidebarOpen: boolean) => ({
-    flex: 1,
-    minWidth: 0,
-    ml: {
-      xs: 0,
-      md: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : 0,
-    },
-    transition: "margin-left 180ms ease",
-  }),
-
-  appBar: {
-    bgcolor: colors.background.surface,
-    color: colors.text.primary,
-    borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
-  },
-
-  toolbar: {
-    minHeight: 70,
-    px: { xs: 2, md: 3 },
-  },
-
-  mobileMenuButton: {
-    display: { xs: "inline-flex", md: "none" },
-    width: 44,
-    height: 44,
-    color: colors.text.primary,
-  },
-
-  desktopMenuButton: {
-    display: { xs: "none", md: "inline-flex" },
-    width: 44,
-    height: 44,
-    color: colors.text.primary,
-  },
-
-  mobileBrand: {
-    display: { xs: "flex", md: "none" },
-    alignItems: "center",
-    gap: 1.25,
-    flexShrink: 0,
-  },
-
-  toolbarSpacer: {
-    flex: 1,
-  },
-
-  userButton: {
-    display: { xs: "none", md: "inline-flex" },
-    minHeight: 48,
-    px: 1.25,
-    borderRadius: 2,
-    color: colors.text.primary,
-    textTransform: "none",
-    bgcolor: "transparent",
-
-    "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.055),
     },
   },
 
@@ -304,14 +248,10 @@ export const styles = {
 
   userInfo: {
     display: "block",
-    textAlign: "left",
     minWidth: 0,
+    textAlign: "left",
   },
 
-  /*
-  Ajustes visuales específicos del
-  bloque de información del usuario.
-  */
   userName: {
     color: colors.text.primary,
     lineHeight: 1.1,
@@ -323,6 +263,158 @@ export const styles = {
     color: colors.text.secondary,
     fontWeight: 500,
   },
+
+  /* =========================================================
+     CONTENEDOR PRINCIPAL
+  ========================================================= */
+
+  mainShell: (isSidebarOpen: boolean) => ({
+    flex: 1,
+    minWidth: 0,
+    ml: {
+      xs: 0,
+      md: isSidebarOpen
+        ? `${SIDEBAR_WIDTH}px`
+        : 0,
+    },
+    transition: "margin-left 180ms ease",
+  }),
+
+  /* =========================================================
+     HEADER ADMINISTRATIVO
+  ========================================================= */
+
+  appBar: {
+    bgcolor: colors.background.surface,
+    color: colors.text.primary,
+    borderBottom: (theme: Theme) =>
+      `1px solid ${theme.palette.divider}`,
+    boxShadow: "none",
+  },
+
+  /*
+  La referencia Premium utiliza un header cercano
+  a los 78 px de altura.
+
+  La altura adicional mejora la jerarquía del título
+  y permite integrar correctamente el chip de actualización.
+  */
+  toolbar: {
+    width: "100%",
+    minHeight: {
+      xs: 70,
+      md: HEADER_HEIGHT,
+    },
+    px: {
+      xs: 2,
+      md: 3,
+      xl: 3.5,
+    },
+    display: "flex",
+    alignItems: "center",
+    gap: {
+      xs: 0.5,
+      md: 0.75,
+    },
+
+    /*
+    MUI aplica alturas internas al Toolbar según breakpoint.
+    Esta regla garantiza que la altura Premium se conserve.
+    */
+    "@media (min-width: 0px)": {
+      minHeight: {
+        xs: 70,
+        md: HEADER_HEIGHT,
+      },
+    },
+  },
+
+  mobileMenuButton: {
+    display: {
+      xs: "inline-flex",
+      md: "none",
+    },
+    width: 44,
+    height: 44,
+    mr: 0.5,
+    flexShrink: 0,
+    color: colors.text.primary,
+  },
+
+  desktopMenuButton: {
+    display: {
+      xs: "none",
+      md: "inline-flex",
+    },
+    width: 44,
+    height: 44,
+    mr: 0.75,
+    flexShrink: 0,
+    color: colors.text.primary,
+  },
+
+  mobileBrand: {
+    display: {
+      xs: "flex",
+      md: "none",
+    },
+    alignItems: "center",
+    gap: 1.25,
+    flexShrink: 0,
+  },
+
+  toolbarSpacer: {
+    flex: 1,
+    minWidth: {
+      xs: 0,
+      md: 2,
+    },
+  },
+
+  /*
+  Slot destinado a acciones contextuales del encabezado.
+
+  En el Dashboard contendrá el indicador:
+  "Actualizado: hoy, 19:05".
+
+  Se oculta en pantallas pequeñas para no comprimir
+  el título ni interferir con el botón del menú.
+  */
+  headerActions: {
+    display: {
+      xs: "none",
+      sm: "flex",
+    },
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flexShrink: 0,
+    ml: {
+      sm: 1.5,
+      md: 2,
+    },
+  },
+
+  userButton: {
+    display: {
+      xs: "none",
+      md: "inline-flex",
+    },
+    minHeight: 48,
+    px: 1.25,
+    borderRadius: 2,
+    color: colors.text.primary,
+    textTransform: "none",
+    bgcolor: "transparent",
+
+    "&:hover": {
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.06),
+    },
+  },
+
+  /* =========================================================
+     DRAWER MOBILE
+  ========================================================= */
 
   mobileDrawerPaper: {
     borderRight: "none",
@@ -336,7 +428,8 @@ export const styles = {
 
   mobileDrawerHeader: {
     p: 0,
-    borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+    borderBottom: (theme: Theme) =>
+      `1px solid ${theme.palette.divider}`,
 
     "& > div": {
       width: "100%",
@@ -364,17 +457,22 @@ export const styles = {
     minHeight: 42,
     px: 1.25,
     borderRadius: 1.5,
-    color: isActive ? colors.brand.primaryDark : colors.text.primary,
+    color: isActive
+      ? colors.brand.primaryDark
+      : colors.text.primary,
     bgcolor: isActive
-      ? (theme: Theme) => alpha(theme.palette.primary.main, 0.075)
+      ? (theme: Theme) =>
+          alpha(theme.palette.primary.main, 0.075)
       : "transparent",
 
     "&:hover": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.055),
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.055),
     },
 
     "&.Mui-selected": {
-      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.075),
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.075),
     },
 
     "&.Mui-disabled": {
@@ -383,17 +481,39 @@ export const styles = {
     },
 
     "& .MuiSvgIcon-root": {
-      color: isActive ? colors.brand.primary : colors.text.secondary,
+      color: isActive
+        ? colors.brand.primary
+        : colors.text.secondary,
       fontSize: 20,
     },
   }),
 
+  /* =========================================================
+     CONTENIDO DE LAS PÁGINAS
+  ========================================================= */
+
   /*
-  Área donde se renderiza el contenido
-  dinámico de cada módulo administrativo.
+  La franja vacía actual no proviene únicamente de este padding:
+  también existe una barra de metadata dentro del Dashboard.
+
+  Aun así, ajustamos el espacio para que, una vez movido el chip
+  al header, las KPI queden a unos 24 px del encabezado.
   */
   content: {
-    px: { xs: 2, md: 3, xl: 3.5 },
-    py: { xs: 3, md: 3.5 },
+    width: "100%",
+    minWidth: 0,
+    px: {
+      xs: 2,
+      md: 3,
+      xl: 3.5,
+    },
+    pt: {
+      xs: 2,
+      md: 3,
+    },
+    pb: {
+      xs: 3,
+      md: 3.5,
+    },
   },
 } as const;

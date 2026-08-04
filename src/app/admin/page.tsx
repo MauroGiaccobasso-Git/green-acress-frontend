@@ -1,34 +1,29 @@
-"use client";
-
-import { Box, Typography } from "@mui/material";
-
 import RequireAuth from "@/components/auth/requireAuth";
+import DashboardContainer from "@/containers/dashboard/DashboardContainer";
 import { AdminLayout } from "@/layouts/admin/AdminLayout";
-import { colors } from "@/theme/colors";
 
-// Pantalla administrativa inicial.
-//
-// Funciona como punto de entrada del panel,
-// reutilizando el layout común del administrador.
+/*
+Ruta principal del panel administrativo.
+
+Responsabilidades:
+- definir la ruta /admin;
+- proteger el acceso exclusivamente para ADMIN;
+- aplicar el layout administrativo compartido;
+- renderizar el container del Dashboard.
+
+NO contiene lógica de negocio.
+NO realiza solicitudes HTTP.
+NO administra estados.
+NO implementa componentes visuales internos.
+*/
 export default function AdminPage() {
   return (
     <RequireAuth allowedRoles={["ADMIN"]}>
-      <AdminLayout>
-        <Box>
-          <Typography
-            variant="h3"
-            sx={{
-              color: colors.brand.primaryDark,
-              mb: 2,
-            }}
-          >
-            Panel administrativo
-          </Typography>
-
-          <Typography variant="body1" sx={{ color: colors.text.secondary }}>
-            Seleccioná una sección del menú para comenzar a gestionar el sistema.
-          </Typography>
-        </Box>
+      <AdminLayout
+        title="Resumen administrativo"
+        subtitle="Indicadores, alertas operativas y recomendaciones para la gestión diaria del club"
+      >
+        <DashboardContainer />
       </AdminLayout>
     </RequireAuth>
   );
