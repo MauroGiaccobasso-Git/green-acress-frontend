@@ -15,19 +15,43 @@ import type {
   Provider,
   ProviderStatus,
 } from "@/api/providersApi";
+import { AppPagination } from "@/components/common/Pagination";
 import { colors } from "@/theme/colors";
 
 import { providersStyles } from "../providers.styles";
 
+/* =========================================================
+   TIPOS
+========================================================= */
+
 type ProviderStatusFilter = ProviderStatus | "TODOS";
+
+type ProvidersPagination = {
+  page: number;
+
+  pageSize: number;
+
+  total: number;
+
+  totalPages: number;
+};
 
 type ProviderListPanelProps = {
   providers: Provider[];
+
   selectedProviderId: number | null;
+
+  pagination: ProvidersPagination;
+
   loading: boolean;
+
   searchValue: string;
+
   statusFilter: ProviderStatusFilter;
+
   onSelectProvider: (providerId: number) => void;
+
+  onPageChange: (page: number) => void;
 };
 
 /* =========================================================
@@ -48,15 +72,19 @@ function getProviderInitials(name: string): string {
     return words[0].slice(0, 2).toUpperCase();
   }
 
-  return `${words[0].charAt(0)}${words.at(-1)?.charAt(0) ?? ""}`
-    .toUpperCase();
+  return `${words[0].charAt(0)}${
+    words.at(-1)?.charAt(0) ?? ""
+  }`.toUpperCase();
 }
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, "");
 
   if (digits.length === 9) {
-    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(
+      3,
+      6,
+    )} ${digits.slice(6)}`;
   }
 
   if (digits.length === 8) {
@@ -67,7 +95,27 @@ function formatPhone(value: string): string {
 }
 
 function getProviderCountLabel(total: number): string {
-  return `${total} ${total === 1 ? "proveedor" : "proveedores"}`;
+  return `${total} ${
+    total === 1 ? "proveedor" : "proveedores"
+  }`;
+}
+
+function getPaginationRange(
+  page: number,
+  pageSize: number,
+  total: number,
+) {
+  if (total === 0) {
+    return {
+      from: 0,
+      to: 0,
+    };
+  }
+
+  return {
+    from: (page - 1) * pageSize + 1,
+    to: Math.min(page * pageSize, total),
+  };
 }
 
 /* =========================================================
@@ -96,27 +144,37 @@ function ProviderStatusChip({
 Panel Master del módulo de Proveedores.
 
 Responsabilidades:
-- presentar el listado obtenido por el hook;
+- presentar la página actual del listado;
 - representar selección y estado operativo;
 - mostrar información responsive;
-- comunicar la selección al Container;
-- resolver actualización y ausencia de resultados.
+- comunicar selección y cambio de página al Container;
+- resolver actualización y ausencia de resultados;
+- mostrar el rango y total de resultados;
+- reutilizar la paginación administrativa compartida.
 
 No realiza solicitudes HTTP.
 No modifica proveedores.
 No administra búsqueda ni filtros.
-No implementa paginación inexistente en backend.
+No calcula la página seleccionada.
 */
 export function ProviderListPanel({
   providers,
   selectedProviderId,
+  pagination,
   loading,
   searchValue,
   statusFilter,
   onSelectProvider,
+  onPageChange,
 }: ProviderListPanelProps) {
   const hasActiveCriteria =
     Boolean(searchValue) || statusFilter !== "TODOS";
+
+  const paginationRange = getPaginationRange(
+    pagination.page,
+    pagination.pageSize,
+    pagination.total,
+  );
 
   return (
     <Box
@@ -142,18 +200,20 @@ export function ProviderListPanel({
             aria-live="polite"
             sx={providersStyles.panelHint}
           >
-            {providers.length > 0
-              ? `Mostrando ${getProviderCountLabel(providers.length)}`
+            {pagination.total > 0
+              ? `Mostrando ${paginationRange.from}–${paginationRange.to} de ${pagination.total}`
               : "Sin proveedores para mostrar"}
           </Typography>
         </Box>
 
         <Box
           component="span"
-          aria-label={getProviderCountLabel(providers.length)}
+          aria-label={getProviderCountLabel(
+            pagination.total,
+          )}
           sx={providersStyles.panelCount}
         >
-          {getProviderCountLabel(providers.length)}
+          {getProviderCountLabel(pagination.total)}
         </Box>
       </Box>
 
@@ -281,13 +341,6 @@ export function ProviderListPanel({
                           sx={providersStyles.providerName}
                         >
                           {provider.nombre}
-                        </Typography>
-
-                        <Typography
-                          component="span"
-                          sx={providersStyles.providerId}
-                        >
-                          ID: {provider.id}
                         </Typography>
                       </Box>
                     </Box>
@@ -447,12 +500,13 @@ export function ProviderListPanel({
         </Box>
       </Box>
 
-      {providers.length > 0 && (
-        <Box sx={providersStyles.listFooter}>
-          <Typography sx={providersStyles.listFooterText}>
-            {getProviderCountLabel(providers.length)} en el
-            resultado actual
-          </Typography>
+      {pagination.total > 0 && (
+        <Box sx={providersStyles.paginationArea}>
+          <AppPagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            onChange={onPageChange}
+          />
         </Box>
       )}
     </Box>

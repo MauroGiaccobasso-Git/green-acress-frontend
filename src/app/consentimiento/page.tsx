@@ -1,3 +1,5 @@
+import RequireAuth from "@/components/auth/requireAuth";
+import RequirePendingConsent from "@/components/auth/requirePendingConsent";
 import ConsentContainer from "@/containers/auth/ConsentContainer";
 
 /*
@@ -6,11 +8,21 @@ de consentimiento informado.
 
 Responsabilidad:
 
+- componer las protecciones de acceso;
 - montar el container correspondiente.
 
-La lógica del flujo pertenece
-a ConsentContainer.
+Las reglas quedan separadas:
+
+- RequireAuth valida sesión y rol;
+- RequirePendingConsent valida el estado del flujo;
+- ConsentContainer administra la interfaz.
 */
 export default function ConsentimientoPage() {
-  return <ConsentContainer />;
+  return (
+    <RequireAuth allowedRoles={["SOCIO"]}>
+      <RequirePendingConsent>
+        <ConsentContainer />
+      </RequirePendingConsent>
+    </RequireAuth>
+  );
 }

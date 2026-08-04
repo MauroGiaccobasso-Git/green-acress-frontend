@@ -1712,6 +1712,317 @@ export const reservationsStyles = {
   },
 
   /* =========================================================
+     MODAL DE FILTROS AVANZADOS
+  ========================================================= */
+
+  reservationsFiltersDialogPaper: {
+    width: {
+      xs: "calc(100% - 24px)",
+      sm: "100%",
+    },
+    maxWidth: 640,
+    m: {
+      xs: 1.5,
+      sm: 2,
+    },
+    borderRadius: {
+      xs: "18px",
+      sm: "22px",
+    },
+    overflow: "hidden",
+    backgroundColor: colors.background.surface,
+    border: `1px solid ${colors.border.default}`,
+    boxShadow: "0 28px 70px rgba(15, 39, 27, 0.2)",
+  },
+
+  reservationsFiltersHeader: {
+    px: {
+      xs: 2,
+      sm: 3,
+    },
+    py: {
+      xs: 2,
+      sm: 2.5,
+    },
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(246,250,247,1) 100%)",
+    borderBottom: `1px solid ${colors.border.default}`,
+  },
+
+  reservationsFiltersHeaderContent: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 2,
+  },
+
+  reservationsFiltersTitle: {
+    fontSize: {
+      xs: 22,
+      sm: 25,
+    },
+    fontWeight: 800,
+    lineHeight: 1.1,
+    letterSpacing: "-0.035em",
+    color: colors.text.primary,
+  },
+
+  reservationsFiltersSubtitle: {
+    mt: 0.7,
+    maxWidth: 470,
+    fontSize: {
+      xs: 13.5,
+      sm: 14.5,
+    },
+    fontWeight: 400,
+    lineHeight: 1.45,
+    color: colors.text.secondary,
+  },
+
+  reservationsFiltersCloseButton: {
+    width: 46,
+    height: 46,
+    flexShrink: 0,
+    color: colors.text.secondary,
+    backgroundColor: colors.background.surface,
+    border: `1px solid ${colors.border.default}`,
+    transition:
+      "color 160ms ease, border-color 160ms ease, background-color 160ms ease, transform 160ms ease",
+
+    "&:hover": {
+      color: colors.text.primary,
+      borderColor: colors.border.strong,
+      backgroundColor: colors.background.soft,
+      transform: "translateY(-1px)",
+    },
+
+    "& svg": {
+      fontSize: 26,
+    },
+  },
+
+  reservationsFiltersContent: {
+    px: {
+      xs: 2,
+      sm: 3,
+    },
+    pt: {
+      xs: 2.25,
+      sm: 3,
+    },
+    pb: {
+      xs: 2.5,
+      sm: 3,
+    },
+  },
+
+  reservationsFiltersInfoCard: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 1.5,
+    p: {
+      xs: 1.75,
+      sm: 2,
+    },
+    borderRadius: "16px",
+    color: colors.text.primary,
+    backgroundColor: colors.background.soft,
+    border: `1px solid ${colors.border.default}`,
+  },
+
+  reservationsFiltersInfoIcon: {
+    width: 46,
+    height: 46,
+    display: "grid",
+    placeItems: "center",
+    flexShrink: 0,
+    borderRadius: "13px",
+    color: colors.brand.primary,
+    backgroundColor: colors.background.surface,
+    border: `1px solid ${colors.border.default}`,
+
+    "& svg": {
+      fontSize: 23,
+    },
+  },
+
+  reservationsFiltersInfoContent: {
+    minWidth: 0,
+    pt: 0.15,
+  },
+
+  reservationsFiltersInfoTitle: {
+    fontSize: 14.5,
+    fontWeight: 750,
+    lineHeight: 1.25,
+    color: colors.text.primary,
+  },
+
+  reservationsFiltersInfoText: {
+    mt: 0.45,
+    fontSize: 13,
+    fontWeight: 400,
+    lineHeight: 1.48,
+    color: colors.text.secondary,
+  },
+
+  reservationsFiltersSectionTitle: {
+    mt: 3,
+    mb: 1.4,
+    fontSize: 12,
+    fontWeight: 800,
+    lineHeight: 1.2,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: colors.brand.primary,
+  },
+
+  reservationsFiltersFieldsGrid: {
+    display: "grid",
+    gap: 2.2,
+  },
+
+  reservationsFiltersFieldGroup: {
+    minWidth: 0,
+  },
+
+  reservationsFiltersAutocomplete: {
+    "& .MuiOutlinedInput-root": {
+      minHeight: 58,
+      borderRadius: "14px",
+      backgroundColor: colors.background.surface,
+      fontSize: 14,
+      color: colors.text.primary,
+      transition:
+        "border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease",
+    },
+
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: colors.border.default,
+    },
+
+    "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: colors.border.strong,
+    },
+
+    "& .MuiOutlinedInput-root.Mui-focused": {
+      boxShadow: `0 0 0 3px ${colors.background.soft}`,
+    },
+
+    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: colors.brand.primary,
+      borderWidth: 1.5,
+    },
+
+    "& .MuiInputLabel-root": {
+      fontSize: 13.5,
+      color: colors.text.secondary,
+    },
+
+    "& .MuiInputLabel-root.Mui-focused": {
+      color: colors.brand.primary,
+    },
+
+    "& .MuiAutocomplete-input": {
+      minWidth: "0 !important",
+    },
+  },
+
+  reservationsFiltersHelperText: {
+    mt: 0.8,
+    px: 0.15,
+    fontSize: 12.5,
+    fontWeight: 400,
+    lineHeight: 1.42,
+    color: colors.text.secondary,
+  },
+
+  reservationsFiltersActions: {
+    px: {
+      xs: 2,
+      sm: 3,
+    },
+    py: {
+      xs: 1.75,
+      sm: 2,
+    },
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 1.25,
+    backgroundColor: colors.background.soft,
+    borderTop: `1px solid ${colors.border.default}`,
+
+    "& > .MuiBox-root": {
+      display: "flex",
+      alignItems: "center",
+      gap: 1,
+      ml: {
+        xs: "auto",
+        sm: 0,
+      },
+    },
+  },
+
+  reservationsFiltersClearButton: {
+    minHeight: 44,
+    px: 2.15,
+    borderRadius: "12px",
+    textTransform: "none",
+    fontSize: 13.5,
+    fontWeight: 700,
+    color: colors.text.secondary,
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.surface,
+
+    "&:hover": {
+      color: colors.text.primary,
+      borderColor: colors.border.strong,
+      backgroundColor: colors.background.surface,
+    },
+
+    "&.Mui-disabled": {
+      color: colors.text.muted,
+      borderColor: colors.border.default,
+      backgroundColor: colors.background.soft,
+      opacity: 0.72,
+    },
+  },
+
+  reservationsFiltersCancelButton: {
+    minHeight: 44,
+    px: 2,
+    borderRadius: "12px",
+    textTransform: "none",
+    fontSize: 13.5,
+    fontWeight: 700,
+    color: colors.text.secondary,
+
+    "&:hover": {
+      color: colors.text.primary,
+      backgroundColor: colors.background.surface,
+    },
+  },
+
+  reservationsFiltersApplyButton: {
+    minHeight: 44,
+    px: 2.4,
+    borderRadius: "12px",
+    textTransform: "none",
+    fontSize: 13.5,
+    fontWeight: 800,
+    color: colors.text.inverse,
+    backgroundColor: colors.brand.primary,
+    boxShadow: "0 10px 22px rgba(47, 111, 70, 0.2)",
+
+    "&:hover": {
+      backgroundColor: colors.brand.primaryDark,
+      boxShadow: "0 12px 24px rgba(47, 111, 70, 0.24)",
+    },
+  },
+
+  /* =========================================================
      ESTADOS UX
   ========================================================= */
 

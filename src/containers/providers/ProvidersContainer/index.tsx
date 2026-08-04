@@ -45,6 +45,7 @@ type ProviderFormMode = "create" | "edit";
 type ProviderStatusFilter = ProviderStatus | "TODOS";
 
 const SEARCH_DEBOUNCE_DELAY = 350;
+const PROVIDERS_PAGE_SIZE = 5;
 
 /*
 Container principal del módulo administrativo de Proveedores.
@@ -88,6 +89,7 @@ export default function ProvidersContainer() {
     updateProviderStatus,
 
     clearProvidersError,
+    clearSelectedProvider,
     clearActionFeedback,
   } = useProviders();
 
@@ -104,8 +106,14 @@ export default function ProvidersContainer() {
   const [isFiltersModalOpen, setIsFiltersModalOpen] =
     useState(false);
 
+  /* =========================================================
+     PAGINACIÓN Y CONSULTA
+  ========================================================= */
+
   /*
   Evita ejecutar una consulta por cada tecla ingresada.
+  La selección se limpia desde el evento de escritura para que
+  la página visible vuelva naturalmente al primer resultado.
   */
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -118,8 +126,9 @@ export default function ProvidersContainer() {
   }, [searchValue]);
 
   /*
-  Consulta proveedores cuando cambia la búsqueda
-  o el filtro de estado.
+  Consulta proveedores cuando cambia la búsqueda o el filtro.
+  El hook conserva la responsabilidad de seleccionar el primer
+  resultado disponible cuando no existe una selección vigente.
   */
   useEffect(() => {
     void fetchProviders({
@@ -130,6 +139,43 @@ export default function ProvidersContainer() {
           : statusFilter,
     });
   }, [debouncedSearch, fetchProviders, statusFilter]);
+
+  const totalProviders = providers.length;
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalProviders / PROVIDERS_PAGE_SIZE),
+  );
+
+  /*
+  La página visible se deriva del proveedor seleccionado.
+
+  Esto mantiene una única fuente de verdad para el patrón
+  Master / Detail y evita sincronizar página y selección
+  mediante efectos secundarios.
+  */
+  const selectedProviderIndex = selectedProvider
+    ? providers.findIndex(
+        (provider) => provider.id === selectedProvider.id,
+      )
+    : -1;
+
+  const visiblePage =
+    selectedProviderIndex >= 0
+      ? Math.floor(
+          selectedProviderIndex / PROVIDERS_PAGE_SIZE,
+        ) + 1
+      : 1;
+
+  const paginatedProviders = useMemo(() => {
+    const startIndex =
+      (visiblePage - 1) * PROVIDERS_PAGE_SIZE;
+
+    return providers.slice(
+      startIndex,
+      startIndex + PROVIDERS_PAGE_SIZE,
+    );
+  }, [providers, visiblePage]);
 
   const activeFiltersCount = useMemo(
     () => (statusFilter === "TODOS" ? 0 : 1),
@@ -197,6 +243,26 @@ export default function ProvidersContainer() {
       }
     },
     [isMobile, selectProvider],
+  );
+
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      const safePage = Math.min(
+        Math.max(nextPage, 1),
+        totalPages,
+      );
+
+      const firstProviderIndex =
+        (safePage - 1) * PROVIDERS_PAGE_SIZE;
+
+      const firstProviderOnPage =
+        providers[firstProviderIndex];
+
+      if (firstProviderOnPage) {
+        selectProvider(firstProviderOnPage.id);
+      }
+    },
+    [providers, selectProvider, totalPages],
   );
 
   const handleCloseMobileDetail = useCallback(() => {
@@ -267,10 +333,11 @@ export default function ProvidersContainer() {
 
   const handleApplyFilters = useCallback(
     (nextStatus: ProviderStatusFilter) => {
+      clearSelectedProvider();
       setStatusFilter(nextStatus);
       setIsFiltersModalOpen(false);
     },
-    [],
+    [clearSelectedProvider],
   );
 
   /* =========================================================
@@ -300,9 +367,10 @@ export default function ProvidersContainer() {
         <Box sx={providersStyles.toolbar}>
           <TextField
             value={searchValue}
-            onChange={(event) =>
-              setSearchValue(event.target.value)
-            }
+            onChange={(event) => {
+              clearSelectedProvider();
+              setSearchValue(event.target.value);
+            }}
             placeholder="Buscar por nombre, contacto o email..."
             size="small"
             fullWidth
@@ -367,14 +435,21 @@ export default function ProvidersContainer() {
       ) : (
         <Box sx={providersStyles.contentGrid}>
           <ProviderListPanel
-            providers={providers}
+            providers={paginatedProviders}
             selectedProviderId={
               selectedProvider?.id ?? null
             }
+            pagination={{
+              page: visiblePage,
+              pageSize: PROVIDERS_PAGE_SIZE,
+              total: totalProviders,
+              totalPages,
+            }}
             loading={loadingProviders}
             searchValue={debouncedSearch}
             statusFilter={statusFilter}
             onSelectProvider={handleSelectProvider}
+            onPageChange={handlePageChange}
           />
 
           {!isMobile && (

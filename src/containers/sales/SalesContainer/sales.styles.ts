@@ -58,20 +58,21 @@ export const salesStyles = {
   panelHeader: {
     display: "flex",
     alignItems: "center",
-    gap: 1.4,
-    mb: 2.15,
+    gap: 1.15,
+    mb: 1.65,
   },
 
   panelHeaderCompact: {
     display: "flex",
     alignItems: "center",
-    gap: 1.4,
+    gap: 1.15,
+    minWidth: 0,
   },
 
   panelIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: "13px",
+    width: 38,
+    height: 38,
+    borderRadius: "11px",
     display: "grid",
     placeItems: "center",
     bgcolor: colors.background.soft,
@@ -81,16 +82,25 @@ export const salesStyles = {
   },
 
   panelTitle: {
-    fontWeight: 800,
+    fontSize: {
+      xs: 17.5,
+      md: 18.5,
+    },
+    fontWeight: 700,
     color: colors.text.primary,
-    lineHeight: 1.08,
-    letterSpacing: "-0.03em",
+    lineHeight: 1.2,
+    letterSpacing: "-0.018em",
   },
 
   panelSubtitle: {
+    mt: 0.3,
+    fontSize: {
+      xs: 12.5,
+      md: 13,
+    },
+    fontWeight: 400,
     color: colors.text.secondary,
-    mt: 0.25,
-    fontSize: 14,
+    lineHeight: 1.4,
   },
 
   stepsWrapper: {
@@ -142,10 +152,10 @@ export const salesStyles = {
     borderRadius: "8px",
     bgcolor: colors.brand.primary,
     color: colors.text.inverse,
-    fontWeight: 800,
+    fontWeight: 700,
     display: "grid",
     placeItems: "center",
-    fontSize: 13,
+    fontSize: 12.5,
     flexShrink: 0,
     boxShadow: "0 6px 12px rgba(47, 111, 70, 0.14)",
   },
@@ -156,10 +166,10 @@ export const salesStyles = {
     borderRadius: "8px",
     bgcolor: "#2F7FD0",
     color: colors.text.inverse,
-    fontWeight: 800,
+    fontWeight: 700,
     display: "grid",
     placeItems: "center",
-    fontSize: 13,
+    fontSize: 12.5,
     flexShrink: 0,
     boxShadow: "0 4px 10px rgba(47, 127, 208, 0.10)",
   },
@@ -170,10 +180,10 @@ export const salesStyles = {
     borderRadius: "8px",
     bgcolor: colors.state.warning,
     color: colors.text.inverse,
-    fontWeight: 800,
+    fontWeight: 700,
     display: "grid",
     placeItems: "center",
-    fontSize: 13,
+    fontSize: 12.5,
     flexShrink: 0,
     boxShadow: "0 6px 12px rgba(197, 138, 31, 0.14)",
   },
@@ -194,9 +204,14 @@ export const salesStyles = {
   },
 
   stepTitle: {
-    fontWeight: 800,
+    fontSize: {
+      xs: 14.25,
+      md: 14.75,
+    },
+    fontWeight: 700,
     color: colors.text.primary,
-    letterSpacing: "-0.01em",
+    letterSpacing: "-0.008em",
+    lineHeight: 1.3,
   },
 
   memberGrid: {
@@ -224,9 +239,10 @@ export const salesStyles = {
   inputLabel: {
     display: "block",
     mb: 0.45,
-    fontWeight: 700,
-    color: colors.text.primary,
-    fontSize: 12,
+    fontSize: 11.75,
+    fontWeight: 650,
+    color: colors.text.secondary,
+    lineHeight: 1.25,
   },
 
   memberSelect: {
@@ -290,7 +306,9 @@ export const salesStyles = {
 
     "& .MuiInputBase-input": {
       py: 1,
-      fontWeight: 700,
+      fontSize: 13.5,
+      fontWeight: 500,
+      color: colors.text.primary,
     },
 
     "& .MuiOutlinedInput-notchedOutline": {
@@ -339,24 +357,31 @@ export const salesStyles = {
   },
 
   optionPrimary: {
-    fontWeight: 800,
+    fontSize: 13.5,
+    fontWeight: 650,
     color: colors.text.primary,
-    lineHeight: 1.15,
-    fontSize: 14,
+    lineHeight: 1.25,
   },
 
   optionSecondary: {
+    mt: 0.2,
     fontSize: 12,
+    fontWeight: 400,
     color: colors.text.secondary,
-    mt: 0.15,
+    lineHeight: 1.35,
   },
 
   activeChip: {
+    height: 24,
     bgcolor: colors.brand.primaryLight,
     color: colors.brand.primaryDark,
-    fontWeight: 800,
-    height: 22,
-    fontSize: 10,
+    fontSize: 10.75,
+    fontWeight: 650,
+    borderRadius: "8px",
+
+    "& .MuiChip-label": {
+      px: 1,
+    },
   },
 
   consumptionCard: {
@@ -378,17 +403,20 @@ export const salesStyles = {
   },
 
   consumptionValue: {
-    fontSize: { xs: 21, md: 23 },
-    fontWeight: 900,
+    fontSize: {
+      xs: 21,
+      md: 22,
+    },
+    fontWeight: 750,
     color: colors.text.primary,
-    letterSpacing: "-0.04em",
+    letterSpacing: "-0.025em",
     lineHeight: 1,
   },
 
   limitText: {
-    fontWeight: 700,
+    fontSize: 13,
+    fontWeight: 500,
     color: colors.text.secondary,
-    fontSize: 14,
   },
 
   progressRow: {
@@ -414,15 +442,16 @@ export const salesStyles = {
   },
 
   progressPercentage: {
-    fontSize: 12,
-    fontWeight: 800,
+    fontSize: 11.5,
+    fontWeight: 650,
     color: colors.text.secondary,
   },
 
   mutedText: {
+    fontSize: 12.25,
+    fontWeight: 400,
     color: colors.text.secondary,
-    fontSize: 13,
-    lineHeight: 1.25,
+    lineHeight: 1.4,
   },
 
   productVisual: {
@@ -464,10 +493,10 @@ export const salesStyles = {
   },
 
   stockValue: {
-    fontWeight: 850,
+    fontSize: 15,
+    fontWeight: 700,
     color: colors.state.success,
-    fontSize: 17,
-    lineHeight: 1.1,
+    lineHeight: 1.2,
   },
 
   addButton: {
@@ -475,7 +504,7 @@ export const salesStyles = {
     borderRadius: "12px",
     px: 1.8,
     bgcolor: colors.brand.primary,
-    fontWeight: 800,
+    fontWeight: 700,
     textTransform: "none",
     boxShadow: "0 5px 12px rgba(47, 111, 70, 0.12)",
 
@@ -495,14 +524,20 @@ export const salesStyles = {
   tableHeader: {
     display: { xs: "none", md: "grid" },
     gridTemplateColumns: "1.3fr 0.45fr 0.72fr 0.82fr 0.82fr 0.5fr",
+    alignItems: "center",
+    minHeight: 42,
     px: 1.45,
-    py: 0.55,
-    bgcolor: colors.background.soft,
+    py: 0.65,
+    bgcolor: "rgba(16, 41, 28, 0.025)",
+    borderBottom: `1px solid ${colors.border.default}`,
 
     "& .MuiTypography-root": {
-      fontSize: 12,
-      fontWeight: 800,
+      fontSize: 11.25,
+      fontWeight: 700,
       color: colors.text.secondary,
+      textTransform: "uppercase",
+      letterSpacing: "0.055em",
+      lineHeight: 1.2,
     },
   },
 
@@ -515,12 +550,14 @@ export const salesStyles = {
     gap: { xs: 1, md: 0 },
     alignItems: "center",
     px: 1.45,
-    py: 0.75,
+    py: 0.9,
     borderTop: `1px solid ${colors.border.default}`,
 
     "& .MuiTypography-root": {
       fontSize: 13,
+      fontWeight: 500,
       color: colors.text.secondary,
+      lineHeight: 1.35,
     },
   },
 
@@ -531,12 +568,14 @@ export const salesStyles = {
   },
 
   productName: {
-    fontWeight: 800,
+    fontSize: 13.25,
+    fontWeight: 650,
     color: `${colors.text.primary} !important`,
   },
 
   subtotalText: {
-    fontWeight: 900,
+    fontSize: 13.25,
+    fontWeight: 700,
     color: `${colors.text.primary} !important`,
   },
 
@@ -558,8 +597,10 @@ export const salesStyles = {
     gap: 0.65,
   },
   summaryIntroText: {
-    fontSize: 15,
+    fontSize: 13,
+    fontWeight: 400,
     color: colors.text.secondary,
+    lineHeight: 1.4,
   },
 
   summaryMetricsGrid: {
@@ -609,8 +650,8 @@ export const salesStyles = {
   },
 
   summaryCurrencyIcon: {
-    fontSize: 26,
-    fontWeight: 900,
+    fontSize: 24,
+    fontWeight: 700,
     color: colors.state.success,
     lineHeight: 1,
   },
@@ -622,23 +663,32 @@ export const salesStyles = {
   },
 
   summaryMetricLabel: {
-    fontSize: 13,
-    fontWeight: 800,
-    color: colors.text.secondary,
     mb: 0.25,
+    fontSize: 11.5,
+    fontWeight: 650,
+    color: colors.text.secondary,
+    lineHeight: 1.25,
   },
 
   summaryMetricValueOrange: {
-    fontSize: 24,
-    fontWeight: 900,
+    fontSize: {
+      xs: 21,
+      md: 22,
+    },
+    fontWeight: 750,
     color: colors.state.warning,
+    letterSpacing: "-0.02em",
     lineHeight: 1,
   },
 
   summaryMetricValueGreen: {
-    fontSize: 24,
-    fontWeight: 900,
+    fontSize: {
+      xs: 21,
+      md: 22,
+    },
+    fontWeight: 750,
     color: colors.state.success,
+    letterSpacing: "-0.02em",
     lineHeight: 1,
   },
 
@@ -666,17 +716,18 @@ export const salesStyles = {
   },
 
   summaryStatusText: {
-    fontSize: 12,
-    fontWeight: 800,
+    fontSize: 11.5,
+    fontWeight: 650,
     color: colors.state.success,
   },
 
   observationsHeader: {
     display: "block",
     mb: 0.65,
-    fontWeight: 800,
-    fontSize: 14,
+    fontSize: 12.5,
+    fontWeight: 650,
     color: colors.text.primary,
+    lineHeight: 1.3,
   },
 
   summaryHeader: {
@@ -712,8 +763,8 @@ export const salesStyles = {
   },
 
   compactGramsValue: {
-    fontSize: 17,
-    fontWeight: 900,
+    fontSize: 16,
+    fontWeight: 700,
     color: colors.state.warning,
     lineHeight: 1,
   },
@@ -723,10 +774,13 @@ export const salesStyles = {
   },
 
   totalAmount: {
-    fontSize: { xs: 28, md: 32 },
-    fontWeight: 950,
+    fontSize: {
+      xs: 25,
+      md: 28,
+    },
+    fontWeight: 750,
     color: colors.brand.primaryDark,
-    letterSpacing: "-0.045em",
+    letterSpacing: "-0.03em",
     lineHeight: 1,
   },
 
@@ -783,7 +837,7 @@ export const salesStyles = {
     borderRadius: "14px",
     px: 2.75,
     textTransform: "none",
-    fontWeight: 800,
+    fontWeight: 700,
     borderColor: colors.border.default,
     color: colors.text.primary,
     bgcolor: colors.background.surface,
@@ -798,7 +852,7 @@ export const salesStyles = {
     borderRadius: "14px",
     px: 3,
     textTransform: "none",
-    fontWeight: 900,
+    fontWeight: 700,
     bgcolor: colors.brand.primary,
     boxShadow: "0 10px 22px rgba(47,111,70,0.18)",
 
@@ -824,10 +878,10 @@ export const salesStyles = {
 
   filterButton: {
     borderRadius: "14px",
-    minHeight: 44,
-    px: 2.15,
+    minHeight: 42,
+    px: 1.85,
     textTransform: "none",
-    fontWeight: 800,
+    fontWeight: 700,
     color: colors.text.primary,
     borderColor: colors.border.default,
     bgcolor: colors.background.surface,
@@ -863,27 +917,25 @@ export const salesStyles = {
       xs: "none",
       md: "grid",
     },
-
     gridTemplateColumns: salesHistoryColumns,
-
+    alignItems: "center",
+    minHeight: 48,
     px: 2.2,
-    py: 1.05,
-
+    py: 0.9,
+    bgcolor: "rgba(16, 41, 28, 0.025)",
     borderBottom: `1px solid ${colors.border.default}`,
 
     "& .MuiTypography-root": {
       minWidth: 0,
-      fontSize: 11.5,
-      fontWeight: 750,
+      fontSize: 11.25,
+      fontWeight: 700,
       color: colors.text.secondary,
       textTransform: "uppercase",
-      letterSpacing: "0.045em",
+      letterSpacing: "0.055em",
+      lineHeight: 1.2,
+      whiteSpace: "nowrap",
     },
 
-    /*
-    Alineación explícita por columna para que el encabezado
-    coincida visualmente con el contenido de cada venta.
-    */
     "& > :nth-child(3), & > :nth-child(4), & > :nth-child(5)": {
       justifySelf: "center",
       textAlign: "center",
@@ -901,17 +953,13 @@ export const salesStyles = {
 
   saleRow: {
     display: "grid",
-
     gridTemplateColumns: {
       xs: "1fr",
       md: salesHistoryColumns,
     },
-
     alignItems: "center",
-
     px: 2.2,
-    py: 1.7,
-
+    py: 1.45,
     borderBottom: `1px solid ${colors.border.default}`,
     transition: "background-color 160ms ease",
 
@@ -919,11 +967,6 @@ export const salesStyles = {
       minWidth: 0,
     },
 
-    /*
-    Las columnas numéricas y de estado se centran para evitar
-    la sensación de tabla desfasada. La columna Acciones queda
-    alineada al inicio y con ancho suficiente para ojo + acción.
-    */
     "& > :nth-child(3), & > :nth-child(4), & > :nth-child(5)": {
       justifySelf: "center",
       textAlign: "center",
@@ -967,16 +1010,21 @@ export const salesStyles = {
   },
 
   saleCode: {
-    fontWeight: 900,
+    fontSize: 14.25,
+    fontWeight: 700,
     color: colors.text.primary,
+    lineHeight: 1.3,
   },
 
   saleDate: {
     display: "flex",
     alignItems: "flex-start",
     gap: 0.5,
+    mt: 0.25,
+    fontSize: 12,
+    fontWeight: 400,
     color: colors.text.secondary,
-    lineHeight: 1.25,
+    lineHeight: 1.35,
     whiteSpace: "normal",
     overflowWrap: "anywhere",
   },
@@ -989,57 +1037,61 @@ export const salesStyles = {
   },
 
   saleMember: {
-    fontWeight: 800,
+    fontSize: 14,
+    fontWeight: 650,
     color: colors.text.primary,
+    lineHeight: 1.3,
   },
 
   saleGrams: {
-    fontSize: 16,
-    fontWeight: 850,
+    fontSize: 13.25,
+    fontWeight: 600,
     color: colors.text.primary,
-    lineHeight: 1.1,
+    lineHeight: 1.3,
   },
 
   saleQuantity: {
-    fontSize: 14,
-    fontWeight: 700,
+    fontSize: 13.25,
+    fontWeight: 600,
     color: colors.text.primary,
+    lineHeight: 1.3,
   },
 
   saleTotal: {
-    fontSize: 15,
-    fontWeight: 850,
+    fontSize: 13.75,
+    fontWeight: 700,
     color: colors.text.primary,
-    letterSpacing: "-0.01em",
+    letterSpacing: "-0.005em",
+    lineHeight: 1.3,
   },
 
   registeredChip: {
-    height: 26,
+    height: 27,
     maxWidth: 118,
     justifySelf: "start",
     bgcolor: colors.brand.primaryLight,
     color: colors.brand.primaryDark,
-    fontWeight: 900,
-
-    "& .MuiChip-label": {
-      px: 1.4,
-      fontSize: 12,
-    },
-  },
-
-  cancelledChip: {
-    height: 24,
-    minWidth: 92,
-    justifySelf: "start",
-    bgcolor: softError,
-    color: colors.state.error,
-    fontWeight: 900,
-    borderRadius: "999px",
+    fontWeight: 650,
+    borderRadius: "9px",
 
     "& .MuiChip-label": {
       px: 1.15,
       fontSize: 11.5,
-      letterSpacing: "0.01em",
+    },
+  },
+
+  cancelledChip: {
+    height: 27,
+    minWidth: 92,
+    justifySelf: "start",
+    bgcolor: softError,
+    color: colors.state.error,
+    fontWeight: 650,
+    borderRadius: "9px",
+
+    "& .MuiChip-label": {
+      px: 1.15,
+      fontSize: 11.5,
     },
   },
 
@@ -1071,7 +1123,7 @@ export const salesStyles = {
   cancelButton: {
     borderRadius: "12px",
     textTransform: "none",
-    fontWeight: 700,
+    fontWeight: 650,
     color: colors.state.error,
     minWidth: 72,
     flexShrink: 0,
@@ -1097,9 +1149,10 @@ export const salesStyles = {
   },
 
   emptyTitle: {
-    fontWeight: 900,
-    color: colors.text.primary,
     mb: 0.5,
+    fontSize: 15,
+    fontWeight: 700,
+    color: colors.text.primary,
   },
 
   /*
@@ -1138,26 +1191,29 @@ export const salesStyles = {
   },
 
   saleDetailEyebrow: {
-    fontSize: 11,
-    fontWeight: 850,
+    fontSize: 11.25,
+    fontWeight: 650,
     color: colors.brand.primary,
     textTransform: "uppercase",
-    letterSpacing: "0.08em",
+    letterSpacing: "0.06em",
     mb: 0.35,
   },
 
   saleDetailTitle: {
-    fontSize: { xs: 22, md: 25 },
-    fontWeight: 850,
+    fontSize: {
+      xs: 20,
+      md: 22,
+    },
+    fontWeight: 700,
     color: colors.text.primary,
-    letterSpacing: "-0.025em",
-    lineHeight: 1.15,
+    letterSpacing: "-0.02em",
+    lineHeight: 1.2,
   },
 
   saleDetailSubtitle: {
     mt: 0.45,
-    fontSize: { xs: 13, md: 14 },
-    fontWeight: 500,
+    fontSize: 13.25,
+    fontWeight: 400,
     color: colors.text.secondary,
     lineHeight: 1.45,
   },
@@ -1208,27 +1264,28 @@ export const salesStyles = {
   },
 
   saleDetailLabel: {
-    fontSize: 11.5,
-    fontWeight: 800,
+    mb: 0.45,
+    fontSize: 11.25,
+    fontWeight: 650,
     color: colors.text.secondary,
     textTransform: "uppercase",
-    letterSpacing: "0.045em",
-    mb: 0.45,
+    letterSpacing: "0.035em",
+    lineHeight: 1.25,
   },
 
   saleDetailValue: {
-    fontSize: 14.5,
-    fontWeight: 800,
+    fontSize: 13.25,
+    fontWeight: 500,
     color: colors.text.primary,
-    lineHeight: 1.3,
+    lineHeight: 1.4,
     wordBreak: "break-word",
   },
 
   saleDetailValueGreen: {
-    fontSize: 14.5,
-    fontWeight: 850,
+    fontSize: 13.25,
+    fontWeight: 600,
     color: colors.brand.primary,
-    lineHeight: 1.3,
+    lineHeight: 1.4,
     wordBreak: "break-word",
   },
 
@@ -1253,16 +1310,19 @@ export const salesStyles = {
   },
 
   saleDetailSectionTitle: {
-    fontSize: 15.5,
-    fontWeight: 850,
-    color: colors.text.primary,
-    letterSpacing: "-0.015em",
+    fontSize: 11.75,
+    fontWeight: 700,
+    color: colors.brand.primary,
+    textTransform: "uppercase",
+    letterSpacing: "0.065em",
+    lineHeight: 1.2,
   },
 
   saleDetailSectionHint: {
     fontSize: 12.5,
-    fontWeight: 550,
+    fontWeight: 400,
     color: colors.text.secondary,
+    lineHeight: 1.4,
   },
 
   saleDetailTable: {
@@ -1280,16 +1340,20 @@ export const salesStyles = {
       md: "1.6fr 0.65fr 0.85fr 0.9fr 0.9fr",
     },
     gap: 1,
+    alignItems: "center",
+    minHeight: 46,
     px: { xs: 1.35, md: 1.6 },
-    py: 0.95,
-    bgcolor: subtleGreen,
+    py: 0.85,
+    bgcolor: "rgba(16, 41, 28, 0.025)",
     borderBottom: `1px solid ${colors.border.default}`,
+
     "& .MuiTypography-root": {
-      fontSize: 11.5,
-      fontWeight: 800,
+      fontSize: 11.25,
+      fontWeight: 700,
       color: colors.text.secondary,
       textTransform: "uppercase",
-      letterSpacing: "0.035em",
+      letterSpacing: "0.055em",
+      lineHeight: 1.2,
     },
   },
 
@@ -1310,22 +1374,24 @@ export const salesStyles = {
   },
 
   saleDetailProductName: {
-    fontSize: 14,
-    fontWeight: 850,
+    fontSize: 13.5,
+    fontWeight: 650,
     color: colors.text.primary,
-    lineHeight: 1.25,
+    lineHeight: 1.3,
   },
 
   saleDetailTableText: {
-    fontSize: 13.2,
-    fontWeight: 650,
+    fontSize: 13,
+    fontWeight: 500,
     color: colors.text.secondary,
+    lineHeight: 1.35,
   },
 
   saleDetailTableTextStrong: {
-    fontSize: 13.2,
-    fontWeight: 800,
+    fontSize: 13,
+    fontWeight: 650,
     color: colors.text.primary,
+    lineHeight: 1.35,
   },
 
   saleDetailFooterGrid: {
@@ -1344,8 +1410,8 @@ export const salesStyles = {
   },
 
   saleDetailObservationText: {
-    fontSize: 13.2,
-    fontWeight: 550,
+    fontSize: 13.25,
+    fontWeight: 400,
     color: colors.text.secondary,
     lineHeight: 1.5,
   },
@@ -1375,11 +1441,14 @@ export const salesStyles = {
   },
 
   saleDetailTotal: {
-    fontSize: { xs: 20, md: 22 },
-    fontWeight: 850,
+    fontSize: {
+      xs: 20,
+      md: 22,
+    },
+    fontWeight: 700,
     color: colors.brand.primary,
-    letterSpacing: "-0.025em",
-    lineHeight: 1.1,
+    letterSpacing: "-0.02em",
+    lineHeight: 1.15,
   },
 
   saleDetailActions: {
@@ -1396,9 +1465,10 @@ export const salesStyles = {
     py: 1.05,
     bgcolor: colors.background.surface,
     color: colors.text.primary,
-    fontWeight: 800,
+    fontWeight: 700,
     textTransform: "none",
     boxShadow: "0 10px 24px rgba(16, 41, 28, 0.05)",
+
     "&:hover": {
       bgcolor: subtleGreen,
     },
@@ -1409,162 +1479,307 @@ export const salesStyles = {
   ========================================================= */
 
   salesFiltersDialog: {
-    borderRadius: "28px",
+    borderRadius: "24px",
     bgcolor: colors.background.surface,
-    boxShadow: "0 28px 90px rgba(16, 41, 28, 0.18)",
+    boxShadow: "0 30px 90px rgba(16, 41, 28, 0.20)",
     overflow: "hidden",
+    width: "100%",
   },
 
   salesFiltersHeader: {
-    px: { xs: 2.25, md: 2.8 },
-    pt: { xs: 2.25, md: 2.6 },
-    pb: 1.55,
+    px: { xs: 2.25, sm: 3 },
+    py: { xs: 2.2, sm: 2.6 },
     borderBottom: `1px solid ${colors.border.default}`,
     bgcolor: colors.background.surface,
   },
 
+  salesFiltersHeaderContent: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 2,
+  },
+
   salesFiltersTitle: {
-    fontSize: { xs: 21, md: 24 },
-    fontWeight: 850,
+    fontSize: {
+      xs: 22,
+      sm: 25,
+    },
+    fontWeight: 700,
     color: colors.text.primary,
-    letterSpacing: "-0.03em",
-    lineHeight: 1.1,
+    letterSpacing: "-0.025em",
+    lineHeight: 1.15,
   },
 
   salesFiltersSubtitle: {
-    mt: 0.45,
-    fontSize: 13.5,
-    fontWeight: 500,
+    mt: 0.55,
+    fontSize: {
+      xs: 14,
+      sm: 15,
+    },
+    fontWeight: 400,
     color: colors.text.secondary,
     lineHeight: 1.45,
   },
 
-  salesFiltersContent: {
-    px: { xs: 2.25, md: 2.8 },
-    pt: { xs: 2.35, md: 2.65 },
-    pb: { xs: 2.1, md: 2.4 },
+  salesFiltersCloseButton: {
+    width: 44,
+    height: 44,
+    flexShrink: 0,
+    border: `1px solid ${colors.border.default}`,
+    color: colors.text.secondary,
     bgcolor: colors.background.surface,
+
+    "&:hover": {
+      color: colors.text.primary,
+      bgcolor: colors.background.soft,
+      borderColor: colors.border.strong,
+    },
+  },
+
+  salesFiltersContent: {
+    px: { xs: 2.25, sm: 3 },
+    py: { xs: 2.4, sm: 2.8 },
+    bgcolor: colors.background.surface,
+  },
+
+  salesFiltersInfoBox: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 1.4,
+    p: { xs: 1.6, sm: 1.8 },
+    mb: { xs: 2.4, sm: 2.8 },
+    borderRadius: "18px",
+    border: `1px solid ${colors.border.default}`,
+    bgcolor: colors.background.soft,
+  },
+
+  salesFiltersInfoIcon: {
+    width: 42,
+    height: 42,
+    flexShrink: 0,
+    display: "grid",
+    placeItems: "center",
+    borderRadius: "13px",
+    border: `1px solid ${colors.border.default}`,
+    bgcolor: colors.background.surface,
+    color: colors.brand.primary,
+  },
+
+  salesFiltersInfoContent: {
+    minWidth: 0,
+  },
+
+  salesFiltersInfoTitle: {
+    fontSize: 14.5,
+    fontWeight: 700,
+    color: colors.text.primary,
+    lineHeight: 1.3,
+  },
+
+  salesFiltersInfoText: {
+    mt: 0.3,
+    fontSize: 13.5,
+    fontWeight: 400,
+    color: colors.text.secondary,
+    lineHeight: 1.45,
   },
 
   salesFiltersSection: {
     display: "grid",
     gap: 1,
+  },
 
-    /*
-    Evita que el primer label del modal quede visualmente
-    pegado al divisor del encabezado.
-    */
-    "&:first-of-type": {
-      mt: 1,
-    },
+  salesFiltersSectionTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: colors.brand.primary,
+    textTransform: "uppercase",
+    letterSpacing: "0.055em",
+    lineHeight: 1.3,
   },
 
   salesFiltersLabel: {
     fontSize: 12,
-    fontWeight: 850,
-    color: colors.text.secondary,
+    fontWeight: 700,
+    color: colors.brand.primary,
     textTransform: "uppercase",
-    letterSpacing: "0.045em",
-    mb: 0.75,
+    letterSpacing: "0.055em",
+    lineHeight: 1.3,
   },
+
   salesFiltersSelect: {
+    minHeight: 56,
     borderRadius: "16px",
-    bgcolor: colors.background.soft,
+    bgcolor: colors.background.surface,
     color: colors.text.primary,
-    fontWeight: 650,
+    fontSize: 15,
+    fontWeight: 600,
+
     "& .MuiOutlinedInput-notchedOutline": {
       borderColor: colors.border.default,
     },
+
     "&:hover .MuiOutlinedInput-notchedOutline": {
-      borderColor: colors.brand.primary,
+      borderColor: colors.border.strong,
     },
+
     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
       borderColor: colors.brand.primary,
-      borderWidth: 1,
+      borderWidth: 1.5,
     },
+
     "& .MuiSelect-select": {
-      py: 1.2,
+      py: 1.55,
+      display: "flex",
+      alignItems: "center",
     },
+  },
+
+  salesFiltersHelperText: {
+    fontSize: 13,
+    fontWeight: 400,
+    color: colors.text.secondary,
+    lineHeight: 1.4,
   },
 
   salesFiltersDivider: {
     height: "1px",
     width: "100%",
     bgcolor: colors.border.default,
-    my: 2,
+    my: { xs: 2.2, sm: 2.5 },
   },
 
   salesFiltersDateGrid: {
     display: "grid",
     gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-    gap: 1.25,
+    gap: 1.4,
   },
 
   salesFiltersDateField: {
     display: "grid",
-    gap: 0.75,
+    gap: 0.65,
   },
 
   salesFiltersDateLabel: {
+    fontSize: 11.5,
+    fontWeight: 650,
     color: colors.text.secondary,
-    fontWeight: 800,
-    fontSize: "0.85rem",
-    lineHeight: 1,
+    textTransform: "uppercase",
+    letterSpacing: "0.045em",
+    lineHeight: 1.3,
   },
 
   salesFiltersDateInput: {
     "& .MuiOutlinedInput-root": {
+      minHeight: 56,
       borderRadius: "16px",
-      bgcolor: colors.background.soft,
+      bgcolor: colors.background.surface,
       color: colors.text.primary,
-      fontWeight: 650,
+      fontSize: 15,
+      fontWeight: 600,
+
       "& fieldset": {
         borderColor: colors.border.default,
       },
+
       "&:hover fieldset": {
-        borderColor: colors.brand.primary,
+        borderColor: colors.border.strong,
       },
+
       "&.Mui-focused fieldset": {
         borderColor: colors.brand.primary,
-        borderWidth: 1,
+        borderWidth: 1.5,
       },
+    },
+
+    "& .MuiInputBase-input": {
+      py: 1.45,
     },
   },
 
   salesFiltersActions: {
-    px: { xs: 2.25, md: 2.8 },
-    py: 1.8,
-    gap: 1,
+    px: { xs: 2.25, sm: 3 },
+    py: { xs: 1.8, sm: 2 },
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 1.25,
     borderTop: `1px solid ${colors.border.default}`,
     bgcolor: colors.background.soft,
+
+    "@media (max-width: 599px)": {
+      alignItems: "stretch",
+      flexDirection: "column",
+    },
+  },
+
+  salesFiltersPrimaryActions: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 1,
+
+    "@media (max-width: 599px)": {
+      width: "100%",
+
+      "& > button": {
+        flex: 1,
+      },
+    },
   },
 
   salesFiltersClearButton: {
-    borderRadius: "16px",
-    px: 2.2,
-    py: 1,
-    color: colors.text.primary,
-    fontWeight: 800,
+    minHeight: 46,
+    borderRadius: "14px",
+    px: 1.8,
+    color: colors.text.secondary,
+    fontWeight: 700,
     textTransform: "none",
+    border: `1px solid ${colors.border.default}`,
     bgcolor: colors.background.surface,
-    boxShadow: "0 10px 24px rgba(16, 41, 28, 0.045)",
+
     "&:hover": {
+      color: colors.text.primary,
       bgcolor: subtleGreen,
+      borderColor: colors.border.strong,
+    },
+
+    "&.Mui-disabled": {
+      color: colors.text.secondary,
+      opacity: 0.45,
+      bgcolor: colors.background.surface,
+      borderColor: colors.border.default,
+    },
+  },
+
+  salesFiltersCancelButton: {
+    minHeight: 46,
+    borderRadius: "14px",
+    px: 2,
+    color: colors.text.secondary,
+    fontWeight: 700,
+    textTransform: "none",
+
+    "&:hover": {
+      color: colors.text.primary,
+      bgcolor: colors.background.surface,
     },
   },
 
   salesFiltersApplyButton: {
-    borderRadius: "16px",
-    px: 2.4,
-    py: 1,
+    minHeight: 46,
+    borderRadius: "14px",
+    px: 2.3,
     bgcolor: colors.brand.primary,
     color: colors.text.inverse,
-    fontWeight: 850,
+    fontWeight: 700,
     textTransform: "none",
-    boxShadow: "0 14px 30px rgba(47, 111, 70, 0.22)",
+    boxShadow: "0 12px 26px rgba(47, 111, 70, 0.20)",
+
     "&:hover": {
       bgcolor: colors.brand.primaryDark,
-      boxShadow: "0 16px 34px rgba(47, 111, 70, 0.28)",
+      boxShadow: "0 14px 30px rgba(47, 111, 70, 0.26)",
     },
   },
 

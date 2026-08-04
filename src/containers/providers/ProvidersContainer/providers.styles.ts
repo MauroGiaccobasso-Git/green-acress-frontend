@@ -27,7 +27,7 @@ const neutralBorder = alpha(colors.text.primary, 0.11);
 const selectedSurface = alpha(colors.brand.primary, 0.065);
 
 const providerTableColumns =
-  "minmax(235px, 1.35fr) minmax(135px, 0.8fr) minmax(120px, 0.7fr) minmax(200px, 1.05fr) minmax(90px, 0.5fr)";
+  "minmax(180px, 1.3fr) minmax(110px, 0.75fr) minmax(100px, 0.65fr) minmax(170px, 1fr) minmax(72px, 0.45fr)";
 
 export const providersStyles = {
   /* =========================================================
@@ -218,9 +218,7 @@ export const providersStyles = {
     display: "grid",
     gridTemplateColumns: {
       xs: "minmax(0, 1fr)",
-      md: "minmax(0, 1fr)",
-      lg: "minmax(0, 1.08fr) minmax(430px, 0.92fr)",
-      xl: "minmax(0, 1.04fr) minmax(500px, 0.96fr)",
+      xl: "minmax(0, 1.08fr) minmax(430px, 0.92fr)",
     },
     gap: {
       xs: 1.75,
@@ -340,7 +338,7 @@ export const providersStyles = {
   providersTable: {
     minWidth: {
       xs: "100%",
-      md: 930,
+      md: 720,
     },
   },
 
@@ -607,6 +605,18 @@ export const providersStyles = {
     fontSize: 12.25,
     fontWeight: 450,
     color: neutralSecondary,
+  },
+
+  paginationArea: {
+    minHeight: 74,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    mt: "auto",
+    px: 2,
+    py: 1.75,
+    borderTop: `1px solid ${neutralBorder}`,
+    backgroundColor: alpha(colors.text.primary, 0.018),
   },
 
   /* =========================================================
