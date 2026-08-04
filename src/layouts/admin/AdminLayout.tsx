@@ -1,7 +1,28 @@
 "use client";
 
-import { ReactNode, useState } from "react";
-import { usePathname } from "next/navigation";
+import type {
+  MouseEvent,
+  ReactNode,
+} from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
+import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
+import MenuIcon from "@mui/icons-material/Menu";
+import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 import {
   AppBar,
   Avatar,
@@ -17,28 +38,72 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import MenuIcon from "@mui/icons-material/Menu";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
-import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
-import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
-import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
-import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
-import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
+import { usePathname } from "next/navigation";
 
-import { useAuth } from "@/hooks/auth/useAuth";
-import { styles } from "./adminLayout.styles";
 import { PageHeader } from "@/components/common/PageHeader";
+import { useAuth } from "@/hooks/auth/useAuth";
+
+import { styles } from "./adminLayout.styles";
+
+/* =========================================================
+   TIPOS
+========================================================= */
 
 type AdminLayoutProps = {
   children: ReactNode;
+
   title?: string;
+
   subtitle?: string;
 };
+
+type AdminHeaderActionsContextValue = {
+  setHeaderActions: (actions: ReactNode) => void;
+
+  clearHeaderActions: () => void;
+};
+
+/* =========================================================
+   CONTEXTO DE ACCIONES DEL HEADER
+========================================================= */
+
+/*
+Permite que cada módulo administrativo agregue contenido
+contextual al extremo derecho del header.
+
+Ejemplos:
+- fecha de actualización;
+- botón de creación;
+- filtros rápidos;
+- acciones específicas de una pantalla.
+
+El layout continúa siendo reutilizable y no necesita conocer
+los datos ni la lógica interna de cada módulo.
+*/
+const AdminHeaderActionsContext =
+  createContext<AdminHeaderActionsContextValue | null>(null);
+
+/*
+Hook utilizado por los containers que necesiten renderizar
+una acción contextual dentro del header administrativo.
+
+Debe utilizarse únicamente dentro de AdminLayout.
+*/
+export function useAdminHeaderActions() {
+  const context = useContext(AdminHeaderActionsContext);
+
+  if (!context) {
+    throw new Error(
+      "useAdminHeaderActions debe utilizarse dentro de AdminLayout.",
+    );
+  }
+
+  return context;
+}
+
+/* =========================================================
+   NAVEGACIÓN
+========================================================= */
 
 const navigationSections = [
   {
@@ -57,25 +122,21 @@ const navigationSections = [
       {
         label: "Stock",
         href: "/admin/stock",
-        disabled: false,
         icon: <Inventory2OutlinedIcon fontSize="small" />,
       },
       {
         label: "Ventas",
         href: "/admin/sales",
-        disabled: false,
         icon: <PointOfSaleOutlinedIcon fontSize="small" />,
       },
       {
         label: "Reservas",
         href: "/admin/reservations",
-        disabled: false,
         icon: <EventAvailableOutlinedIcon fontSize="small" />,
       },
       {
         label: "Socios",
         href: "/admin/members",
-        disabled: false,
         icon: <GroupOutlinedIcon fontSize="small" />,
       },
     ],
@@ -86,13 +147,11 @@ const navigationSections = [
       {
         label: "Proveedores",
         href: "/admin/providers",
-        disabled: false,
         icon: <LocalShippingOutlinedIcon fontSize="small" />,
       },
       {
         label: "Compras",
         href: "/admin/purchases",
-        disabled: false,
         icon: <ShoppingBagOutlinedIcon fontSize="small" />,
       },
     ],
@@ -101,67 +160,109 @@ const navigationSections = [
     title: "Configuración",
     items: [
       {
-        label: "Usuarios",
-        href: "/admin/users",
-        disabled: true,
-        icon: <GroupOutlinedIcon fontSize="small" />,
-      },
-      {
         label: "Novedades",
         href: "/admin/news",
-        disabled: false,
         icon: <ArticleOutlinedIcon fontSize="small" />,
       },
       {
         label: "Configuración",
         href: "/admin/settings",
-        disabled: false,
         icon: <SettingsOutlinedIcon fontSize="small" />,
       },
     ],
   },
 ];
 
-export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
+/* =========================================================
+   LAYOUT PRINCIPAL
+========================================================= */
+
+export function AdminLayout({
+  children,
+  title,
+  subtitle,
+}: AdminLayoutProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
+  const [anchorEl, setAnchorEl] =
+    useState<HTMLElement | null>(null);
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] =
+    useState(false);
+
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] =
+    useState(true);
+
+  const [headerActions, setHeaderActionsState] =
+    useState<ReactNode>(null);
 
   const isUserMenuOpen = Boolean(anchorEl);
 
-  // Abre el menú desplegable del usuario desde el botón del header.
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+  /* =========================================================
+     ACCIONES DEL HEADER
+  ========================================================= */
+
+  const setHeaderActions = useCallback(
+    (actions: ReactNode) => {
+      setHeaderActionsState(() => actions);
+    },
+    [],
+  );
+
+  const clearHeaderActions = useCallback(() => {
+    setHeaderActionsState(null);
+  }, []);
+
+  const headerActionsContextValue =
+    useMemo<AdminHeaderActionsContextValue>(
+      () => ({
+        setHeaderActions,
+        clearHeaderActions,
+      }),
+      [clearHeaderActions, setHeaderActions],
+    );
+
+  /* =========================================================
+     HANDLERS DEL USUARIO
+  ========================================================= */
+
+  const handleOpenUserMenu = (
+    event: MouseEvent<HTMLElement>,
+  ) => {
     setAnchorEl(event.currentTarget);
   };
 
-  // Cierra el menú de usuario sin ejecutar acciones adicionales.
   const handleCloseUserMenu = () => {
     setAnchorEl(null);
   };
 
-  // Abre la navegación mobile desde el botón hamburguesa.
-  const handleOpenMobileMenu = () => {
-    setIsMobileMenuOpen(true);
-  };
-
-  // Cierra la navegación mobile.
-  const handleCloseMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  // Permite ocultar o mostrar el sidebar en desktop desde el botón hamburguesa.
-  const handleToggleDesktopSidebar = () => {
-    setIsDesktopSidebarOpen((currentValue) => !currentValue);
-  };
-
-  // Cierra la sesión desde el menú del usuario.
   const handleLogout = () => {
     handleCloseUserMenu();
     logout();
   };
+
+  /* =========================================================
+     HANDLERS DE NAVEGACIÓN
+  ========================================================= */
+
+  const handleOpenMobileMenu = () => {
+    setIsMobileMenuOpen(true);
+  };
+
+  const handleCloseMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleToggleDesktopSidebar = () => {
+    setIsDesktopSidebarOpen(
+      (currentValue) => !currentValue,
+    );
+  };
+
+  /* =========================================================
+     BLOQUES REUTILIZABLES
+  ========================================================= */
 
   const renderBrand = () => (
     <Box sx={styles.sidebarBrand}>
@@ -170,34 +271,44 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
       </Avatar>
 
       <Box>
-        <Typography variant="subtitle1" sx={styles.brandTitle}>
+        <Typography
+          variant="subtitle1"
+          sx={styles.brandTitle}
+        >
           Green Acres
         </Typography>
 
-        <Typography variant="caption" sx={styles.brandSubtitle}>
+        <Typography
+          variant="caption"
+          sx={styles.brandSubtitle}
+        >
           Club Cannábico
         </Typography>
       </Box>
     </Box>
   );
 
-  /*
-  Renderiza la navegación por secciones.
-
-  Mantiene la misma lógica de activación por pathname
-  y reutiliza el mismo bloque tanto para desktop como para mobile.
-  */
   const renderNavigation = (isMobile = false) => (
     <Box sx={styles.navigationSections}>
       {navigationSections.map((section) => (
-        <Box key={section.title} sx={styles.navigationSection}>
-          <Typography variant="overline" sx={styles.sidebarSectionTitle}>
+        <Box
+          key={section.title}
+          sx={styles.navigationSection}
+        >
+          <Typography
+            variant="overline"
+            sx={styles.sidebarSectionTitle}
+          >
             {section.title}
           </Typography>
 
           <List
             disablePadding
-            sx={isMobile ? styles.mobileNavigationList : styles.navigationList}
+            sx={
+              isMobile
+                ? styles.mobileNavigationList
+                : styles.navigationList
+            }
           >
             {section.items.map((item) => {
               const isActive = pathname === item.href;
@@ -205,24 +316,35 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
               return (
                 <ListItemButton
                   key={item.href}
-                  component={item.disabled ? "button" : "a"}
-                  href={item.disabled ? undefined : item.href}
-                  disabled={item.disabled}
+                  component="a"
+                  href={item.href}
                   selected={isActive}
-                  onClick={isMobile ? handleCloseMobileMenu : undefined}
+                  onClick={
+                    isMobile
+                      ? handleCloseMobileMenu
+                      : undefined
+                  }
                   sx={
                     isMobile
-                      ? styles.mobileNavigationItem(isActive)
-                      : styles.sidebarNavigationItem(isActive)
+                      ? styles.mobileNavigationItem(
+                          isActive,
+                        )
+                      : styles.sidebarNavigationItem(
+                          isActive,
+                        )
                   }
                 >
-                  <Box sx={styles.navigationIcon}>{item.icon}</Box>
+                  <Box sx={styles.navigationIcon}>
+                    {item.icon}
+                  </Box>
 
                   <ListItemText
                     primary={item.label}
                     slotProps={{
                       primary: {
-                        sx: styles.navigationText(isActive),
+                        sx: styles.navigationText(
+                          isActive,
+                        ),
                       },
                     }}
                   />
@@ -235,100 +357,156 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
     </Box>
   );
 
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
-    <Box sx={styles.page}>
-      {/* Sidebar desktop permanente, alineado al diseño premium del panel administrativo. */}
-      <Box component="aside" sx={styles.desktopSidebar(isDesktopSidebarOpen)}>
-        {renderBrand()}
+    <AdminHeaderActionsContext.Provider
+      value={headerActionsContextValue}
+    >
+      <Box sx={styles.page}>
+        <Box
+          component="aside"
+          sx={styles.desktopSidebar(
+            isDesktopSidebarOpen,
+          )}
+        >
+          {renderBrand()}
 
-        {renderNavigation()}
+          {renderNavigation()}
 
-        {/* Bloque inferior de usuario. Mantiene las acciones de cuenta existentes. */}
-        <Box sx={styles.sidebarUserArea}>
-          <Button
-            onClick={handleOpenUserMenu}
-            aria-label="Abrir menú de usuario"
-            aria-controls={isUserMenuOpen ? "admin-user-menu" : undefined}
-            aria-haspopup="true"
-            aria-expanded={isUserMenuOpen ? "true" : undefined}
-            endIcon={<KeyboardArrowDownIcon />}
-            sx={styles.sidebarUserButton}
+          <Box sx={styles.sidebarUserArea}>
+            <Button
+              onClick={handleOpenUserMenu}
+              aria-label="Abrir menú de usuario"
+              aria-controls={
+                isUserMenuOpen
+                  ? "admin-user-menu"
+                  : undefined
+              }
+              aria-haspopup="true"
+              aria-expanded={
+                isUserMenuOpen
+                  ? "true"
+                  : undefined
+              }
+              endIcon={<KeyboardArrowDownIcon />}
+              sx={styles.sidebarUserButton}
+            >
+              <Avatar sx={styles.userAvatar}>
+                AD
+              </Avatar>
+
+              <Box sx={styles.userInfo}>
+                <Typography
+                  variant="body2"
+                  sx={styles.userName}
+                >
+                  Admin
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  sx={styles.userEmail}
+                >
+                  Administrador
+                </Typography>
+              </Box>
+            </Button>
+          </Box>
+        </Box>
+
+        <Box
+          sx={styles.mainShell(
+            isDesktopSidebarOpen,
+          )}
+        >
+          <AppBar
+            position="sticky"
+            elevation={0}
+            sx={styles.appBar}
           >
-            <Avatar sx={styles.userAvatar}>AD</Avatar>
+            <Toolbar
+              disableGutters
+              sx={styles.toolbar}
+            >
+              <IconButton
+                onClick={handleOpenMobileMenu}
+                aria-label="Abrir navegación administrativa"
+                sx={styles.mobileMenuButton}
+              >
+                <MenuIcon />
+              </IconButton>
 
-            <Box sx={styles.userInfo}>
-              <Typography variant="body2" sx={styles.userName}>
-                Admin
-              </Typography>
+              <IconButton
+                onClick={handleToggleDesktopSidebar}
+                aria-label="Mostrar u ocultar navegación administrativa"
+                sx={styles.desktopMenuButton}
+              >
+                <MenuIcon />
+              </IconButton>
 
-              <Typography variant="caption" sx={styles.userEmail}>
-                Administrador
-              </Typography>
+              <PageHeader
+                title={title}
+                subtitle={subtitle}
+              />
+
+              <Box sx={styles.toolbarSpacer} />
+
+              {headerActions ? (
+                <Box sx={styles.headerActions}>
+                  {headerActions}
+                </Box>
+              ) : null}
+
+              <Menu
+                id="admin-user-menu"
+                anchorEl={anchorEl}
+                open={isUserMenuOpen}
+                onClose={handleCloseUserMenu}
+              >
+                <MenuItem disabled>
+                  Mi perfil
+                </MenuItem>
+
+                <MenuItem onClick={handleLogout}>
+                  Cerrar sesión
+                </MenuItem>
+              </Menu>
+            </Toolbar>
+          </AppBar>
+
+          <Box
+            component="main"
+            sx={styles.content}
+          >
+            {children}
+          </Box>
+        </Box>
+
+        <Drawer
+          anchor="left"
+          open={isMobileMenuOpen}
+          onClose={handleCloseMobileMenu}
+          slotProps={{
+            paper: {
+              sx: styles.mobileDrawerPaper,
+            },
+          }}
+        >
+          <Box
+            sx={styles.mobileDrawer}
+            role="navigation"
+          >
+            <Box sx={styles.mobileDrawerHeader}>
+              {renderBrand()}
             </Box>
-          </Button>
-        </Box>
+
+            {renderNavigation(true)}
+          </Box>
+        </Drawer>
       </Box>
-
-      <Box sx={styles.mainShell(isDesktopSidebarOpen)}>
-        <AppBar position="sticky" elevation={0} sx={styles.appBar}>
-          <Toolbar disableGutters sx={styles.toolbar}>
-            {/* Mobile: abre drawer. Desktop: muestra/oculta sidebar. */}
-            <IconButton
-              onClick={handleOpenMobileMenu}
-              aria-label="Abrir navegación administrativa"
-              sx={styles.mobileMenuButton}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            <IconButton
-              onClick={handleToggleDesktopSidebar}
-              aria-label="Mostrar u ocultar navegación administrativa"
-              sx={styles.desktopMenuButton}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            {/* Header dinámico de cada página administrativa. */}
-            <PageHeader title={title} subtitle={subtitle} />
-
-            <Box sx={styles.toolbarSpacer} />
-
-            <Menu
-              id="admin-user-menu"
-              anchorEl={anchorEl}
-              open={isUserMenuOpen}
-              onClose={handleCloseUserMenu}
-            >
-              <MenuItem disabled>Mi perfil</MenuItem>
-              <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
-            </Menu>
-          </Toolbar>
-        </AppBar>
-
-        {/* Contenido dinámico de cada pantalla administrativa. */}
-        <Box component="main" sx={styles.content}>
-          {children}
-        </Box>
-      </Box>
-
-      {/* Navegación mobile en drawer lateral para pantallas reducidas. */}
-      <Drawer
-        anchor="left"
-        open={isMobileMenuOpen}
-        onClose={handleCloseMobileMenu}
-        slotProps={{
-          paper: {
-            sx: styles.mobileDrawerPaper,
-          },
-        }}
-      >
-        <Box sx={styles.mobileDrawer} role="navigation">
-          <Box sx={styles.mobileDrawerHeader}>{renderBrand()}</Box>
-
-          {renderNavigation(true)}
-        </Box>
-      </Drawer>
-    </Box>
+    </AdminHeaderActionsContext.Provider>
   );
 }
