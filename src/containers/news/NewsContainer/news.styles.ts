@@ -156,14 +156,14 @@ export const newsStyles = {
     display: "grid",
     gridTemplateColumns: {
       xs: "minmax(0, 1fr)",
-      lg: "minmax(0, 1.04fr) minmax(470px, 0.96fr)",
-      xl: "minmax(0, 1.02fr) minmax(520px, 0.98fr)",
+      lg: "minmax(0, 1.08fr) minmax(430px, 0.92fr)",
+      xl: "minmax(0, 1.04fr) minmax(500px, 0.96fr)",
     },
     gap: {
       xs: 1.75,
-      md: 2,
+      md: 2.25,
     },
-    alignItems: "start",
+    alignItems: "stretch",
   },
 
   panel: {
@@ -172,23 +172,30 @@ export const newsStyles = {
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
-    borderRadius: "18px",
+    borderRadius: "20px",
     border: `1px solid ${neutralBorder}`,
     backgroundColor: colors.background.surface,
     boxShadow: panelShadow,
+
+    "& > *": {
+      minWidth: 0,
+    },
   },
 
   listPanel: {
     minHeight: {
-      xs: 500,
-      lg: 520,
-      xl: 535,
+      xs: 560,
+      lg: 600,
+      xl: 620,
     },
   },
 
   detailPanel: {
-    height: "fit-content",
-    minHeight: 0,
+    minHeight: {
+      xs: 500,
+      lg: 600,
+      xl: 620,
+    },
     boxShadow: detailShadow,
   },
 
@@ -197,12 +204,15 @@ export const newsStyles = {
   ========================================================= */
 
   listPanelHeader: {
-    minHeight: 78,
+    minHeight: 82,
     px: {
       xs: 2,
-      sm: 2.25,
+      sm: 2.5,
     },
-    py: 1.45,
+    py: {
+      xs: 1.75,
+      md: 2,
+    },
     display: "flex",
     flexDirection: {
       xs: "column",
@@ -218,12 +228,15 @@ export const newsStyles = {
   },
 
   panelHeader: {
-    minHeight: 76,
+    minHeight: 82,
     px: {
       xs: 2,
-      sm: 2.25,
+      sm: 2.5,
     },
-    py: 1.65,
+    py: {
+      xs: 1.75,
+      md: 2,
+    },
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -238,20 +251,23 @@ export const newsStyles = {
   panelTitle: {
     fontSize: {
       xs: 16.5,
-      sm: 17.5,
+      md: 18,
     },
-    fontWeight: 750,
-    letterSpacing: "-0.025em",
+    fontWeight: 700,
+    letterSpacing: "-0.015em",
     color: colors.text.primary,
     lineHeight: 1.25,
   },
 
   panelHint: {
-    mt: 0.3,
-    fontSize: 11.5,
+    mt: 0.4,
+    fontSize: {
+      xs: 12.5,
+      md: 13,
+    },
     fontWeight: 400,
     color: colors.text.secondary,
-    lineHeight: 1.35,
+    lineHeight: 1.4,
   },
 
   /* =========================================================
@@ -276,11 +292,11 @@ export const newsStyles = {
     },
 
     "& .MuiOutlinedInput-root": {
-      height: 42,
-      borderRadius: "12px",
+      height: 46,
+      borderRadius: "13px",
       backgroundColor: colors.background.surface,
       color: colors.text.primary,
-      fontSize: 12.5,
+      fontSize: 14,
     },
 
     "& .MuiOutlinedInput-notchedOutline": {
@@ -306,17 +322,17 @@ export const newsStyles = {
     },
 
     "& .MuiInputAdornment-root svg": {
-      fontSize: 18,
+      fontSize: 20,
       color: colors.text.secondary,
     },
   },
 
   filterButton: {
-    minHeight: 42,
-    px: 1.55,
-    borderRadius: "12px",
+    minHeight: 46,
+    px: 2.15,
+    borderRadius: "13px",
     textTransform: "none",
-    fontSize: 12.25,
+    fontSize: 14,
     fontWeight: 650,
     color: colors.brand.primary,
     borderColor: colors.border.default,
@@ -347,11 +363,11 @@ export const newsStyles = {
   },
 
   createButton: {
-    minHeight: 42,
-    px: 1.8,
-    borderRadius: "12px",
+    minHeight: 46,
+    px: 2.35,
+    borderRadius: "13px",
     textTransform: "none",
-    fontSize: 12.25,
+    fontSize: 14,
     fontWeight: 700,
     whiteSpace: "nowrap",
     boxShadow: `0 8px 18px ${alpha(colors.brand.primary, 0.16)}`,
@@ -383,20 +399,20 @@ export const newsStyles = {
   },
 
   tableHeader: {
-    minHeight: 45,
-    px: 1.75,
+    minHeight: 48,
+    px: 2.25,
     display: "grid",
     gridTemplateColumns: newsTableColumns,
     alignItems: "center",
     gap: 1,
-    backgroundColor: alpha(colors.background.soft, 0.72),
+    backgroundColor: alpha(colors.text.primary, 0.025),
     borderBottom: `1px solid ${neutralBorder}`,
   },
 
   tableHeaderCell: {
     minWidth: 0,
-    fontSize: 9.75,
-    fontWeight: 750,
+    fontSize: 11.25,
+    fontWeight: 700,
     letterSpacing: "0.055em",
     textTransform: "uppercase",
     color: neutralLabel,
@@ -409,8 +425,8 @@ export const newsStyles = {
 
   tableRow: {
     position: "relative",
-    minHeight: 72,
-    px: 1.75,
+    minHeight: 78,
+    px: 2.25,
     display: "grid",
     gridTemplateColumns: newsTableColumns,
     alignItems: "center",
@@ -451,11 +467,11 @@ export const newsStyles = {
   },
 
   newsAvatar: (inactive = false) => ({
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     flexShrink: 0,
-    fontSize: 10.5,
-    fontWeight: 750,
+    fontSize: 11.5,
+    fontWeight: 700,
     color: inactive ? colors.state.error : colors.brand.primaryDark,
     backgroundColor: inactive ? inactiveSurface : colors.brand.primaryLight,
     border: `1px solid ${
@@ -476,7 +492,7 @@ export const newsStyles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    fontSize: 12.25,
+    fontSize: 13.25,
     fontWeight: 700,
     color: colors.text.primary,
     lineHeight: 1.3,
@@ -485,11 +501,11 @@ export const newsStyles = {
   newsPreview: {
     display: "block",
     minWidth: 0,
-    mt: 0.25,
+    mt: 0.3,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    fontSize: 10.75,
+    fontSize: 11.75,
     fontWeight: 400,
     color: colors.text.secondary,
     lineHeight: 1.3,
@@ -502,9 +518,9 @@ export const newsStyles = {
   },
 
   statusChip: (status: "ACTIVA" | "INACTIVA") => ({
-    height: 24,
-    borderRadius: "8px",
-    fontSize: 10.25,
+    height: 27,
+    borderRadius: "9px",
+    fontSize: 11.5,
     fontWeight: 650,
     color: status === "ACTIVA" ? colors.state.success : colors.state.error,
     backgroundColor: status === "ACTIVA" ? activeSurface : inactiveSurface,
@@ -525,7 +541,7 @@ export const newsStyles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    fontSize: 11.25,
+    fontSize: 12.25,
     fontWeight: 500,
     color: neutralStrong,
     lineHeight: 1.35,
@@ -534,15 +550,15 @@ export const newsStyles = {
   notificationCount: {
     display: "block",
     minWidth: 0,
-    fontSize: 11.25,
+    fontSize: 12.25,
     fontWeight: 650,
     color: colors.text.primary,
     lineHeight: 1.35,
   },
 
   rowAction: {
-    width: 30,
-    height: 30,
+    width: 34,
+    height: 34,
     justifySelf: "end",
     display: "grid",
     placeItems: "center",
@@ -559,7 +575,7 @@ export const newsStyles = {
   ========================================================= */
 
   listFooter: {
-    minHeight: 64,
+    minHeight: 74,
     mt: "auto",
     px: {
       xs: 1.75,
@@ -651,11 +667,11 @@ export const newsStyles = {
   detailHero: {
     px: {
       xs: 2,
-      sm: 2.25,
+      sm: 2.75,
     },
     py: {
-      xs: 1.8,
-      sm: 2,
+      xs: 2.5,
+      sm: 2.9,
     },
     display: "flex",
     flexDirection: {
@@ -664,11 +680,13 @@ export const newsStyles = {
     },
     alignItems: {
       xs: "stretch",
-      sm: "center",
+      sm: "flex-start",
     },
     justifyContent: "space-between",
-    gap: 1.6,
-    borderBottom: `1px solid ${neutralBorder}`,
+    gap: {
+      xs: 1.5,
+      md: 1.75,
+    },
     background: `linear-gradient(
       135deg,
       ${colors.background.surface} 0%,
@@ -678,17 +696,21 @@ export const newsStyles = {
 
   detailIdentity: {
     minWidth: 0,
+    flex: 1,
     display: "flex",
-    alignItems: "center",
-    gap: 1.25,
+    alignItems: "flex-start",
+    gap: {
+      xs: 1.5,
+      md: 1.75,
+    },
   },
 
   detailAvatar: (inactive = false) => ({
-    width: 48,
-    height: 48,
+    width: 64,
+    height: 64,
     flexShrink: 0,
-    fontSize: 13.5,
-    fontWeight: 750,
+    fontSize: 19,
+    fontWeight: 700,
     color: inactive ? colors.state.error : colors.brand.primaryDark,
     backgroundColor: inactive ? inactiveSurface : colors.brand.primaryLight,
     border: `1px solid ${
@@ -705,25 +727,25 @@ export const newsStyles = {
   detailTitle: {
     overflowWrap: "anywhere",
     fontSize: {
-      xs: 16.5,
-      sm: 18,
+      xs: 20,
+      sm: 22,
     },
-    fontWeight: 750,
+    fontWeight: 700,
     letterSpacing: "-0.025em",
     color: colors.text.primary,
     lineHeight: 1.25,
   },
 
   detailMeta: {
-    mt: 0.35,
-    fontSize: 11.25,
-    fontWeight: 450,
+    mt: 0.45,
+    fontSize: 13.25,
+    fontWeight: 400,
     color: colors.text.secondary,
     lineHeight: 1.4,
   },
 
   detailStatusRow: {
-    mt: 0.65,
+    mt: 1.15,
     display: "flex",
     alignItems: "center",
     flexWrap: "wrap",
@@ -742,11 +764,11 @@ export const newsStyles = {
   },
 
   secondaryActionButton: {
-    minHeight: 38,
-    px: 1.45,
-    borderRadius: "10px",
+    minHeight: 42,
+    px: 2,
+    borderRadius: "12px",
     textTransform: "none",
-    fontSize: 11.5,
+    fontSize: 13.5,
     fontWeight: 650,
     color: colors.brand.primary,
     borderColor: colors.border.default,
@@ -764,28 +786,25 @@ export const newsStyles = {
     scrollMarginTop: 16,
     px: {
       xs: 2,
-      sm: 2.25,
+      sm: 2.75,
     },
-    py: 1.75,
-    borderBottom: `1px solid ${neutralBorder}`,
-
-    "&:last-of-type": {
-      borderBottom: "none",
+    py: {
+      xs: 2.65,
+      sm: 3.05,
     },
+    borderTop: `1px solid ${neutralBorder}`,
   },
 
   sectionHeading: {
     display: "flex",
     alignItems: "center",
     gap: 0.75,
-    pb: 1,
-    mb: 1.15,
-    borderBottom: `1px solid ${alpha(colors.border.default, 0.82)}`,
+    mb: 1.95,
   },
 
   sectionIconSurface: {
-    width: 26,
-    height: 26,
+    width: 28,
+    height: 28,
     flexShrink: 0,
     display: "grid",
     placeItems: "center",
@@ -799,9 +818,9 @@ export const newsStyles = {
   },
 
   sectionTitle: {
-    fontSize: 10.75,
-    fontWeight: 750,
-    letterSpacing: "0.045em",
+    fontSize: 11.75,
+    fontWeight: 700,
+    letterSpacing: "0.065em",
     textTransform: "uppercase",
     color: colors.brand.primaryDark,
     lineHeight: 1.2,
@@ -813,27 +832,33 @@ export const newsStyles = {
       xs: "1fr",
       sm: "repeat(2, minmax(0, 1fr))",
     },
-    gap: {
-      xs: 1.4,
-      sm: 1.7,
+    columnGap: {
+      xs: 1.75,
+      sm: 2.4,
+    },
+    rowGap: {
+      xs: 2.15,
+      sm: 2.55,
     },
   },
 
   detailItem: {
     minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
   },
 
   detailLabel: {
-    fontSize: 9.75,
-    fontWeight: 750,
-    letterSpacing: "0.045em",
+    fontSize: 11.25,
+    fontWeight: 650,
+    letterSpacing: "0.035em",
     textTransform: "uppercase",
     color: neutralLabel,
     lineHeight: 1.25,
   },
 
   detailValueRow: {
-    mt: 0.55,
+    mt: 0.8,
     minWidth: 0,
     display: "flex",
     alignItems: "center",
@@ -841,14 +866,14 @@ export const newsStyles = {
   },
 
   detailValueIcon: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.text.secondary,
   },
 
   detailValue: {
     minWidth: 0,
     overflowWrap: "anywhere",
-    fontSize: 11.75,
+    fontSize: 13.25,
     fontWeight: 500,
     color: colors.text.primary,
     lineHeight: 1.45,
@@ -857,7 +882,7 @@ export const newsStyles = {
   contentText: {
     overflowWrap: "anywhere",
     whiteSpace: "pre-wrap",
-    fontSize: 12,
+    fontSize: 13.25,
     fontWeight: 400,
     color: neutralStrong,
     lineHeight: 1.65,
@@ -873,16 +898,17 @@ export const newsStyles = {
       xs: "repeat(2, minmax(0, 1fr))",
       sm: "repeat(4, minmax(0, 1fr))",
     },
-    gap: 0.85,
+    gap: 1.25,
   },
 
   deliveryCard: {
     minWidth: 0,
-    p: {
-      xs: 1.2,
-      sm: 1.3,
-    },
-    borderRadius: "11px",
+    minHeight: 76,
+    p: 1.7,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    borderRadius: "12px",
     border: `1px solid ${colors.border.default}`,
     backgroundColor: alpha(colors.background.soft, 0.45),
   },
@@ -891,8 +917,8 @@ export const newsStyles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    fontSize: 9,
-    fontWeight: 750,
+    fontSize: 11.25,
+    fontWeight: 650,
     letterSpacing: "0.04em",
     textTransform: "uppercase",
     color: neutralLabel,
@@ -908,9 +934,9 @@ export const newsStyles = {
     };
 
     return {
-      mt: 0.6,
-      fontSize: 18,
-      fontWeight: 750,
+      mt: 0.7,
+      fontSize: 20,
+      fontWeight: 700,
       letterSpacing: "-0.025em",
       color: tones[tone],
       lineHeight: 1,
@@ -920,14 +946,14 @@ export const newsStyles = {
   informationBanner: {
     mx: {
       xs: 2,
-      sm: 2.25,
+      sm: 2.75,
     },
-    mt: 1.5,
+    mt: 2.1,
     mb: {
-      xs: 1.75,
-      sm: 2,
+      xs: 2,
+      sm: 2.5,
     },
-    p: 1.2,
+    p: 1.4,
     display: "flex",
     alignItems: "flex-start",
     gap: 0.85,
@@ -944,7 +970,7 @@ export const newsStyles = {
   },
 
   informationBannerText: {
-    fontSize: 11,
+    fontSize: 12.25,
     fontWeight: 450,
     color: "#1565C0",
     lineHeight: 1.45,
