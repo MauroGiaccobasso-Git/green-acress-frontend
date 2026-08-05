@@ -61,20 +61,17 @@ export class HttpError extends Error {
 
 /*
 URL base utilizada para todas las
-comunicaciones realizadas hacia backend.
+comunicaciones realizadas hacia el backend.
 
-Centralizar esta URL evita:
+En producción utiliza la URL configurada
+en la variable NEXT_PUBLIC_API_URL.
 
-- repetir localhost múltiples veces
-
-- errores de escritura
-
-- cambios masivos futuros
-
-Si mañana backend cambia de puerto
-o se despliega, se modifica acá.
+En desarrollo local, si no existe esa variable,
+utiliza http://localhost:8080.
 */
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, "") ||
+  "http://localhost:8080";
 
 /*
 Métodos HTTP soportados
