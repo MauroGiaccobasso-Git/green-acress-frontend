@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import {
   type SaleProductOption,
@@ -60,6 +60,37 @@ export function useSales() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingSale, setSavingSale] = useState(false);
   const [cancellingSale, setCancellingSale] = useState(false);
+
+  /* =========================================================
+     PROTECCIÓN SINCRÓNICA CONTRA ENVÍOS DUPLICADOS
+  ========================================================= */
+
+  /*
+  Los estados de React actualizan la interfaz, pero su cambio
+  no es inmediato dentro del mismo ciclo de eventos.
+
+  Por eso, dos clics extremadamente rápidos podrían ejecutar
+  createSale antes de que savingSale llegue a true.
+
+  Este ref funciona como un cierre sincrónico:
+
+  primer clic  → obtiene el cierre;
+  segundo clic → se descarta inmediatamente;
+  finally      → libera el cierre.
+
+  El backend mantiene la seguridad real mediante transacciones
+  y bloqueos de PostgreSQL. Esta protección frontend evita
+  solicitudes duplicadas accidentales y mejora la UX.
+  */
+  const savingSaleGuardRef = useRef(false);
+
+  /*
+  Aplica la misma protección a la anulación de ventas.
+
+  Evita que un doble clic envíe dos solicitudes de anulación
+  antes de que el botón alcance a quedar deshabilitado.
+  */
+  const cancellingSaleGuardRef = useRef(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -163,6 +194,19 @@ export function useSales() {
   */
   const createSale = useCallback(
     async (payload: CreateSalePayload) => {
+      /*
+      CONCURRENCIA UI — REGISTRO DE VENTA
+
+      El ref se consulta antes de modificar estado porque setState
+      no bloquea sincrónicamente un segundo clic dentro del mismo
+      ciclo de eventos.
+      */
+      if (savingSaleGuardRef.current) {
+        return null;
+      }
+
+      savingSaleGuardRef.current = true;
+
       try {
         setSavingSale(true);
         setError(null);
@@ -182,6 +226,7 @@ export function useSales() {
 
         return null;
       } finally {
+        savingSaleGuardRef.current = false;
         setSavingSale(false);
       }
     },
@@ -196,6 +241,19 @@ export function useSales() {
   */
   const cancelSale = useCallback(
     async (saleId: number) => {
+      /*
+      CONCURRENCIA UI — ANULACIÓN DE VENTA
+
+      Solo una solicitud de anulación puede estar en vuelo desde
+      esta instancia del hook. Un segundo clic se ignora hasta
+      que la primera operación termine.
+      */
+      if (cancellingSaleGuardRef.current) {
+        return null;
+      }
+
+      cancellingSaleGuardRef.current = true;
+
       try {
         setCancellingSale(true);
         setError(null);
@@ -219,6 +277,7 @@ export function useSales() {
 
         return null;
       } finally {
+        cancellingSaleGuardRef.current = false;
         setCancellingSale(false);
       }
     },
