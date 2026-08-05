@@ -348,6 +348,35 @@ export function useReservations() {
   const selectedReservationIdRef = useRef<number | null>(null);
 
   /* =========================================================
+     PROTECCIÓN SINCRÓNICA CONTRA ACCIONES DUPLICADAS
+  ========================================================= */
+
+  /*
+  Los estados de React deshabilitan la interfaz, pero su actualización
+  no es inmediata dentro del mismo ciclo de eventos.
+
+  Por eso, dos clics extremadamente rápidos podrían intentar ejecutar
+  más de una acción antes de que cancellingReservation o
+  confirmingWithdrawal lleguen a true.
+
+  Este ref funciona como un cierre sincrónico compartido para todas
+  las transiciones administrativas de una reserva:
+
+  primer clic  → obtiene el cierre;
+  segundo clic → se descarta inmediatamente;
+  finally      → libera el cierre.
+
+  El cierre es compartido porque cancelar y retirar son transiciones
+  incompatibles sobre la misma reserva. Mientras una está en curso,
+  la otra tampoco debe iniciarse desde esta instancia del hook.
+
+  PostgreSQL y el backend mantienen la integridad real mediante
+  transacciones y bloqueos de fila. Esta protección frontend evita
+  solicitudes duplicadas accidentales y mejora la experiencia de uso.
+  */
+  const reservationActionGuardRef = useRef(false);
+
+  /* =========================================================
      VALORES DERIVADOS
   ========================================================= */
 
@@ -836,6 +865,22 @@ export function useReservations() {
       reservationId: number,
       payload: CancelReservationPayload = {},
     ): Promise<Reservation | null> => {
+      /*
+      CONCURRENCIA UI — CANCELACIÓN DE RESERVA
+
+      El ref se consulta antes de modificar estado porque setState
+      no bloquea sincrónicamente un segundo clic dentro del mismo
+      ciclo de eventos.
+
+      También impide iniciar un retiro mientras la cancelación
+      todavía se encuentra en curso.
+      */
+      if (reservationActionGuardRef.current) {
+        return null;
+      }
+
+      reservationActionGuardRef.current = true;
+
       try {
         setCancellingReservation(true);
         setActionError(null);
@@ -864,6 +909,7 @@ export function useReservations() {
 
         return null;
       } finally {
+        reservationActionGuardRef.current = false;
         setCancellingReservation(false);
       }
     },
@@ -880,6 +926,24 @@ export function useReservations() {
   */
   const confirmReservationWithdrawal = useCallback(
     async (reservationId: number): Promise<Reservation | null> => {
+      /*
+      CONCURRENCIA UI — RETIRO DE RESERVA
+
+      Solo una transición administrativa puede estar en vuelo desde
+      esta instancia del hook.
+
+      Esto evita:
+
+      - doble retiro por clic repetido;
+      - retiro iniciado mientras una cancelación está en curso;
+      - dos solicitudes antes de que el botón quede deshabilitado.
+      */
+      if (reservationActionGuardRef.current) {
+        return null;
+      }
+
+      reservationActionGuardRef.current = true;
+
       try {
         setConfirmingWithdrawal(true);
         setActionError(null);
@@ -908,6 +972,7 @@ export function useReservations() {
 
         return null;
       } finally {
+        reservationActionGuardRef.current = false;
         setConfirmingWithdrawal(false);
       }
     },
