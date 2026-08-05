@@ -6,11 +6,16 @@ import {
   type CreateProductPayload,
   type GetProductsParams,
   type Product,
+  type ProductImageFile,
   type ProductsPagination,
   productsApi,
   type UpdateProductPayload,
   type UpdateProductStatusPayload,
 } from "@/api/productsApi";
+
+/* =========================================================
+   ESTADOS INICIALES
+========================================================= */
 
 const DEFAULT_PRODUCTS_PAGINATION: ProductsPagination = {
   page: 1,
@@ -19,62 +24,75 @@ const DEFAULT_PRODUCTS_PAGINATION: ProductsPagination = {
   totalPages: 0,
 };
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
+// Obtiene un mensaje seguro y consistente para los errores
+// producidos durante las operaciones del módulo.
+const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
+  error instanceof Error ? error.message : fallbackMessage;
+
+/*
+Normaliza los parámetros utilizados por el listado administrativo.
+
+La paginación siempre dispone de valores válidos aunque el container
+no los envíe explícitamente.
+*/
+const normalizeProductsParams = (
+  params: GetProductsParams = {},
+): GetProductsParams => ({
+  search: params.search,
+  tipo: params.tipo,
+  estado: params.estado,
+  genetica: params.genetica,
+  page: params.page ?? 1,
+  limit: params.limit ?? 10,
+});
+
+/* =========================================================
+   HOOK PRINCIPAL
+========================================================= */
+
 /*
 Hook especializado encargado de administrar
-la lógica relacionada al listado administrativo
-de productos.
+la lógica del módulo administrativo de Productos.
 
-Su responsabilidad es:
+Responsabilidades:
 
-- solicitar productos al backend
+- solicitar productos al backend;
+- almacenar el listado y su paginación;
+- conservar los últimos filtros aplicados;
+- registrar productos con imagen opcional;
+- actualizar productos con imagen opcional;
+- modificar el estado lógico;
+- separar la carga del listado de las operaciones de guardado;
+- evitar que respuestas antiguas sobrescriban búsquedas recientes;
+- exponer errores de consulta y de acciones por separado.
 
-- almacenar productos cargados
+Este hook:
 
-- administrar filtros y paginación backend
+- no renderiza componentes;
+- no construye interfaz;
+- no realiza fetch directo;
+- no contiene reglas críticas de negocio.
 
-- administrar loading
-
-- administrar errores
-
-- exponer funciones reutilizables
-  para consumir desde containers
-
-Este hook NO renderiza componentes.
-
-Este hook NO construye interfaz.
-
-Este hook NO realiza fetch directo.
-
-Toda comunicación ocurre mediante
-productsApi.
+Toda comunicación ocurre mediante productsApi.
 */
 export function useProducts() {
-  /*
-  Almacena productos obtenidos
-  desde backend.
+  /* =========================================================
+     ESTADO DEL LISTADO
+  ========================================================= */
 
-  El container consumirá este estado
-  para renderizar cards, tablas
-  o cualquier representación visual.
-  */
   const [products, setProducts] = useState<Product[]>([]);
 
-  /*
-  Almacena información de paginación
-  devuelta por backend.
-
-  La paginación no se calcula en frontend
-  para evitar trabajar sobre listados
-  incompletos o inconsistentes.
-  */
   const [pagination, setPagination] = useState<ProductsPagination>(
     DEFAULT_PRODUCTS_PAGINATION,
   );
 
   /*
-  Conserva los últimos parámetros utilizados
-  para poder refrescar el listado luego de
-  altas, ediciones o cambios de estado.
+  Conserva los últimos parámetros utilizados para refrescar
+  el listado después de altas, ediciones o cambios de estado.
   */
   const lastFetchParamsRef = useRef<GetProductsParams>({
     page: 1,
@@ -82,167 +100,207 @@ export function useProducts() {
   });
 
   /*
-  Indica cuándo existe una solicitud
-  en ejecución.
+  Identifica la solicitud de listado más reciente.
 
-  Permite que la interfaz pueda:
-
-  - mostrar spinner
-
-  - bloquear acciones
-
-  - mostrar mensajes de carga
+  Si una búsqueda anterior termina después de una nueva,
+  su respuesta se descarta para evitar mostrar resultados obsoletos.
   */
+  const latestFetchRequestRef = useRef(0);
+
+  /* =========================================================
+     ESTADOS DE CARGA
+  ========================================================= */
+
+  // Se utiliza únicamente para la carga del listado.
   const [loading, setLoading] = useState(false);
 
-  /*
-  Guarda mensajes de error producidos
-  durante solicitudes.
+  // Se utiliza durante el alta o la edición de un producto.
+  const [submitting, setSubmitting] = useState(false);
 
-  El container puede utilizar esto
-  para renderizar mensajes amigables
-  para el usuario.
-  */
+  // Se utiliza exclusivamente durante el cambio de estado lógico.
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  /* =========================================================
+     ESTADOS DE ERROR
+  ========================================================= */
+
+  // Error asociado a la consulta del listado.
   const [error, setError] = useState<string | null>(null);
 
+  // Error asociado a crear, editar o cambiar el estado.
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  /* =========================================================
+     CONSULTAS INTERNAS
+  ========================================================= */
+
   /*
-  Función reutilizable encargada
-  de consultar productos.
+  Ejecuta la consulta real del listado.
 
-  Recibe búsqueda, filtros y paginación
-  para delegar la consulta real al backend.
+  showLoading permite refrescar silenciosamente después de una
+  operación sin reemplazar toda la pantalla por un spinner.
   */
-  const fetchProducts = useCallback(
-    async (params: GetProductsParams = {}): Promise<void> => {
-      try {
+  const loadProducts = useCallback(
+    async (
+      params: GetProductsParams = {},
+      showLoading = true,
+    ): Promise<boolean> => {
+      const normalizedParams = normalizeProductsParams(params);
+      const requestId = latestFetchRequestRef.current + 1;
+
+      latestFetchRequestRef.current = requestId;
+      lastFetchParamsRef.current = normalizedParams;
+
+      if (showLoading) {
         setLoading(true);
-        setError(null);
+      }
 
-        const normalizedParams: GetProductsParams = {
-          search: params.search,
-          tipo: params.tipo,
-          estado: params.estado,
-          genetica: params.genetica,
-          page: params.page ?? 1,
-          limit: params.limit ?? 10,
-        };
+      setError(null);
 
-        lastFetchParamsRef.current = normalizedParams;
-
+      try {
         const response = await productsApi.getProducts(normalizedParams);
 
-        setProducts(response.data);
-        setPagination(response.pagination);
+        /*
+        Solo la solicitud más reciente puede actualizar la pantalla.
+        */
+        if (requestId === latestFetchRequestRef.current) {
+          setProducts(response.data);
+          setPagination(response.pagination);
+        }
+
+        return true;
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Error al cargar productos",
-        );
+        if (requestId === latestFetchRequestRef.current) {
+          setError(
+            getErrorMessage(error, "Error al cargar productos."),
+          );
+        }
+
+        return false;
       } finally {
-        setLoading(false);
+        /*
+        La solicitud más reciente es también la responsable
+        de cerrar cualquier estado de carga pendiente.
+        */
+        if (requestId === latestFetchRequestRef.current) {
+          setLoading(false);
+        }
       }
     },
     [],
   );
 
+  /* =========================================================
+     CONSULTAS PÚBLICAS
+  ========================================================= */
+
   /*
-  Refresca el listado utilizando los últimos
-  filtros y parámetros de paginación aplicados.
+  Consulta productos aplicando búsqueda, filtros y paginación.
+
+  El container utiliza esta función para las cargas visibles
+  iniciadas por navegación, búsqueda o filtros.
+  */
+  const fetchProducts = useCallback(
+    async (params: GetProductsParams = {}): Promise<void> => {
+      await loadProducts(params, true);
+    },
+    [loadProducts],
+  );
+
+  /*
+  Refresca silenciosamente el listado utilizando los últimos
+  parámetros aplicados.
+
+  Se utiliza después de operaciones exitosas para conservar
+  búsqueda, filtros y página actual.
   */
   const refreshProducts = useCallback(async (): Promise<void> => {
-    await fetchProducts(lastFetchParamsRef.current);
-  }, [fetchProducts]);
+    await loadProducts(lastFetchParamsRef.current, false);
+  }, [loadProducts]);
+
+  /* =========================================================
+     OPERACIONES ADMINISTRATIVAS
+  ========================================================= */
 
   /*
-  Función reutilizable encargada
-  de registrar un nuevo producto.
+  Registra un nuevo producto.
 
-  El hook delega la comunicación
-  HTTP en productsApi y luego
-  refresca el listado desde backend.
-
-  No contiene reglas de negocio.
-  Las validaciones definitivas
-  permanecen en el backend.
+  La imagen es opcional y se mantiene separada del payload
+  de negocio para que productsApi construya FormData.
   */
   const createProduct = useCallback(
-    async (payload: CreateProductPayload): Promise<Product | null> => {
+    async (
+      payload: CreateProductPayload,
+      imageFile: ProductImageFile = null,
+    ): Promise<Product | null> => {
       try {
-        setLoading(true);
-        setError(null);
+        setSubmitting(true);
+        setActionError(null);
 
-        const createdProduct = await productsApi.createProduct(payload);
+        const createdProduct = await productsApi.createProduct(
+          payload,
+          imageFile,
+        );
 
-        await fetchProducts({
-          ...lastFetchParamsRef.current,
-          page: 1,
-        });
+        await loadProducts(lastFetchParamsRef.current, false);
 
         return createdProduct;
       } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Error al registrar producto",
+        setActionError(
+          getErrorMessage(error, "Error al registrar producto."),
         );
 
         return null;
       } finally {
-        setLoading(false);
+        setSubmitting(false);
       }
     },
-    [fetchProducts],
+    [loadProducts],
   );
 
   /*
-  Función reutilizable encargada
-  de actualizar los datos editables
-  de un producto existente.
+  Actualiza los datos editables de un producto existente.
 
-  No modifica el estado lógico.
-  La activación o inactivación se
-  gestiona mediante updateProductStatus.
+  Si se recibe una imagen nueva, productsApi la adjunta al
+  formulario multipart para reemplazar la imagen anterior.
   */
   const updateProduct = useCallback(
     async (
       productId: number,
       payload: UpdateProductPayload,
+      imageFile: ProductImageFile = null,
     ): Promise<Product | null> => {
       try {
-        setLoading(true);
-        setError(null);
+        setSubmitting(true);
+        setActionError(null);
 
         const updatedProduct = await productsApi.updateProduct(
           productId,
           payload,
+          imageFile,
         );
 
-        await refreshProducts();
+        await loadProducts(lastFetchParamsRef.current, false);
 
         return updatedProduct;
       } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Error al actualizar producto",
+        setActionError(
+          getErrorMessage(error, "Error al actualizar producto."),
         );
 
         return null;
       } finally {
-        setLoading(false);
+        setSubmitting(false);
       }
     },
-    [refreshProducts],
+    [loadProducts],
   );
 
   /*
-  Función reutilizable encargada
-  de actualizar el estado lógico
-  de un producto.
+  Actualiza el estado lógico de un producto.
 
-  Se utiliza para activar o inactivar
-  productos sin eliminarlos físicamente,
-  respetando la baja lógica definida
-  para el módulo.
+  La activación o inactivación permanece separada de la edición
+  general porque utiliza un endpoint específico del backend.
   */
   const updateProductStatus = useCallback(
     async (
@@ -250,41 +308,58 @@ export function useProducts() {
       payload: UpdateProductStatusPayload,
     ): Promise<Product | null> => {
       try {
-        setLoading(true);
-        setError(null);
+        setUpdatingStatus(true);
+        setActionError(null);
 
         const updatedProduct = await productsApi.updateProductStatus(
           productId,
           payload,
         );
 
-        await refreshProducts();
+        await loadProducts(lastFetchParamsRef.current, false);
 
         return updatedProduct;
       } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Error al actualizar estado del producto",
+        setActionError(
+          getErrorMessage(
+            error,
+            "Error al actualizar el estado del producto.",
+          ),
         );
 
         return null;
       } finally {
-        setLoading(false);
+        setUpdatingStatus(false);
       }
     },
-    [refreshProducts],
+    [loadProducts],
   );
+
+  /* =========================================================
+     LIMPIEZA DE FEEDBACK
+  ========================================================= */
+
+  const clearActionError = useCallback(() => {
+    setActionError(null);
+  }, []);
 
   return {
     products,
     pagination,
+
     loading,
+    submitting,
+    updatingStatus,
+
     error,
+    actionError,
+
     fetchProducts,
     refreshProducts,
     createProduct,
     updateProduct,
     updateProductStatus,
+
+    clearActionError,
   };
 }

@@ -124,7 +124,6 @@ export function CreateSeedModal({
       productPayload: {
         nombre: name.trim(),
         descripcion: null,
-        imagen_url: null,
         tipo: "SEMILLA",
         genetica: genetics,
         porcentaje_thc: null,

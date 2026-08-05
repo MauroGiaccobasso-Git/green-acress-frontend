@@ -106,8 +106,14 @@ type RequestOptions = {
   /*
   Información enviada hacia backend.
 
-  Se serializará automáticamente
-  como JSON.
+  Soporta:
+
+  - objetos serializados como JSON
+
+  - FormData para archivos multipart
+
+  httpClient detecta automáticamente
+  cuál formato debe utilizar.
   */
 
   body?: unknown;
@@ -125,18 +131,6 @@ type RequestOptions = {
 
   token?: string;
 };
-
-/*
-Respuesta de error esperada
-desde backend.
-
-El middleware global devuelve:
-
-{
-  message: string,
-  code: string
-}
-*/
 
 /*
 Convierte de forma segura
@@ -213,6 +207,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /*
+Determina si el body recibido
+corresponde a FormData.
+
+La comprobación protege también
+los contextos donde FormData
+podría no estar disponible.
+*/
+function isFormData(value: unknown): value is FormData {
+  return typeof FormData !== "undefined" && value instanceof FormData;
+}
+
+/*
 Extrae el mensaje de error
 recibido desde backend.
 
@@ -247,6 +253,64 @@ function getErrorCode(data: unknown): string | undefined {
 }
 
 /*
+Construye los headers comunes
+para cada solicitud.
+
+Cuando el body es FormData NO se define
+Content-Type manualmente.
+
+El navegador debe generar automáticamente:
+
+multipart/form-data
+
+junto con su boundary correspondiente.
+*/
+function buildRequestHeaders({
+  authToken,
+  usesFormData,
+  hasBody,
+}: {
+  authToken: string | null;
+  usesFormData: boolean;
+  hasBody: boolean;
+}): HeadersInit {
+  return {
+    ...(hasBody && !usesFormData
+      ? {
+          "Content-Type": "application/json",
+        }
+      : {}),
+
+    ...(authToken
+      ? {
+          Authorization: `Bearer ${authToken}`,
+        }
+      : {}),
+  };
+}
+
+/*
+Prepara el body antes de enviarlo.
+
+- FormData se entrega directamente al navegador.
+
+- Los demás valores se serializan como JSON.
+
+- Si no existe body, devuelve undefined.
+*/
+function buildRequestBody(body: unknown): BodyInit | undefined {
+  if (body === undefined) {
+    return undefined;
+  }
+
+  if (isFormData(body)) {
+    return body;
+  }
+
+  return JSON.stringify(body);
+}
+
+/*
 Cliente HTTP reutilizable.
 
 Responsabilidades:
@@ -256,6 +320,8 @@ Responsabilidades:
 - incorporar JWT automáticamente
 
 - agregar headers comunes
+
+- soportar JSON y FormData
 
 - manejar errores compartidos
 
@@ -323,6 +389,16 @@ export async function httpClient<T>(
   const authToken = token || getStoredToken();
 
   /*
+  Detecta el formato de envío.
+
+  Esta información permite evitar
+  un Content-Type incorrecto cuando
+  se adjuntan archivos.
+  */
+
+  const usesFormData = isFormData(body);
+
+  /*
   Ejecuta solicitud HTTP real.
 
   Construye:
@@ -348,40 +424,13 @@ export async function httpClient<T>(
     {
       method,
 
-      headers: {
-        /*
-          Todas las solicitudes
-          utilizan JSON.
-          */
+      headers: buildRequestHeaders({
+        authToken,
+        usesFormData,
+        hasBody: body !== undefined,
+      }),
 
-        "Content-Type": "application/json",
-
-        /*
-          Agrega Authorization
-          únicamente cuando existe token.
-
-          Resultado:
-
-          Authorization:
-
-          Bearer xxxxxxxxx
-          */
-
-        ...(authToken
-          ? {
-              Authorization: `Bearer ${authToken}`,
-            }
-          : {}),
-      },
-
-      /*
-        Convierte body a JSON.
-
-        Si no existe body,
-        se envía undefined.
-        */
-
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: buildRequestBody(body),
     },
   );
 

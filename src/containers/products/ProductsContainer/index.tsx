@@ -28,6 +28,12 @@ import {
   type Product,
   type UpdateProductPayload,
 } from "@/api/productsApi";
+import {
+  type EditProductFormPayload,
+  hasProductDataChanges,
+  hasProductStatusChange,
+  type ProductFormMode,
+} from "@/features/products/utils/productForm";
 import { useProducts } from "@/hooks/products/useProducts";
 import { AppPagination } from "@/components/common/Pagination";
 import {
@@ -44,12 +50,6 @@ type ProductFeedback = {
   open: boolean;
   message: string;
   severity: AlertColor;
-};
-
-type ProductFormMode = "create" | "edit";
-
-type EditProductPayloadWithStatus = UpdateProductPayload & {
-  estado: Product["estado"];
 };
 
 const PRODUCTS_PAGE_LIMIT = 10;
@@ -100,6 +100,8 @@ export function ProductsContainer() {
     products,
     pagination,
     loading,
+    submitting,
+    updatingStatus,
     error,
     fetchProducts,
     createProduct,
@@ -276,19 +278,29 @@ export function ProductsContainer() {
   };
 
   /*
-  Recibe el payload construido por el modal
+  Recibe el contrato construido por el modal
   y delega la creación o actualización al hook
   según el modo activo del formulario.
 
-  En edición se separa la actualización
-  de datos generales del cambio de estado
-  lógico, porque el backend expone endpoints
-  distintos para cada responsabilidad.
+  La imagen se mantiene separada del payload
+  de negocio y se entrega al hook como archivo
+  opcional para que productsApi construya FormData.
+
+  En edición se separan:
+
+  - los datos generales mediante PUT;
+  - el estado lógico mediante PATCH.
+
+  Esto respeta los endpoints reales del backend.
   */
-  const handleSubmitProductForm = async (payload: ProductFormSubmitPayload) => {
+  const handleSubmitProductForm = async ({
+    payload,
+    imageFile,
+  }: ProductFormSubmitPayload) => {
     if (productFormMode === "create") {
       const createdProduct = await createProduct(
         payload as CreateProductPayload,
+        imageFile,
       );
 
       if (createdProduct) {
@@ -323,29 +335,26 @@ export function ProductsContainer() {
       return;
     }
 
-    const editPayload = payload as EditProductPayloadWithStatus;
+    const editPayload = payload as EditProductFormPayload;
 
     const productDataPayload: UpdateProductPayload = {
       nombre: editPayload.nombre,
       descripcion: editPayload.descripcion,
-      imagen_url: editPayload.imagen_url,
       genetica: editPayload.genetica,
       porcentaje_thc: editPayload.porcentaje_thc,
       precio_venta_actual: editPayload.precio_venta_actual,
     };
 
-    const hasDataChanges =
-      productDataPayload.nombre !== selectedProduct.nombre ||
-      (productDataPayload.descripcion ?? null) !==
-        (selectedProduct.descripcion ?? null) ||
-      (productDataPayload.imagen_url ?? null) !==
-        (selectedProduct.imagen_url ?? null) ||
-      productDataPayload.genetica !== selectedProduct.genetica ||
-      productDataPayload.porcentaje_thc !== selectedProduct.porcentaje_thc ||
-      productDataPayload.precio_venta_actual !==
-        selectedProduct.precio_venta_actual;
+    const hasDataChanges = hasProductDataChanges(
+      selectedProduct,
+      productDataPayload,
+      imageFile,
+    );
 
-    const hasStatusChange = editPayload.estado !== selectedProduct.estado;
+    const hasStatusChange = hasProductStatusChange(
+      selectedProduct,
+      editPayload.estado,
+    );
 
     if (!hasDataChanges && !hasStatusChange) {
       handleCloseProductModal();
@@ -359,10 +368,20 @@ export function ProductsContainer() {
       return;
     }
 
+    /*
+    Los datos generales se actualizan primero.
+
+    Cuando incluyen una imagen nueva, el backend se encarga de:
+
+    - subirla a S3;
+    - compensarla si PostgreSQL falla;
+    - eliminar la imagen anterior después del reemplazo exitoso.
+    */
     if (hasDataChanges) {
       const updatedProduct = await updateProduct(
         selectedProduct.id,
         productDataPayload,
+        imageFile,
       );
 
       if (!updatedProduct) {
@@ -386,11 +405,31 @@ export function ProductsContainer() {
       );
 
       if (!updatedProductStatus) {
+        /*
+        Si los datos generales ya fueron guardados, se cierra el
+        formulario para evitar reenviar una imagen que ya se subió.
+
+        La advertencia informa claramente que solo quedó pendiente
+        el cambio de estado.
+        */
+        if (hasDataChanges) {
+          handleCloseProductModal();
+
+          setFeedback({
+            open: true,
+            severity: "warning",
+            message:
+              "Los datos del producto se guardaron, pero no fue posible actualizar su estado.",
+          });
+
+          return;
+        }
+
         setFeedback({
           open: true,
           severity: "error",
           message:
-            "No se pudo actualizar el estado del producto. Revisá los datos e intentá nuevamente.",
+            "No se pudo actualizar el estado del producto. Intentá nuevamente.",
         });
 
         return;
@@ -399,12 +438,17 @@ export function ProductsContainer() {
 
     handleCloseProductModal();
 
+    const successMessage =
+      hasDataChanges && hasStatusChange
+        ? "Producto y estado actualizados correctamente."
+        : hasStatusChange
+          ? "Estado del producto actualizado correctamente."
+          : "Producto actualizado correctamente.";
+
     setFeedback({
       open: true,
       severity: "success",
-      message: hasStatusChange
-        ? "Estado del producto actualizado correctamente."
-        : "Producto actualizado correctamente.",
+      message: successMessage,
     });
   };
 
@@ -624,7 +668,7 @@ export function ProductsContainer() {
         open={productModalOpen}
         mode={productFormMode}
         product={selectedProduct}
-        loading={loading}
+        loading={submitting || updatingStatus}
         onClose={handleCloseProductModal}
         onSubmit={handleSubmitProductForm}
       />

@@ -14,34 +14,47 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { FormEvent, useState } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import type {
-  CreateProductPayload,
   Product,
-  UpdateProductPayload,
+  ProductImageFile,
 } from "@/api/productsApi";
+import {
+  buildInitialProductFormValues,
+  buildProductFormSubmission,
+  formatProductLabel,
+  getProductFormFieldError,
+  getProductUnitByType,
+  getProductUnitLabel,
+  hasProductFormChanges,
+  hasProductFormErrors,
+  type ProductFormErrors,
+  type ProductFormField,
+  type ProductFormMode,
+  type ProductFormSubmission,
+  type ProductFormValues,
+  validateProductForm,
+  validateProductImageFile,
+} from "@/features/products/utils/productForm";
 
+import { ProductImageField } from "./ProductImageField";
 import { productsStyles } from "../products.styles";
 
-type ProductFormMode = "create" | "edit";
+/* =========================================================
+   CONTRATOS
+========================================================= */
 
 /*
-Payload utilizado por el formulario en modo edición.
-
-Incluye estado porque la UI permite modificarlo,
-pero el container será responsable de separar:
-
-- datos generales → PUT /productos/:id
-- estado lógico → PATCH /productos/:id/estado
+Alias público conservado para que el container consuma
+el contrato definitivo construido por el formulario.
 */
-export type EditProductFormPayload = UpdateProductPayload & {
-  estado: Product["estado"];
-};
-
-export type ProductFormSubmitPayload =
-  | CreateProductPayload
-  | EditProductFormPayload;
+export type ProductFormSubmitPayload = ProductFormSubmission;
 
 type ProductFormModalProps = {
   open: boolean;
@@ -49,174 +62,27 @@ type ProductFormModalProps = {
   product?: Product | null;
   loading: boolean;
   onClose: () => void;
-  onSubmit: (payload: ProductFormSubmitPayload) => Promise<void>;
+  onSubmit: (submission: ProductFormSubmission) => Promise<void>;
 };
 
 type ProductFormContentProps = ProductFormModalProps;
 
-type ProductFormState = {
-  nombre: string;
-  descripcion: string;
-  imagen_url: string;
-  tipo: "FLOR" | "SEMILLA";
-  genetica: "INDICA" | "SATIVA" | "HIBRIDA";
-  porcentaje_thc: string;
-  precio_venta_actual: string;
-  estado: "ACTIVO" | "INACTIVO";
-};
-
-type ProductFormErrors = Partial<Record<keyof ProductFormState, string>>;
-
-const unitLabels: Record<string, string> = {
-  GRAMOS: "g",
-  UNIDADES: "unidades",
-};
-
-const formatLabel = (value?: string | null) => {
-  if (!value) return "No definido";
-  return value.toLowerCase().replace("_", " ");
-};
+/* =========================================================
+   COMPONENTE INTERNO
+========================================================= */
 
 /*
-Obtiene la unidad de medida correspondiente
-al tipo de producto.
-*/
-function getUnitByType(type: ProductFormState["tipo"]) {
-  return type === "FLOR" ? "GRAMOS" : "UNIDADES";
-}
+Contiene el estado visual del formulario.
 
-/*
-Construye el estado inicial del formulario.
-*/
-function buildInitialFormState(
-  mode: ProductFormMode,
-  product?: Product | null,
-): ProductFormState {
-  if (mode === "edit" && product) {
-    return {
-      nombre: product.nombre,
-      descripcion: product.descripcion ?? "",
-      imagen_url: product.imagen_url ?? "",
-      tipo: product.tipo,
-      genetica: product.genetica,
-      porcentaje_thc:
-        product.porcentaje_thc !== null && product.porcentaje_thc !== undefined
-          ? String(product.porcentaje_thc)
-          : "",
-      precio_venta_actual:
-        product.precio_venta_actual !== null &&
-        product.precio_venta_actual !== undefined
-          ? String(product.precio_venta_actual)
-          : "",
-      estado: product.estado,
-    };
-  }
+Las reglas reutilizables de:
 
-  return {
-    nombre: "",
-    descripcion: "",
-    imagen_url: "",
-    tipo: "FLOR",
-    genetica: "HIBRIDA",
-    porcentaje_thc: "",
-    precio_venta_actual: "",
-    estado: "ACTIVO",
-  };
-}
+- inicialización;
+- normalización;
+- validación;
+- detección de cambios;
+- construcción de payloads;
 
-function isValidUrl(value: string) {
-  if (!value.trim()) return true;
-
-  try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol);
-  } catch {
-    return false;
-  }
-}
-
-function hasUnsavedChanges(
-  currentForm: ProductFormState,
-  initialForm: ProductFormState,
-) {
-  return (
-    currentForm.nombre !== initialForm.nombre ||
-    currentForm.descripcion !== initialForm.descripcion ||
-    currentForm.imagen_url !== initialForm.imagen_url ||
-    currentForm.tipo !== initialForm.tipo ||
-    currentForm.genetica !== initialForm.genetica ||
-    currentForm.porcentaje_thc !== initialForm.porcentaje_thc ||
-    currentForm.precio_venta_actual !== initialForm.precio_venta_actual ||
-    currentForm.estado !== initialForm.estado
-  );
-}
-
-function getFieldError(
-  field: keyof ProductFormState,
-  form: ProductFormState,
-  isSeed: boolean,
-) {
-  if (field === "nombre" && !form.nombre.trim()) {
-    return "El nombre es obligatorio.";
-  }
-
-  if (field === "nombre" && form.nombre.trim().length > 50) {
-    return "El nombre no puede superar los 50 caracteres.";
-  }
-
-  if (
-    field === "imagen_url" &&
-    form.imagen_url.trim() &&
-    !isValidUrl(form.imagen_url)
-  ) {
-    return "Ingresá una URL válida que comience con http o https.";
-  }
-
-  if (field === "tipo" && !form.tipo) {
-    return "El tipo de producto es obligatorio.";
-  }
-
-  if (field === "genetica" && !form.genetica) {
-    return "La genética es obligatoria.";
-  }
-
-  /*
-  El precio de venta solo aplica a productos tipo FLOR.
-  Las semillas forman parte del circuito de compras,
-  inventario y producción interna.
-  */
-  if (field === "precio_venta_actual" && !isSeed) {
-    const price = Number(form.precio_venta_actual);
-
-    if (!form.precio_venta_actual || Number.isNaN(price) || price <= 0) {
-      return "El precio debe ser mayor a 0.";
-    }
-
-    if (!Number.isInteger(price)) {
-      return "El precio debe ser un número entero mayor a 0.";
-    }
-  }
-
-  if (field === "porcentaje_thc" && !isSeed) {
-    const thc = Number(form.porcentaje_thc);
-
-    if (!form.porcentaje_thc || Number.isNaN(thc)) {
-      return "El THC es obligatorio para flores.";
-    }
-
-    if (thc < 1 || thc > 100) {
-      return "El THC debe estar entre 1 y 100.";
-    }
-  }
-
-  return undefined;
-}
-
-/*
-Componente interno que contiene el formulario real.
-
-Se renderiza con una key desde el modal para reiniciar correctamente
-el estado local al alternar entre alta y edición.
+se encuentran en features/products/utils/productForm.ts.
 */
 function ProductFormContent({
   open,
@@ -226,21 +92,46 @@ function ProductFormContent({
   onClose,
   onSubmit,
 }: ProductFormContentProps) {
-  const [initialForm] = useState<ProductFormState>(() =>
-    buildInitialFormState(mode, product),
+  const [initialForm] = useState<ProductFormValues>(() =>
+    buildInitialProductFormValues(mode, product),
   );
 
-  const [form, setForm] = useState<ProductFormState>(initialForm);
+  const [form, setForm] = useState<ProductFormValues>(initialForm);
   const [errors, setErrors] = useState<ProductFormErrors>({});
+
+  const [imageFile, setImageFile] =
+    useState<ProductImageFile>(null);
+
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(
+    product?.imagen_url ?? null,
+  );
   const [imagePreviewFailed, setImagePreviewFailed] = useState(false);
+
+  /*
+  Conserva la URL temporal creada para una imagen local.
+
+  Se utiliza para revocarla cuando:
+
+  - el administrador cambia nuevamente la imagen;
+  - descarta la selección;
+  - cierra el modal.
+  */
+  const imageObjectUrlRef = useRef<string | null>(null);
+
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
 
   const isCreateMode = mode === "create";
   const isSeed = form.tipo === "SEMILLA";
-  const derivedUnit = getUnitByType(form.tipo);
+  const derivedUnit = getProductUnitByType(form.tipo);
   const stockAvailable = product?.stock?.cantidad_disponible ?? 0;
-  const unitLabel = unitLabels[derivedUnit] ?? derivedUnit;
-  const isDirty = hasUnsavedChanges(form, initialForm);
+  const unitLabel = getProductUnitLabel(form.tipo);
+
+  const isDirty = hasProductFormChanges(
+    initialForm,
+    form,
+    imageFile,
+  );
 
   const title = isCreateMode ? "Nuevo producto" : "Editar producto";
 
@@ -251,7 +142,32 @@ function ProductFormContent({
   const submitLabel = isCreateMode ? "Crear producto" : "Guardar cambios";
   const loadingLabel = isCreateMode ? "Creando..." : "Guardando...";
 
-  const handleChange = (field: keyof ProductFormState, value: string) => {
+  /*
+  Libera la URL temporal cuando se desmonta el formulario.
+
+  La creación y el reemplazo de la vista previa se realizan
+  directamente cuando el administrador selecciona un archivo.
+
+  De esta forma evitamos actualizaciones de estado dentro del
+  efecto y prevenimos renders encadenados innecesarios.
+  */
+  useEffect(() => {
+    return () => {
+      if (imageObjectUrlRef.current) {
+        URL.revokeObjectURL(imageObjectUrlRef.current);
+        imageObjectUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  /* =========================================================
+     MANEJO DEL FORMULARIO
+  ========================================================= */
+
+  const handleChange = (
+    field: ProductFormField,
+    value: string,
+  ) => {
     setForm((currentForm) => {
       if (field === "tipo" && value === "SEMILLA") {
         return {
@@ -265,7 +181,7 @@ function ProductFormContent({
       return {
         ...currentForm,
         [field]: value,
-      };
+      } as ProductFormValues;
     });
 
     setErrors((currentErrors) => ({
@@ -278,14 +194,10 @@ function ProductFormContent({
           }
         : {}),
     }));
-
-    if (field === "imagen_url") {
-      setImagePreviewFailed(false);
-    }
   };
 
-  const handleBlur = (field: keyof ProductFormState) => {
-    const fieldError = getFieldError(field, form, isSeed);
+  const handleBlur = (field: ProductFormField) => {
+    const fieldError = getProductFormFieldError(field, form);
 
     setErrors((currentErrors) => ({
       ...currentErrors,
@@ -293,69 +205,75 @@ function ProductFormContent({
     }));
   };
 
-  const validateForm = () => {
-    const fieldsToValidate: Array<keyof ProductFormState> = [
-      "nombre",
-      "imagen_url",
-      "tipo",
-      "genetica",
-      "precio_venta_actual",
-      "porcentaje_thc",
-    ];
+  const handleImageChange = (file: ProductImageFile) => {
+    const nextImageError = validateProductImageFile(file);
 
-    const nextErrors = fieldsToValidate.reduce<ProductFormErrors>(
-      (accumulatedErrors, field) => {
-        const fieldError = getFieldError(field, form, isSeed);
+    /*
+    Antes de crear una nueva vista previa se libera la URL
+    temporal anterior para evitar consumo acumulado de memoria.
+    */
+    if (imageObjectUrlRef.current) {
+      URL.revokeObjectURL(imageObjectUrlRef.current);
+      imageObjectUrlRef.current = null;
+    }
 
-        if (fieldError) {
-          accumulatedErrors[field] = fieldError;
-        }
+    /*
+    Solo se genera una vista previa local cuando el archivo
+    cumple las validaciones básicas del frontend.
 
-        return accumulatedErrors;
-      },
-      {},
-    );
+    Si el archivo es inválido o se descarta la selección,
+    se vuelve a mostrar la imagen actualmente persistida.
+    */
+    if (file && !nextImageError) {
+      const nextPreviewUrl = URL.createObjectURL(file);
 
-    setErrors(nextErrors);
+      imageObjectUrlRef.current = nextPreviewUrl;
+      setImagePreviewUrl(nextPreviewUrl);
+    } else {
+      setImagePreviewUrl(product?.imagen_url ?? null);
+    }
 
-    return Object.keys(nextErrors).length === 0;
+    setImageFile(file);
+    setImageError(nextImageError);
+    setImagePreviewFailed(false);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const validateForm = (): boolean => {
+    const nextErrors = validateProductForm(form);
+    const nextImageError = validateProductImageFile(imageFile);
+
+    setErrors(nextErrors);
+    setImageError(nextImageError);
+
+    return !hasProductFormErrors(nextErrors) && !nextImageError;
+  };
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
-    if (!validateForm()) return;
-
-    if (isCreateMode) {
-      await onSubmit({
-        nombre: form.nombre.trim(),
-        descripcion:
-          form.descripcion.trim() !== "" ? form.descripcion.trim() : null,
-        imagen_url:
-          form.imagen_url.trim() !== "" ? form.imagen_url.trim() : null,
-        tipo: form.tipo,
-        genetica: form.genetica,
-        porcentaje_thc: isSeed ? null : Number(form.porcentaje_thc),
-        precio_venta_actual: isSeed ? null : Number(form.precio_venta_actual),
-      });
-
+    if (!validateForm()) {
       return;
     }
 
-    await onSubmit({
-      nombre: form.nombre.trim(),
-      descripcion:
-        form.descripcion.trim() !== "" ? form.descripcion.trim() : null,
-      imagen_url: form.imagen_url.trim() !== "" ? form.imagen_url.trim() : null,
-      genetica: form.genetica,
-      porcentaje_thc: isSeed ? null : Number(form.porcentaje_thc),
-      precio_venta_actual: isSeed ? null : Number(form.precio_venta_actual),
-      estado: form.estado,
-    });
+    const submission = buildProductFormSubmission(
+      mode,
+      form,
+      imageFile,
+    );
+
+    await onSubmit(submission);
   };
 
+  /* =========================================================
+     CIERRE SEGURO
+  ========================================================= */
+
   const handleRequestClose = () => {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
 
     if (isDirty) {
       setDiscardDialogOpen(true);
@@ -369,6 +287,10 @@ function ProductFormContent({
     setDiscardDialogOpen(false);
     onClose();
   };
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
 
   return (
     <>
@@ -395,7 +317,9 @@ function ProductFormContent({
               </Typography>
 
               {isCreateMode && (
-                <Typography sx={productsStyles.productFormDefaultStatusText}>
+                <Typography
+                  sx={productsStyles.productFormDefaultStatusText}
+                >
                   Los nuevos productos se crean activos por defecto.
                 </Typography>
               )}
@@ -403,7 +327,7 @@ function ProductFormContent({
 
             {!isCreateMode && (
               <Chip
-                label={formatLabel(form.estado)}
+                label={formatProductLabel(form.estado)}
                 sx={
                   form.estado === "ACTIVO"
                     ? productsStyles.productFormStatusActiveChip
@@ -417,10 +341,10 @@ function ProductFormContent({
             <Box sx={productsStyles.productFormLayout}>
               <Box sx={productsStyles.productFormPreviewCard}>
                 <Box sx={productsStyles.productFormImageFrame}>
-                  {form.imagen_url && !imagePreviewFailed ? (
+                  {imagePreviewUrl && !imagePreviewFailed ? (
                     <Box
                       component="img"
-                      src={form.imagen_url}
+                      src={imagePreviewUrl}
                       alt={`Imagen de ${
                         form.nombre || product?.nombre || "producto"
                       }`}
@@ -430,7 +354,9 @@ function ProductFormContent({
                   ) : (
                     <Box sx={productsStyles.productFormImageFallback}>
                       <Typography
-                        sx={productsStyles.productFormImageFallbackText}
+                        sx={
+                          productsStyles.productFormImageFallbackText
+                        }
                       >
                         Vista previa no disponible
                       </Typography>
@@ -439,24 +365,28 @@ function ProductFormContent({
                 </Box>
 
                 <Box sx={productsStyles.productFormPreviewContent}>
-                  <Typography sx={productsStyles.productFormPreviewLabel}>
+                  <Typography
+                    sx={productsStyles.productFormPreviewLabel}
+                  >
                     Vista previa
                   </Typography>
 
-                  <Typography sx={productsStyles.productFormPreviewTitle}>
+                  <Typography
+                    sx={productsStyles.productFormPreviewTitle}
+                  >
                     {form.nombre || "Producto sin nombre"}
                   </Typography>
 
                   <Box sx={productsStyles.productFormPreviewChips}>
                     <Chip
                       size="small"
-                      label={formatLabel(form.tipo)}
+                      label={formatProductLabel(form.tipo)}
                       sx={productsStyles.productFormPreviewChip}
                     />
 
                     <Chip
                       size="small"
-                      label={formatLabel(form.genetica)}
+                      label={formatProductLabel(form.genetica)}
                       sx={productsStyles.productFormPreviewChip}
                     />
 
@@ -464,14 +394,16 @@ function ProductFormContent({
                       size="small"
                       label={
                         isCreateMode
-                          ? `Unidad: ${formatLabel(derivedUnit)}`
+                          ? `Unidad: ${formatProductLabel(derivedUnit)}`
                           : `${stockAvailable} ${unitLabel} disponibles`
                       }
                       sx={productsStyles.productFormPreviewChip}
                     />
                   </Box>
 
-                  <Typography sx={productsStyles.productFormPreviewText}>
+                  <Typography
+                    sx={productsStyles.productFormPreviewText}
+                  >
                     {form.descripcion.trim()
                       ? form.descripcion
                       : "Agregá una descripción para visualizar cómo se presentará el producto."}
@@ -482,11 +414,15 @@ function ProductFormContent({
               <Box sx={productsStyles.productFormSections}>
                 <Box sx={productsStyles.productFormSection}>
                   <Box sx={productsStyles.productFormSectionHeader}>
-                    <Typography sx={productsStyles.productFormSectionTitle}>
+                    <Typography
+                      sx={productsStyles.productFormSectionTitle}
+                    >
                       Información principal
                     </Typography>
 
-                    <Typography sx={productsStyles.productFormSectionText}>
+                    <Typography
+                      sx={productsStyles.productFormSectionText}
+                    >
                       Datos que identifican visualmente el producto.
                     </Typography>
                   </Box>
@@ -499,6 +435,7 @@ function ProductFormContent({
                         handleChange("nombre", event.target.value)
                       }
                       onBlur={() => handleBlur("nombre")}
+                      disabled={loading}
                       fullWidth
                       error={Boolean(errors.nombre)}
                       helperText={errors.nombre}
@@ -512,8 +449,12 @@ function ProductFormContent({
                       label="Descripción"
                       value={form.descripcion}
                       onChange={(event) =>
-                        handleChange("descripcion", event.target.value)
+                        handleChange(
+                          "descripcion",
+                          event.target.value,
+                        )
                       }
+                      disabled={loading}
                       multiline
                       minRows={3}
                       fullWidth
@@ -528,23 +469,12 @@ function ProductFormContent({
                       ]}
                     />
 
-                    <TextField
-                      label="URL de imagen"
-                      value={form.imagen_url}
-                      onChange={(event) =>
-                        handleChange("imagen_url", event.target.value)
-                      }
-                      onBlur={() => handleBlur("imagen_url")}
-                      fullWidth
-                      error={Boolean(errors.imagen_url)}
-                      helperText={
-                        errors.imagen_url ??
-                        "Opcional. Se actualiza la vista previa al modificarla."
-                      }
-                      sx={[
-                        productsStyles.productFormField,
-                        productsStyles.productFormFullWidth,
-                      ]}
+                    <ProductImageField
+                      currentImageUrl={product?.imagen_url}
+                      selectedFile={imageFile}
+                      error={imageError}
+                      disabled={loading}
+                      onChange={handleImageChange}
                     />
                   </Box>
                 </Box>
@@ -553,11 +483,15 @@ function ProductFormContent({
 
                 <Box sx={productsStyles.productFormSection}>
                   <Box sx={productsStyles.productFormSectionHeader}>
-                    <Typography sx={productsStyles.productFormSectionTitle}>
+                    <Typography
+                      sx={productsStyles.productFormSectionTitle}
+                    >
                       Datos comerciales
                     </Typography>
 
-                    <Typography sx={productsStyles.productFormSectionText}>
+                    <Typography
+                      sx={productsStyles.productFormSectionText}
+                    >
                       {isSeed
                         ? "Las semillas se gestionan como insumos de producción interna."
                         : "Información operativa visible para la gestión."}
@@ -568,20 +502,28 @@ function ProductFormContent({
                     {isSeed ? (
                       <Box sx={productsStyles.productFormReadonlyCard}>
                         <Typography
-                          sx={productsStyles.productFormReadonlyLabel}
+                          sx={
+                            productsStyles.productFormReadonlyLabel
+                          }
                         >
                           Precio de venta
                         </Typography>
 
                         <Typography
-                          sx={productsStyles.productFormReadonlyValue}
+                          sx={
+                            productsStyles.productFormReadonlyValue
+                          }
                         >
                           No aplica
                         </Typography>
 
-                        <Typography sx={productsStyles.productFormReadonlyHint}>
-                          Las semillas no se comercializan a socios. Su costo se
-                          registra en compras.
+                        <Typography
+                          sx={
+                            productsStyles.productFormReadonlyHint
+                          }
+                        >
+                          Las semillas no se comercializan a socios. Su
+                          costo se registra en compras.
                         </Typography>
                       </Box>
                     ) : (
@@ -595,9 +537,14 @@ function ProductFormContent({
                             event.target.value,
                           )
                         }
-                        onBlur={() => handleBlur("precio_venta_actual")}
+                        onBlur={() =>
+                          handleBlur("precio_venta_actual")
+                        }
+                        disabled={loading}
                         fullWidth
-                        error={Boolean(errors.precio_venta_actual)}
+                        error={Boolean(
+                          errors.precio_venta_actual,
+                        )}
                         helperText={errors.precio_venta_actual}
                         slotProps={{
                           htmlInput: {
@@ -615,13 +562,19 @@ function ProductFormContent({
                         label="Estado *"
                         value={form.estado}
                         onChange={(event) =>
-                          handleChange("estado", event.target.value)
+                          handleChange(
+                            "estado",
+                            event.target.value,
+                          )
                         }
+                        disabled={loading}
                         fullWidth
                         sx={productsStyles.productFormField}
                       >
                         <MenuItem value="ACTIVO">Activo</MenuItem>
-                        <MenuItem value="INACTIVO">Inactivo</MenuItem>
+                        <MenuItem value="INACTIVO">
+                          Inactivo
+                        </MenuItem>
                       </TextField>
                     )}
                   </Box>
@@ -631,11 +584,15 @@ function ProductFormContent({
 
                 <Box sx={productsStyles.productFormSection}>
                   <Box sx={productsStyles.productFormSectionHeader}>
-                    <Typography sx={productsStyles.productFormSectionTitle}>
+                    <Typography
+                      sx={productsStyles.productFormSectionTitle}
+                    >
                       Clasificación
                     </Typography>
 
-                    <Typography sx={productsStyles.productFormSectionText}>
+                    <Typography
+                      sx={productsStyles.productFormSectionText}
+                    >
                       Reglas del dominio asociadas al producto.
                     </Typography>
                   </Box>
@@ -647,9 +604,13 @@ function ProductFormContent({
                         label="Tipo *"
                         value={form.tipo}
                         onChange={(event) =>
-                          handleChange("tipo", event.target.value)
+                          handleChange(
+                            "tipo",
+                            event.target.value,
+                          )
                         }
                         onBlur={() => handleBlur("tipo")}
+                        disabled={loading}
                         fullWidth
                         error={Boolean(errors.tipo)}
                         helperText={
@@ -662,58 +623,89 @@ function ProductFormContent({
                         <MenuItem value="SEMILLA">Semilla</MenuItem>
                       </TextField>
 
-                      <Box sx={productsStyles.productFormReadonlyCard}>
+                      <Box
+                        sx={productsStyles.productFormReadonlyCard}
+                      >
                         <Typography
-                          sx={productsStyles.productFormReadonlyLabel}
+                          sx={
+                            productsStyles.productFormReadonlyLabel
+                          }
                         >
                           Unidad
                         </Typography>
 
                         <Typography
-                          sx={productsStyles.productFormReadonlyValue}
+                          sx={
+                            productsStyles.productFormReadonlyValue
+                          }
                         >
-                          {formatLabel(derivedUnit)}
+                          {formatProductLabel(derivedUnit)}
                         </Typography>
 
-                        <Typography sx={productsStyles.productFormReadonlyHint}>
-                          Se define automáticamente por el tipo seleccionado.
+                        <Typography
+                          sx={
+                            productsStyles.productFormReadonlyHint
+                          }
+                        >
+                          Se define automáticamente por el tipo
+                          seleccionado.
                         </Typography>
                       </Box>
                     </Box>
                   ) : (
                     <Box sx={productsStyles.productFormMetaGrid}>
-                      <Box sx={productsStyles.productFormReadonlyCard}>
+                      <Box
+                        sx={productsStyles.productFormReadonlyCard}
+                      >
                         <Typography
-                          sx={productsStyles.productFormReadonlyLabel}
+                          sx={
+                            productsStyles.productFormReadonlyLabel
+                          }
                         >
                           Tipo
                         </Typography>
 
                         <Typography
-                          sx={productsStyles.productFormReadonlyValue}
+                          sx={
+                            productsStyles.productFormReadonlyValue
+                          }
                         >
-                          {formatLabel(form.tipo)}
+                          {formatProductLabel(form.tipo)}
                         </Typography>
 
-                        <Typography sx={productsStyles.productFormReadonlyHint}>
+                        <Typography
+                          sx={
+                            productsStyles.productFormReadonlyHint
+                          }
+                        >
                           No modificable luego de la creación.
                         </Typography>
                       </Box>
 
-                      <Box sx={productsStyles.productFormReadonlyCard}>
+                      <Box
+                        sx={productsStyles.productFormReadonlyCard}
+                      >
                         <Typography
-                          sx={productsStyles.productFormReadonlyLabel}
+                          sx={
+                            productsStyles.productFormReadonlyLabel
+                          }
                         >
                           Unidad
                         </Typography>
 
                         <Typography
-                          sx={productsStyles.productFormReadonlyValue}
+                          sx={
+                            productsStyles.productFormReadonlyValue
+                          }
                         >
-                          {formatLabel(derivedUnit)}
+                          {formatProductLabel(derivedUnit)}
                         </Typography>
 
-                        <Typography sx={productsStyles.productFormReadonlyHint}>
+                        <Typography
+                          sx={
+                            productsStyles.productFormReadonlyHint
+                          }
+                        >
                           Definida automáticamente por el tipo.
                         </Typography>
                       </Box>
@@ -726,9 +718,13 @@ function ProductFormContent({
                       label="Genética *"
                       value={form.genetica}
                       onChange={(event) =>
-                        handleChange("genetica", event.target.value)
+                        handleChange(
+                          "genetica",
+                          event.target.value,
+                        )
                       }
                       onBlur={() => handleBlur("genetica")}
+                      disabled={loading}
                       fullWidth
                       error={Boolean(errors.genetica)}
                       helperText={errors.genetica}
@@ -744,10 +740,13 @@ function ProductFormContent({
                       type="number"
                       value={form.porcentaje_thc}
                       onChange={(event) =>
-                        handleChange("porcentaje_thc", event.target.value)
+                        handleChange(
+                          "porcentaje_thc",
+                          event.target.value,
+                        )
                       }
                       onBlur={() => handleBlur("porcentaje_thc")}
-                      disabled={isSeed}
+                      disabled={loading || isSeed}
                       fullWidth
                       error={Boolean(errors.porcentaje_thc)}
                       slotProps={{
@@ -773,10 +772,12 @@ function ProductFormContent({
                 </Box>
 
                 <Box sx={productsStyles.productFormHelpBox}>
-                  <Typography sx={productsStyles.productFormHelpText}>
-                    El stock no se modifica desde esta pantalla. Los cambios de
-                    inventario deben registrarse mediante movimientos de stock
-                    para mantener trazabilidad.
+                  <Typography
+                    sx={productsStyles.productFormHelpText}
+                  >
+                    El stock no se modifica desde esta pantalla. Los
+                    cambios de inventario deben registrarse mediante
+                    movimientos de stock para mantener trazabilidad.
                   </Typography>
                 </Box>
               </Box>
@@ -836,7 +837,9 @@ function ProductFormContent({
           </Typography>
         </DialogContent>
 
-        <DialogActions sx={productsStyles.productFormConfirmActions}>
+        <DialogActions
+          sx={productsStyles.productFormConfirmActions}
+        >
           <Button
             variant="outlined"
             onClick={() => setDiscardDialogOpen(false)}
@@ -859,6 +862,10 @@ function ProductFormContent({
   );
 }
 
+/* =========================================================
+   MODAL PÚBLICO
+========================================================= */
+
 export default function ProductFormModal({
   open,
   mode,
@@ -873,7 +880,11 @@ export default function ProductFormModal({
 
   return (
     <ProductFormContent
-      key={mode === "edit" ? product?.id : `create-product-${Number(open)}`}
+      key={
+        mode === "edit"
+          ? product?.id
+          : `create-product-${Number(open)}`
+      }
       open={open}
       mode={mode}
       product={product}
