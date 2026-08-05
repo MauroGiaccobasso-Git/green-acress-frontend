@@ -27,12 +27,9 @@ export const styles = {
     minHeight: "100vh",
     flexDirection: "column",
     bgcolor: colors.background.surface,
-    borderRight: (theme: Theme) =>
-      `1px solid ${theme.palette.divider}`,
+    borderRight: (theme: Theme) => `1px solid ${theme.palette.divider}`,
     zIndex: (theme: Theme) => theme.zIndex.drawer,
-    transform: isOpen
-      ? "translateX(0)"
-      : `translateX(-${SIDEBAR_WIDTH}px)`,
+    transform: isOpen ? "translateX(0)" : `translateX(-${SIDEBAR_WIDTH}px)`,
     transition: "transform 180ms ease",
   }),
 
@@ -42,13 +39,6 @@ export const styles = {
     gap: 1.25,
     minHeight: 86,
     px: 2.5,
-  },
-
-  brand: {
-    display: "flex",
-    alignItems: "center",
-    gap: 1.25,
-    flexShrink: 0,
   },
 
   brandAvatar: {
@@ -92,11 +82,6 @@ export const styles = {
     gap: 0.5,
   },
 
-  sidebarSection: {
-    px: 1.5,
-    py: 2,
-  },
-
   sidebarSectionTitle: {
     display: "block",
     px: 1.25,
@@ -112,65 +97,26 @@ export const styles = {
     p: 0,
   },
 
-  desktopNavigation: {
-    display: {
-      xs: "none",
-      md: "flex",
-    },
-    alignItems: "center",
-    gap: 0.5,
-  },
-
-  navigationButton: (isActive: boolean) => ({
-    minHeight: 44,
-    px: 2,
-    borderRadius: 999,
-    color: isActive
-      ? colors.brand.primaryDark
-      : colors.text.primary,
-    bgcolor: isActive
-      ? (theme: Theme) =>
-          alpha(theme.palette.primary.main, 0.09)
-      : "transparent",
-    fontWeight: 700,
-    textTransform: "none",
-
-    "&:hover": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.06),
-    },
-
-    "&.Mui-disabled": {
-      opacity: 0.45,
-    },
-  }),
-
   sidebarNavigationItem: (isActive: boolean) => ({
     minHeight: 42,
     px: 1.25,
     borderRadius: 1.5,
-    color: isActive
-      ? colors.brand.primaryDark
-      : colors.text.primary,
+    color: isActive ? colors.brand.primaryDark : colors.text.primary,
     bgcolor: isActive
-      ? (theme: Theme) =>
-          alpha(theme.palette.primary.main, 0.075)
+      ? (theme: Theme) => alpha(theme.palette.primary.main, 0.075)
       : "transparent",
     textTransform: "none",
 
     "&:hover": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.055),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.055),
     },
 
     "&.Mui-selected": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.075),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.075),
     },
 
     "&.Mui-selected:hover": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.105),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.105),
     },
 
     "&.Mui-disabled": {
@@ -179,9 +125,7 @@ export const styles = {
     },
 
     "& .MuiSvgIcon-root": {
-      color: isActive
-        ? colors.brand.primary
-        : colors.text.secondary,
+      color: isActive ? colors.brand.primary : colors.text.secondary,
       fontSize: 20,
     },
   }),
@@ -197,22 +141,50 @@ export const styles = {
   },
 
   navigationText: (isActive: boolean) => ({
-    color: isActive
-      ? colors.brand.primaryDark
-      : colors.text.primary,
+    color: isActive ? colors.brand.primaryDark : colors.text.primary,
     fontSize: 14,
     fontWeight: isActive ? 700 : 500,
   }),
 
-  mobileNavigationIcon: {
-    display: "flex",
-    alignItems: "center",
-    mr: 1.5,
+  /* =========================================================
+     USUARIO
+  ========================================================= */
+
+  sidebarFooterActionArea: {
+    mt: "auto",
+    p: 1.5,
+    borderTop: (theme: Theme) => `1px solid ${theme.palette.divider}`,
   },
 
-  /* =========================================================
-     USUARIO DEL SIDEBAR
-  ========================================================= */
+  sidebarFooterAction: {
+    width: "100%",
+    minHeight: 44,
+    px: 1.25,
+    borderRadius: 1.5,
+    justifyContent: "flex-start",
+    color: colors.text.secondary,
+    textTransform: "none",
+    fontSize: 14,
+    fontWeight: 600,
+
+    "&:hover": {
+      color: colors.text.primary,
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.055),
+    },
+
+    "&.Mui-disabled": {
+      opacity: 0.62,
+      color: colors.text.secondary,
+    },
+
+    "& .MuiButton-startIcon": {
+      mr: 1.25,
+    },
+
+    "& .MuiSvgIcon-root": {
+      fontSize: 20,
+    },
+  },
 
   sidebarUserArea: {
     mt: "auto",
@@ -227,12 +199,10 @@ export const styles = {
     justifyContent: "flex-start",
     color: colors.text.primary,
     textTransform: "none",
-    borderTop: (theme: Theme) =>
-      `1px solid ${theme.palette.divider}`,
+    borderTop: (theme: Theme) => `1px solid ${theme.palette.divider}`,
 
     "&:hover": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.055),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.055),
     },
   },
 
@@ -260,8 +230,12 @@ export const styles = {
 
   userEmail: {
     display: "block",
+    maxWidth: 130,
+    overflow: "hidden",
     color: colors.text.secondary,
     fontWeight: 500,
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
 
   /* =========================================================
@@ -273,32 +247,22 @@ export const styles = {
     minWidth: 0,
     ml: {
       xs: 0,
-      md: isSidebarOpen
-        ? `${SIDEBAR_WIDTH}px`
-        : 0,
+      md: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : 0,
     },
     transition: "margin-left 180ms ease",
   }),
 
   /* =========================================================
-     HEADER ADMINISTRATIVO
+     HEADER
   ========================================================= */
 
   appBar: {
     bgcolor: colors.background.surface,
     color: colors.text.primary,
-    borderBottom: (theme: Theme) =>
-      `1px solid ${theme.palette.divider}`,
+    borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
     boxShadow: "none",
   },
 
-  /*
-  La referencia Premium utiliza un header cercano
-  a los 78 px de altura.
-
-  La altura adicional mejora la jerarquía del título
-  y permite integrar correctamente el chip de actualización.
-  */
   toolbar: {
     width: "100%",
     minHeight: {
@@ -317,10 +281,6 @@ export const styles = {
       md: 0.75,
     },
 
-    /*
-    MUI aplica alturas internas al Toolbar según breakpoint.
-    Esta regla garantiza que la altura Premium se conserve.
-    */
     "@media (min-width: 0px)": {
       minHeight: {
         xs: 70,
@@ -353,16 +313,6 @@ export const styles = {
     color: colors.text.primary,
   },
 
-  mobileBrand: {
-    display: {
-      xs: "flex",
-      md: "none",
-    },
-    alignItems: "center",
-    gap: 1.25,
-    flexShrink: 0,
-  },
-
   toolbarSpacer: {
     flex: 1,
     minWidth: {
@@ -371,15 +321,6 @@ export const styles = {
     },
   },
 
-  /*
-  Slot destinado a acciones contextuales del encabezado.
-
-  En el Dashboard contendrá el indicador:
-  "Actualizado: hoy, 19:05".
-
-  Se oculta en pantallas pequeñas para no comprimir
-  el título ni interferir con el botón del menú.
-  */
   headerActions: {
     display: {
       xs: "none",
@@ -394,24 +335,6 @@ export const styles = {
     },
   },
 
-  userButton: {
-    display: {
-      xs: "none",
-      md: "inline-flex",
-    },
-    minHeight: 48,
-    px: 1.25,
-    borderRadius: 2,
-    color: colors.text.primary,
-    textTransform: "none",
-    bgcolor: "transparent",
-
-    "&:hover": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.06),
-    },
-  },
-
   /* =========================================================
      DRAWER MOBILE
   ========================================================= */
@@ -422,29 +345,20 @@ export const styles = {
 
   mobileDrawer: {
     width: 280,
+    height: "100%",
     minHeight: "100%",
+    display: "flex",
+    flexDirection: "column",
     bgcolor: colors.background.surface,
   },
 
   mobileDrawerHeader: {
     p: 0,
-    borderBottom: (theme: Theme) =>
-      `1px solid ${theme.palette.divider}`,
+    borderBottom: (theme: Theme) => `1px solid ${theme.palette.divider}`,
 
     "& > div": {
       width: "100%",
     },
-  },
-
-  mobileDrawerTitle: {
-    color: colors.brand.primaryDark,
-    lineHeight: 1,
-    fontWeight: 700,
-  },
-
-  mobileDrawerSubtitle: {
-    display: "block",
-    color: colors.text.secondary,
   },
 
   mobileNavigationList: {
@@ -457,22 +371,21 @@ export const styles = {
     minHeight: 42,
     px: 1.25,
     borderRadius: 1.5,
-    color: isActive
-      ? colors.brand.primaryDark
-      : colors.text.primary,
+    color: isActive ? colors.brand.primaryDark : colors.text.primary,
     bgcolor: isActive
-      ? (theme: Theme) =>
-          alpha(theme.palette.primary.main, 0.075)
+      ? (theme: Theme) => alpha(theme.palette.primary.main, 0.075)
       : "transparent",
 
     "&:hover": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.055),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.055),
     },
 
     "&.Mui-selected": {
-      bgcolor: (theme: Theme) =>
-        alpha(theme.palette.primary.main, 0.075),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.075),
+    },
+
+    "&.Mui-selected:hover": {
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.105),
     },
 
     "&.Mui-disabled": {
@@ -481,24 +394,15 @@ export const styles = {
     },
 
     "& .MuiSvgIcon-root": {
-      color: isActive
-        ? colors.brand.primary
-        : colors.text.secondary,
+      color: isActive ? colors.brand.primary : colors.text.secondary,
       fontSize: 20,
     },
   }),
 
   /* =========================================================
-     CONTENIDO DE LAS PÁGINAS
+     CONTENIDO
   ========================================================= */
 
-  /*
-  La franja vacía actual no proviene únicamente de este padding:
-  también existe una barra de metadata dentro del Dashboard.
-
-  Aun así, ajustamos el espacio para que, una vez movido el chip
-  al header, las KPI queden a unos 24 px del encabezado.
-  */
   content: {
     width: "100%",
     minWidth: 0,

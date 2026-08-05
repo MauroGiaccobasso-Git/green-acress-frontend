@@ -1,69 +1,31 @@
 "use client";
 
-import { Box, Button, Container, Paper, Typography } from "@mui/material";
-import { useRouter } from "next/navigation";
-
+import RequireAcceptedConsent from "@/components/auth/requireAcceptedConsent";
 import RequireAuth from "@/components/auth/requireAuth";
-import { useAuth } from "@/hooks/auth/useAuth";
-import { colors } from "@/theme/colors";
+import MemberProfileContainer from "@/containers/member/MemberProfileContainer";
+import { MemberLayout } from "@/layouts/member/MemberLayout";
 
-// Pantalla inicial del portal de socio.
-//
-// Funciona como base temporal para validar
-// el flujo autenticado del rol SOCIO.
+/*
+Página principal del Portal Socio.
+
+Compone las responsabilidades necesarias:
+
+- protege el acceso para usuarios SOCIO;
+- exige el consentimiento informado aceptado;
+- utiliza el layout autenticado del portal;
+- presenta el perfil real del socio.
+*/
 export default function SocioPage() {
-  const router = useRouter();
-
-  const { logout } = useAuth();
-
-  // Cierra sesión y vuelve al login.
-  const handleLogout = () => {
-    logout();
-
-    router.push("/");
-  };
-
   return (
-    // Protege contenido permitiendo acceso
-    // únicamente a usuarios SOCIO autenticados.
     <RequireAuth allowedRoles={["SOCIO"]}>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          bgcolor: colors.background.app,
-          py: 4,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              borderRadius: 4,
-            }}
-          >
-            <Typography
-              variant="h4"
-              sx={{ color: colors.brand.primaryDark }}
-              gutterBottom
-            >
-              Portal del socio
-            </Typography>
-
-            <Typography
-              variant="body1"
-              sx={{ color: colors.text.secondary, mb: 3 }}
-            >
-              Sesión iniciada correctamente. Esta pantalla funcionará como base
-              inicial para el portal de socios del sistema.
-            </Typography>
-
-            <Button variant="outlined" color="error" onClick={handleLogout}>
-              Cerrar sesión
-            </Button>
-          </Paper>
-        </Container>
-      </Box>
+      <RequireAcceptedConsent>
+        <MemberLayout
+          title="Mi perfil"
+          subtitle="Revisá tu información personal y el resumen de tu límite legal mensual."
+        >
+          <MemberProfileContainer />
+        </MemberLayout>
+      </RequireAcceptedConsent>
     </RequireAuth>
   );
 }

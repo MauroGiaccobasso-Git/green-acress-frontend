@@ -8,13 +8,8 @@ import { httpClient } from "./httpClient";
 Estados soportados por el ciclo de vida
 completo de una reserva.
 
-PENDIENTE existe dentro del backend como
-estado transitorio durante el procesamiento
-automático de la solicitud.
-
-Aunque no será expuesto como estado operativo
-principal al administrador, forma parte del
-contrato real del módulo.
+PENDIENTE existe como estado transitorio
+durante el procesamiento automático.
 */
 export type ReservationStatus =
   | "PENDIENTE"
@@ -26,7 +21,7 @@ export type ReservationStatus =
 
 /*
 Estados posibles del usuario relacionado
-con una reserva.
+con una reserva administrativa.
 */
 export type ReservationUserStatus =
   | "ACTIVO"
@@ -35,7 +30,7 @@ export type ReservationUserStatus =
 
 /*
 Estados posibles del socio asociado
-a una reserva.
+a una reserva administrativa.
 */
 export type ReservationMemberStatus =
   | "ACTIVO"
@@ -51,8 +46,7 @@ export type ReservationProductStatus =
   | "INACTIVO";
 
 /*
-Genéticas soportadas por productos
-de tipo FLOR.
+Genéticas soportadas por productos FLOR.
 */
 export type ReservationProductGenetics =
   | "INDICA"
@@ -68,15 +62,12 @@ export type ReservationSaleStatus =
   | "ANULADA";
 
 /* =========================================================
-   USUARIO Y SOCIO
+   CONTRATOS ADMINISTRATIVOS — USUARIO Y SOCIO
 ========================================================= */
 
 /*
 Representa la información segura de usuario
-devuelta por el backend dentro del módulo.
-
-No expone información interna relacionada
-con credenciales, intentos fallidos o bloqueos.
+devuelta dentro del módulo administrativo.
 */
 export type ReservationUser = {
   id: number;
@@ -89,10 +80,8 @@ export type ReservationUser = {
 };
 
 /*
-Representa el socio asociado a una reserva.
-
-Incluye toda la información requerida por
-el panel administrativo de detalle.
+Representa el socio asociado a una reserva
+dentro del panel administrativo.
 */
 export type ReservationMember = {
   id: number;
@@ -119,19 +108,12 @@ export type ReservationMember = {
 };
 
 /* =========================================================
-   PRODUCTOS Y DETALLES
+   CONTRATOS ADMINISTRATIVOS — PRODUCTOS Y DETALLES
 ========================================================= */
 
 /*
-Representa el producto reducido devuelto
-dentro del listado administrativo.
-
-La grilla no necesita cargar la información
-completa del producto.
-
-Esto mantiene desacoplado el listado del
-modelo interno de Producto y evita transportar
-información innecesaria.
+Representa el producto reducido utilizado
+por el listado administrativo.
 */
 export type ReservationSummaryProduct = {
   id: number;
@@ -146,11 +128,8 @@ export type ReservationSummaryProduct = {
 };
 
 /*
-Representa el producto completo devuelto
-dentro del detalle individual de una reserva.
-
-Este contrato alimenta el panel lateral
-Master / Detail.
+Representa el producto completo utilizado
+por el detalle administrativo.
 */
 export type ReservationProduct = {
   id: number;
@@ -196,7 +175,7 @@ export type ReservationSummaryDetail = {
 
 /*
 Representa un detalle completo dentro
-de la consulta individual de una reserva.
+de la consulta administrativa individual.
 */
 export type ReservationDetail = {
   id: number;
@@ -215,15 +194,12 @@ export type ReservationDetail = {
 };
 
 /* =========================================================
-   HISTORIAL Y VENTA ASOCIADA
+   CONTRATOS ADMINISTRATIVOS — HISTORIAL Y VENTA
 ========================================================= */
 
 /*
 Representa un cambio de estado registrado
-dentro del historial funcional de la reserva.
-
-El usuario puede ser null cuando el cambio
-fue ejecutado automáticamente por el sistema.
+dentro del historial funcional.
 */
 export type ReservationHistoryItem = {
   id: number;
@@ -242,12 +218,8 @@ export type ReservationHistoryItem = {
 };
 
 /*
-Representa la venta generada cuando
-el administrador confirma el retiro presencial
-de una reserva.
-
-La relación solamente existirá cuando
-la reserva se encuentre FINALIZADA.
+Representa la venta generada al confirmar
+el retiro presencial de una reserva.
 */
 export type ReservationSale = {
   id: number;
@@ -260,19 +232,11 @@ export type ReservationSale = {
 };
 
 /* =========================================================
-   RESERVA RESUMIDA Y COMPLETA
+   CONTRATOS ADMINISTRATIVOS — RESERVAS
 ========================================================= */
 
 /*
-Representa una fila dentro del listado
-administrativo principal.
-
-Utiliza el DTO resumido expuesto por
-reservaResumenSelect en backend.
-
-No incluye historial, usuario responsable
-ni venta completa porque esa información
-pertenece al detalle individual.
+Representa una fila del listado administrativo.
 */
 export type ReservationSummary = {
   id: number;
@@ -301,18 +265,7 @@ export type ReservationSummary = {
 };
 
 /*
-Representa el detalle administrativo completo
-de una reserva.
-
-Este contrato alimenta:
-
-- información del socio;
-- fechas;
-- productos;
-- totales;
-- historial;
-- venta asociada;
-- acciones contextuales.
+Representa el detalle administrativo completo.
 */
 export type Reservation = {
   id: number;
@@ -347,18 +300,82 @@ export type Reservation = {
 };
 
 /* =========================================================
+   CONTRATOS DEL PORTAL DE SOCIOS
+========================================================= */
+
+/*
+Representa un producto incluido dentro
+de una reserva visible por el socio.
+
+Los importes corresponden a los valores
+históricos congelados al crear la reserva,
+no al precio actual del producto.
+*/
+export type MemberReservationProduct = {
+  nombre: string;
+
+  imagen: string | null;
+
+  cantidad: number;
+
+  precioUnitario: number;
+
+  subtotal: number;
+};
+
+/*
+Representa el contrato público de una reserva
+perteneciente al socio autenticado.
+
+No expone:
+
+- socio relacionado;
+- usuario responsable;
+- identificadores internos de detalles;
+- identificadores internos de productos;
+- auditorías;
+- venta administrativa asociada;
+- historial técnico completo.
+*/
+export type MemberReservation = {
+  id: number;
+
+  fechaSolicitud: string;
+
+  fechaLimiteRetiro: string | null;
+
+  estado: ReservationStatus;
+
+  estadoDescripcion: string;
+
+  motivo: string | null;
+
+  totalGramos: number;
+
+  total: number;
+
+  productos: MemberReservationProduct[];
+};
+
+/*
+Representa la separación realizada por backend
+entre reservas vigentes e historial personal.
+*/
+export type MemberReservationsCollection = {
+  activas: MemberReservation[];
+
+  historial: MemberReservation[];
+};
+
+/* =========================================================
    FILTROS ADMINISTRATIVOS
 ========================================================= */
 
 /*
-Filtros administrativos soportados por
-el endpoint real del backend.
+Filtros soportados por el listado administrativo.
 
 El backend devuelve los registros ordenados
-por fecha_solicitud descendente.
-
-Por este motivo no se incorpora ordenamiento
-adicional dentro del contrato del frontend.
+por fecha de solicitud descendente.
 */
 export type ReservationsFilters = {
   search?: string;
@@ -375,39 +392,71 @@ export type ReservationsFilters = {
 };
 
 /* =========================================================
-   PAYLOADS DE ACCIONES
+   PAYLOADS ADMINISTRATIVOS
 ========================================================= */
 
 /*
 Payload utilizado para cancelar manualmente
 una reserva confirmada.
-
-La observación permite dejar contexto funcional
-dentro de HistorialReserva.
-
-El backend continúa siendo responsable de:
-
-- validar el estado;
-- liberar stock;
-- registrar movimiento;
-- actualizar la reserva;
-- registrar historial;
-- generar auditoría.
 */
 export type CancelReservationPayload = {
   observaciones?: string;
 };
 
 /* =========================================================
-   RESPUESTAS DEL BACKEND
+   PAYLOADS DEL PORTAL DE SOCIOS
 ========================================================= */
 
 /*
-Respuesta devuelta por el backend al consultar
-el listado administrativo de reservas.
+Representa un producto y su cantidad dentro
+de una nueva solicitud de reserva.
 
-El backend expone la colección bajo
-la propiedad "data".
+El nombre producto_id coincide exactamente
+con el contrato recibido por backend.
+
+La cantidad debe ser mayor a cero y expresarse
+en múltiplos de 0,5 gramos.
+*/
+export type CreateMemberReservationDetailPayload = {
+  producto_id: number;
+
+  cantidad: number;
+};
+
+/*
+Representa la solicitud completa enviada
+por el socio autenticado.
+
+Una reserva puede contener múltiples productos,
+pero el mismo producto no puede repetirse.
+*/
+export type CreateMemberReservationPayload = {
+  detalles: CreateMemberReservationDetailPayload[];
+
+  observaciones?: string | null;
+};
+
+/*
+Resultado utilizado por el frontend después
+de crear y procesar una solicitud.
+
+El mensaje y el estado de la reserva deben
+interpretarse conjuntamente porque una respuesta
+HTTP 201 también puede contener una reserva
+funcionalmente RECHAZADA.
+*/
+export type CreateMemberReservationResult = {
+  message: string;
+
+  reservation: MemberReservation;
+};
+
+/* =========================================================
+   RESPUESTAS ADMINISTRATIVAS
+========================================================= */
+
+/*
+Respuesta del listado administrativo.
 */
 type ReservationsResponse = {
   success: boolean;
@@ -416,8 +465,7 @@ type ReservationsResponse = {
 };
 
 /*
-Respuesta devuelta por el backend al consultar
-el detalle individual de una reserva.
+Respuesta de operaciones y detalle administrativo.
 */
 type ReservationResponse = {
   success: boolean;
@@ -425,6 +473,92 @@ type ReservationResponse = {
   message?: string;
 
   data: Reservation;
+};
+
+/* =========================================================
+   RESPUESTAS DEL PORTAL DE SOCIOS
+========================================================= */
+
+/*
+Respuesta del listado personal de reservas.
+*/
+type MemberReservationsResponse = {
+  success: boolean;
+
+  data: MemberReservationsCollection;
+};
+
+/*
+Respuesta del detalle personal de una reserva.
+*/
+type MemberReservationResponse = {
+  success: boolean;
+
+  data: MemberReservation;
+};
+
+/*
+Respuesta devuelta al crear y procesar
+automáticamente una solicitud.
+*/
+type CreateMemberReservationResponse = {
+  success: boolean;
+
+  message: string;
+
+  data: MemberReservation;
+};
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+/*
+Construye los query params utilizados
+exclusivamente por el listado administrativo.
+*/
+const buildReservationsQueryParams = (
+  filters: ReservationsFilters = {},
+): string => {
+  const params = new URLSearchParams();
+
+  if (filters.search) {
+    params.set("search", filters.search);
+  }
+
+  if (filters.estado) {
+    params.set("estado", filters.estado);
+  }
+
+  if (filters.socioId) {
+    params.set(
+      "socioId",
+      String(filters.socioId),
+    );
+  }
+
+  if (filters.productoId) {
+    params.set(
+      "productoId",
+      String(filters.productoId),
+    );
+  }
+
+  if (filters.fechaDesde) {
+    params.set(
+      "fechaDesde",
+      filters.fechaDesde,
+    );
+  }
+
+  if (filters.fechaHasta) {
+    params.set(
+      "fechaHasta",
+      filters.fechaHasta,
+    );
+  }
+
+  return params.toString();
 };
 
 /* =========================================================
@@ -438,54 +572,27 @@ Arquitectura:
 
 Container → Hook → API → httpClient → Backend
 
-Los componentes nunca realizan llamadas HTTP
+Los componentes nunca realizan solicitudes
 directamente.
-
-Toda la comunicación con el backend pasa
-por esta capa.
 */
 export const reservationsApi = {
+  /* =========================================================
+     CONSULTAS ADMINISTRATIVAS
+  ========================================================= */
+
   /*
   Obtiene el listado administrativo de reservas.
-
-  Los filtros son procesados por backend y
-  los registros se devuelven ordenados por
-  fecha de solicitud descendente.
   */
   async getReservations(
     filters: ReservationsFilters = {},
   ): Promise<ReservationSummary[]> {
-    const params = new URLSearchParams();
+    const query =
+      buildReservationsQueryParams(filters);
 
-    if (filters.search) {
-      params.append("search", filters.search);
-    }
-
-    if (filters.estado) {
-      params.append("estado", filters.estado);
-    }
-
-    if (filters.socioId) {
-      params.append("socioId", String(filters.socioId));
-    }
-
-    if (filters.productoId) {
-      params.append("productoId", String(filters.productoId));
-    }
-
-    if (filters.fechaDesde) {
-      params.append("fechaDesde", filters.fechaDesde);
-    }
-
-    if (filters.fechaHasta) {
-      params.append("fechaHasta", filters.fechaHasta);
-    }
-
-    const query = params.toString();
-
-    const response = await httpClient<ReservationsResponse>(
-      `/reservas${query ? `?${query}` : ""}`,
-    );
+    const response =
+      await httpClient<ReservationsResponse>(
+        `/reservas${query ? `?${query}` : ""}`,
+      );
 
     return response.data;
   },
@@ -493,41 +600,127 @@ export const reservationsApi = {
   /*
   Obtiene el detalle administrativo completo
   de una reserva.
-
-  Esta solicitud alimenta el panel lateral
-  Master / Detail y evita sobrecargar la tabla
-  principal con información innecesaria.
   */
   async getReservationById(
     reservationId: number,
   ): Promise<Reservation> {
-    const response = await httpClient<ReservationResponse>(
-      `/reservas/${reservationId}`,
-    );
+    const response =
+      await httpClient<ReservationResponse>(
+        `/reservas/${reservationId}`,
+      );
+
+    return response.data;
+  },
+
+  /* =========================================================
+     CONSULTAS DEL PORTAL DE SOCIOS
+  ========================================================= */
+
+  /*
+  Obtiene las reservas pertenecientes
+  al socio autenticado.
+
+  Backend separa automáticamente:
+
+  - reservas activas;
+  - historial personal.
+  */
+  async getMyReservations(): Promise<
+    MemberReservationsCollection
+  > {
+    const response =
+      await httpClient<MemberReservationsResponse>(
+        "/reservas/mis-reservas",
+      );
 
     return response.data;
   },
 
   /*
+  Obtiene una reserva específica verificando
+  en backend que pertenezca al socio autenticado.
+  */
+  async getMyReservationById(
+    reservationId: number,
+  ): Promise<MemberReservation> {
+    const response =
+      await httpClient<MemberReservationResponse>(
+        `/reservas/mis-reservas/${reservationId}`,
+      );
+
+    return response.data;
+  },
+
+  /* =========================================================
+     OPERACIONES DEL PORTAL DE SOCIOS
+  ========================================================= */
+
+  /*
+  Crea y procesa automáticamente una solicitud
+  de reserva con uno o varios productos.
+
+  El backend:
+
+  - valida socio activo;
+  - valida productos y cantidades;
+  - calcula precios y subtotales;
+  - calcula gramos totales;
+  - registra inicialmente PENDIENTE;
+  - valida stock;
+  - valida límite legal mensual;
+  - confirma y bloquea stock;
+  - o rechaza conservando trazabilidad.
+
+  El frontend debe interpretar el estado
+  funcional de la reserva devuelta.
+  */
+  async createMemberReservation(
+    payload: CreateMemberReservationPayload,
+  ): Promise<CreateMemberReservationResult> {
+    const response =
+      await httpClient<CreateMemberReservationResponse>(
+        "/reservas",
+        {
+          method: "POST",
+          body: {
+            detalles: payload.detalles,
+            observaciones:
+              payload.observaciones ?? null,
+          },
+        },
+      );
+
+    return {
+      message: response.message,
+      reservation: response.data,
+    };
+  },
+
+  /* =========================================================
+     OPERACIONES ADMINISTRATIVAS
+  ========================================================= */
+
+  /*
   Cancela manualmente una reserva confirmada.
 
   La validación del estado, liberación del stock,
-  historial y auditoría son responsabilidad
-  exclusiva del backend.
+  historial y auditoría corresponden al backend.
   */
   async cancelReservation(
     reservationId: number,
     payload: CancelReservationPayload = {},
   ): Promise<Reservation> {
-    const response = await httpClient<ReservationResponse>(
-      `/reservas/${reservationId}/cancelar`,
-      {
-        method: "PATCH",
-        body: {
-          observaciones: payload.observaciones,
+    const response =
+      await httpClient<ReservationResponse>(
+        `/reservas/${reservationId}/cancelar`,
+        {
+          method: "PATCH",
+          body: {
+            observaciones:
+              payload.observaciones,
+          },
         },
-      },
-    );
+      );
 
     return response.data;
   },
@@ -535,25 +728,20 @@ export const reservationsApi = {
   /*
   Registra el retiro presencial de una reserva.
 
-  El backend:
-
-  - crea la venta asociada;
-  - consume el stock reservado;
-  - actualiza la reserva a FINALIZADA;
-  - registra historial;
-  - genera auditoría;
-
-  todo dentro de una única transacción.
+  El backend crea la venta, consume el stock
+  reservado y finaliza el ciclo de vida dentro
+  de una única transacción.
   */
   async confirmReservationWithdrawal(
     reservationId: number,
   ): Promise<Reservation> {
-    const response = await httpClient<ReservationResponse>(
-      `/reservas/${reservationId}/confirmar-retiro`,
-      {
-        method: "PATCH",
-      },
-    );
+    const response =
+      await httpClient<ReservationResponse>(
+        `/reservas/${reservationId}/confirmar-retiro`,
+        {
+          method: "PATCH",
+        },
+      );
 
     return response.data;
   },
