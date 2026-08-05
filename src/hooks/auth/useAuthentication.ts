@@ -126,6 +126,18 @@ Puede contener:
 type HandleDisableMfaResult = AuthMessageResponse | null;
 
 /*
+Resultado posible al cerrar
+la sesión autenticada.
+
+Puede contener:
+
+- el mensaje de confirmación del backend
+- null cuando no fue posible completar
+  la revocación remota
+*/
+type HandleLogoutResult = AuthMessageResponse | null;
+
+/*
 ==================================================
 HOOK DE AUTENTICACIÓN
 ==================================================
@@ -165,6 +177,7 @@ Actualmente administra:
 - cambio de contraseña temporal
 - aceptación de consentimiento informado
 - persistencia de la sesión
+- cierre y revocación de sesión
 - estados de carga
 - manejo de errores
 - mensajes de confirmación
@@ -179,7 +192,11 @@ export function useAuthentication() {
   para evitar confundirla
   con authApi.login.
   */
-  const { login: saveAuthenticatedSession, updateUser, logout } = useAuth();
+  const {
+    login: saveAuthenticatedSession,
+    updateUser,
+    logout: clearLocalSession,
+  } = useAuth();
 
   /*
   Indica si el proceso inicial
@@ -225,6 +242,12 @@ export function useAuthentication() {
   Indica si se está desactivando MFA.
   */
   const [isDisablingMfa, setIsDisablingMfa] = useState(false);
+
+  /*
+  Indica si el cierre de sesión
+  se encuentra en ejecución.
+  */
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   /*
   Indica si la solicitud de recuperación
@@ -441,11 +464,11 @@ export function useAuthentication() {
       }
 
       /*
-Backend entregó una sesión
-autenticada definitiva.
+      Backend entregó una sesión
+      autenticada definitiva.
 
-Se guarda mediante AuthProvider.
-*/
+      Se guarda mediante AuthProvider.
+      */
       saveAuthenticatedSession(
         {
           ...response.usuario,
@@ -679,16 +702,49 @@ Se guarda mediante AuthProvider.
 
       setSuccessMessage(response.message);
 
-      logout();
+      clearLocalSession();
 
       return response;
     } catch (caughtError) {
-      return handleOperationError(
-        caughtError,
-        "No se pudo desactivar MFA",
-      );
+      return handleOperationError(caughtError, "No se pudo desactivar MFA");
     } finally {
       setIsDisablingMfa(false);
+    }
+  };
+
+  /*
+  ==================================================
+  CIERRE DE SESIÓN
+  ==================================================
+  */
+
+  /*
+  Cierra completamente la sesión autenticada.
+
+  Responsabilidades:
+
+  - solicitar al backend la revocación del JWT;
+  - limpiar siempre la sesión local;
+  - conservar separada la decisión de redirección.
+
+  La limpieza local se ejecuta incluso si backend
+  no responde o la sesión ya fue invalidada.
+  */
+  const handleLogout = async (): Promise<HandleLogoutResult> => {
+    setIsLoggingOut(true);
+
+    resetFeedback();
+
+    try {
+      return await authApi.logout();
+    } catch (caughtError) {
+      return handleOperationError(
+        caughtError,
+        "No se pudo cerrar la sesión correctamente",
+      );
+    } finally {
+      clearLocalSession();
+      setIsLoggingOut(false);
     }
   };
 
@@ -899,6 +955,7 @@ Se guarda mediante AuthProvider.
     handleConfigureMfa,
     handleConfirmMfa,
     handleDisableMfa,
+    handleLogout,
 
     handleRequestPasswordRecovery,
     handleResetPassword,
@@ -911,6 +968,7 @@ Se guarda mediante AuthProvider.
     isConfiguringMfa,
     isConfirmingMfa,
     isDisablingMfa,
+    isLoggingOut,
 
     isRequestingPasswordRecovery,
     isResettingPassword,

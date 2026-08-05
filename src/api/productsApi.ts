@@ -1,5 +1,9 @@
 import { httpClient } from "./httpClient";
 
+/* =========================================================
+   CONTRATOS ADMINISTRATIVOS
+========================================================= */
+
 /*
 Representa la información de stock
 asociada a un producto.
@@ -22,8 +26,8 @@ export type ProductStock = {
 };
 
 /*
-Representa la estructura del producto
-utilizada por el frontend.
+Representa la estructura administrativa
+de un producto utilizada por el frontend.
 
 Se mantienen los nombres del backend
 para evitar mapeos innecesarios.
@@ -62,6 +66,61 @@ export type Product = {
 
   stock: ProductStock | null;
 };
+
+/* =========================================================
+   CONTRATOS DEL PORTAL DE SOCIOS
+========================================================= */
+
+/*
+Representa una flor disponible para reserva
+dentro del Portal de Socios.
+
+El contrato coincide exactamente con la
+respuesta pública reducida del backend.
+
+No expone:
+
+- estado administrativo;
+- fechas internas;
+- estructura completa de stock;
+- unidad de medida;
+- identificadores de relaciones.
+
+El identificador se utiliza exclusivamente
+para construir la solicitud de reserva y
+no debe presentarse visualmente.
+*/
+export type MemberAvailableProduct = {
+  id: number;
+
+  nombre: string;
+
+  genetica: "INDICA" | "SATIVA" | "HIBRIDA";
+
+  porcentajeThc: number;
+
+  descripcion: string | null;
+
+  precioPorGramo: number;
+
+  imagen: string | null;
+
+  cantidadDisponible: number;
+};
+
+/*
+Representa la respuesta del endpoint público
+de productos disponibles para el socio.
+*/
+type MemberAvailableProductsResponse = {
+  message: string;
+
+  productos: MemberAvailableProduct[];
+};
+
+/* =========================================================
+   CONTRATOS OPERATIVOS
+========================================================= */
 
 /*
 Representa una opción de producto
@@ -110,6 +169,10 @@ export type PurchaseProductOption = {
 
   stock: number;
 };
+
+/* =========================================================
+   PAYLOADS ADMINISTRATIVOS
+========================================================= */
 
 /*
 Representa los campos necesarios
@@ -177,6 +240,10 @@ export type UpdateProductStatusPayload = {
   estado: "ACTIVO" | "INACTIVO";
 };
 
+/* =========================================================
+   LISTADO ADMINISTRATIVO
+========================================================= */
+
 /*
 Representa la paginación administrativa
 devuelta por el backend para listados.
@@ -227,6 +294,10 @@ export type GetProductsResponse = {
   pagination: ProductsPagination;
 };
 
+/* =========================================================
+   RESPUESTAS OPERATIVAS
+========================================================= */
+
 /*
 Representa la respuesta devuelta por backend
 al consultar productos disponibles para Ventas.
@@ -247,6 +318,10 @@ type PurchaseProductOptionsResponse = {
   productos: PurchaseProductOption[];
 };
 
+/* =========================================================
+   RESPUESTAS ADMINISTRATIVAS
+========================================================= */
+
 /*
 Representa la respuesta devuelta por backend
 al registrar un producto.
@@ -266,11 +341,6 @@ al actualizar un producto.
 
 El endpoint retorna un mensaje informativo
 junto con el producto actualizado.
-
-Se tipa explícitamente para mantener alineado
-el contrato frontend-backend y evitar asumir
-que la respuesta contiene directamente
-la entidad Product.
 */
 type UpdateProductResponse = {
   message: string;
@@ -288,6 +358,10 @@ type UpdateProductStatusResponse = {
   producto: Product;
 };
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
 /*
 Construye query params para el listado
 administrativo de productos.
@@ -296,7 +370,9 @@ La búsqueda, los filtros y la paginación
 se mantienen exclusivamente dentro
 del caso de uso administrativo.
 */
-const buildProductsQueryParams = (params: GetProductsParams = {}) => {
+const buildProductsQueryParams = (
+  params: GetProductsParams = {},
+): string => {
   const searchParams = new URLSearchParams();
 
   if (params.search) {
@@ -312,19 +388,32 @@ const buildProductsQueryParams = (params: GetProductsParams = {}) => {
   }
 
   if (params.genetica) {
-    searchParams.set("genetica", params.genetica);
+    searchParams.set(
+      "genetica",
+      params.genetica,
+    );
   }
 
   if (params.page) {
-    searchParams.set("page", String(params.page));
+    searchParams.set(
+      "page",
+      String(params.page),
+    );
   }
 
   if (params.limit) {
-    searchParams.set("limit", String(params.limit));
+    searchParams.set(
+      "limit",
+      String(params.limit),
+    );
   }
 
   return searchParams.toString();
 };
+
+/* =========================================================
+   API DE PRODUCTOS
+========================================================= */
 
 /*
 Centraliza las operaciones HTTP
@@ -334,6 +423,10 @@ Los componentes no deben realizar
 llamadas directas a la API.
 */
 export const productsApi = {
+  /* =========================================================
+     CONSULTAS ADMINISTRATIVAS
+  ========================================================= */
+
   /*
   Obtiene el listado administrativo de productos.
 
@@ -345,12 +438,46 @@ export const productsApi = {
   async getProducts(
     params: GetProductsParams = {},
   ): Promise<GetProductsResponse> {
-    const query = buildProductsQueryParams(params);
+    const query =
+      buildProductsQueryParams(params);
 
     return httpClient<GetProductsResponse>(
       `/productos${query ? `?${query}` : ""}`,
     );
   },
+
+  /* =========================================================
+     CONSULTAS DEL PORTAL DE SOCIOS
+  ========================================================= */
+
+  /*
+  Obtiene el catálogo de flores disponibles
+  para reserva dentro del Portal de Socios.
+
+  El backend aplica las reglas de elegibilidad:
+
+  - producto de tipo FLOR;
+  - producto ACTIVO;
+  - precio de venta válido;
+  - stock disponible mayor a cero.
+
+  El frontend recibe un contrato público
+  reducido y no replica dichos filtros.
+  */
+  async getAvailableProducts(): Promise<
+    MemberAvailableProduct[]
+  > {
+    const response =
+      await httpClient<MemberAvailableProductsResponse>(
+        "/productos/disponibles",
+      );
+
+    return response.productos;
+  },
+
+  /* =========================================================
+     CONSULTAS OPERATIVAS
+  ========================================================= */
 
   /*
   Obtiene los productos habilitados
@@ -360,10 +487,13 @@ export const productsApi = {
   y devuelve un contrato operativo reducido,
   sin depender del listado administrativo.
   */
-  async getSaleProductOptions(): Promise<SaleProductOption[]> {
-    const response = await httpClient<SaleProductOptionsResponse>(
-      "/productos/opciones-venta",
-    );
+  async getSaleProductOptions(): Promise<
+    SaleProductOption[]
+  > {
+    const response =
+      await httpClient<SaleProductOptionsResponse>(
+        "/productos/opciones-venta",
+      );
 
     return response.productos;
   },
@@ -376,13 +506,20 @@ export const productsApi = {
   e inactivas junto con su estado para
   permitir su diferenciación visual.
   */
-  async getPurchaseProductOptions(): Promise<PurchaseProductOption[]> {
-    const response = await httpClient<PurchaseProductOptionsResponse>(
-      "/productos/opciones-compra",
-    );
+  async getPurchaseProductOptions(): Promise<
+    PurchaseProductOption[]
+  > {
+    const response =
+      await httpClient<PurchaseProductOptionsResponse>(
+        "/productos/opciones-compra",
+      );
 
     return response.productos;
   },
+
+  /* =========================================================
+     OPERACIONES ADMINISTRATIVAS
+  ========================================================= */
 
   /*
   Registra un nuevo producto.
@@ -390,11 +527,17 @@ export const productsApi = {
   La validación final de reglas de negocio
   continúa siendo responsabilidad del backend.
   */
-  async createProduct(payload: CreateProductPayload): Promise<Product> {
-    const response = await httpClient<CreateProductResponse>("/productos", {
-      method: "POST",
-      body: payload,
-    });
+  async createProduct(
+    payload: CreateProductPayload,
+  ): Promise<Product> {
+    const response =
+      await httpClient<CreateProductResponse>(
+        "/productos",
+        {
+          method: "POST",
+          body: payload,
+        },
+      );
 
     return response.producto;
   },
@@ -411,13 +554,14 @@ export const productsApi = {
     productId: number,
     payload: UpdateProductPayload,
   ): Promise<Product> {
-    const response = await httpClient<UpdateProductResponse>(
-      `/productos/${productId}`,
-      {
-        method: "PUT",
-        body: payload,
-      },
-    );
+    const response =
+      await httpClient<UpdateProductResponse>(
+        `/productos/${productId}`,
+        {
+          method: "PUT",
+          body: payload,
+        },
+      );
 
     return response.producto;
   },
@@ -434,13 +578,14 @@ export const productsApi = {
     productId: number,
     payload: UpdateProductStatusPayload,
   ): Promise<Product> {
-    const response = await httpClient<UpdateProductStatusResponse>(
-      `/productos/${productId}/estado`,
-      {
-        method: "PATCH",
-        body: payload,
-      },
-    );
+    const response =
+      await httpClient<UpdateProductStatusResponse>(
+        `/productos/${productId}/estado`,
+        {
+          method: "PATCH",
+          body: payload,
+        },
+      );
 
     return response.producto;
   },

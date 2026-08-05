@@ -34,6 +34,31 @@ export type News = {
   cantidadNotificaciones: number;
 };
 
+/* =========================================================
+   CONTRATOS DEL PORTAL DE SOCIOS
+========================================================= */
+
+/*
+Representa una novedad activa visible
+dentro del Portal de Socios.
+
+El contrato coincide exactamente con la
+respuesta pública reducida del backend.
+
+No expone:
+
+- identificadores técnicos;
+- estado administrativo;
+- usuario responsable;
+- resultados de notificaciones;
+- fechas internas de actualización.
+*/
+export type MemberNews = {
+  titulo: string;
+  contenido: string;
+  fecha_creacion: string;
+};
+
 /*
 Resumen del estado actual de las entregas
 asociadas a una novedad.
@@ -121,6 +146,15 @@ export type UpdateNewsStatusPayload = {
    RESPUESTAS DEL BACKEND
 ========================================================= */
 
+/*
+Representa la respuesta pública del endpoint
+de novedades activas para el socio.
+*/
+type MemberActiveNewsResponse = {
+  message: string;
+  novedades: MemberNews[];
+};
+
 type GetNewsResponse = {
   message: string;
   novedades: News[];
@@ -158,7 +192,9 @@ Construye de forma segura los parámetros
 de búsqueda y filtrado soportados
 por el backend.
 */
-const buildNewsQueryParams = (params: GetNewsParams = {}): string => {
+const buildNewsQueryParams = (
+  params: GetNewsParams = {},
+): string => {
   const searchParams = new URLSearchParams();
 
   const normalizedSearch = params.search?.trim();
@@ -187,6 +223,31 @@ no deben comunicarse directamente
 con el backend.
 */
 export const newsApi = {
+  /* =========================================================
+     CONSULTAS DEL PORTAL DE SOCIOS
+  ========================================================= */
+
+  /*
+  Obtiene las novedades activas visibles
+  para el socio autenticado.
+
+  El backend aplica las reglas de visibilidad,
+  ordena desde la más reciente y devuelve
+  únicamente el contrato público permitido.
+  */
+  async getActiveNews(): Promise<MemberNews[]> {
+    const response =
+      await httpClient<MemberActiveNewsResponse>(
+        "/novedades/activas",
+      );
+
+    return response.novedades;
+  },
+
+  /* =========================================================
+     CONSULTAS ADMINISTRATIVAS
+  ========================================================= */
+
   /*
   Obtiene el listado administrativo
   de novedades.
@@ -194,7 +255,9 @@ export const newsApi = {
   Permite aplicar búsqueda por texto
   y filtro por estado.
   */
-  async getNews(params: GetNewsParams = {}): Promise<News[]> {
+  async getNews(
+    params: GetNewsParams = {},
+  ): Promise<News[]> {
     const query = buildNewsQueryParams(params);
 
     const response = await httpClient<GetNewsResponse>(
@@ -212,10 +275,13 @@ export const newsApi = {
   El backend devuelve ambos datos dentro
   de la propiedad novedad.
   */
-  async getNewsById(newsId: number): Promise<NewsDetail> {
-    const response = await httpClient<GetNewsDetailResponse>(
-      `/novedades/${newsId}`,
-    );
+  async getNewsById(
+    newsId: number,
+  ): Promise<NewsDetail> {
+    const response =
+      await httpClient<GetNewsDetailResponse>(
+        `/novedades/${newsId}`,
+      );
 
     return response.novedad;
   },
@@ -231,13 +297,20 @@ export const newsApi = {
   - registra la auditoría;
   - procesa los correos después del commit.
   */
-  async publishNews(payload: PublishNewsPayload): Promise<PublishNewsResult> {
-    const response = await httpClient<PublishNewsResponse>("/novedades", {
-      method: "POST",
-      body: payload,
-    });
+  async publishNews(
+    payload: PublishNewsPayload,
+  ): Promise<PublishNewsResult> {
+    const response =
+      await httpClient<PublishNewsResponse>(
+        "/novedades",
+        {
+          method: "POST",
+          body: payload,
+        },
+      );
 
-    const { resultadoEnvios, ...news } = response.novedad;
+    const { resultadoEnvios, ...news } =
+      response.novedad;
 
     return {
       news,
@@ -256,13 +329,14 @@ export const newsApi = {
     newsId: number,
     payload: UpdateNewsStatusPayload,
   ): Promise<News> {
-    const response = await httpClient<UpdateNewsStatusResponse>(
-      `/novedades/${newsId}/estado`,
-      {
-        method: "PATCH",
-        body: payload,
-      },
-    );
+    const response =
+      await httpClient<UpdateNewsStatusResponse>(
+        `/novedades/${newsId}/estado`,
+        {
+          method: "PATCH",
+          body: payload,
+        },
+      );
 
     return response.novedad;
   },
