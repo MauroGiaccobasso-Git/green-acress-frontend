@@ -185,13 +185,15 @@ asociadas al THC.
 El stock no se incluye porque debe
 gestionarse mediante movimientos
 trazables de inventario.
+
+La imagen tampoco se incluye aquí:
+se envía como archivo independiente
+mediante multipart/form-data.
 */
 export type CreateProductPayload = {
   nombre: string;
 
   descripcion?: string | null;
-
-  imagen_url?: string | null;
 
   tipo: "FLOR" | "SEMILLA";
 
@@ -213,13 +215,14 @@ de negocio del backend.
 El estado también queda excluido porque
 la baja lógica se gestiona mediante
 un endpoint específico PATCH /estado.
+
+La nueva imagen, cuando existe, se recibe
+como archivo independiente.
 */
 export type UpdateProductPayload = {
   nombre: string;
 
   descripcion?: string | null;
-
-  imagen_url?: string | null;
 
   genetica: "INDICA" | "SATIVA" | "HIBRIDA";
 
@@ -227,6 +230,16 @@ export type UpdateProductPayload = {
 
   precio_venta_actual: number | null;
 };
+
+/*
+Representa el archivo opcional seleccionado
+para crear o reemplazar la imagen de un producto.
+
+La imagen se mantiene fuera del payload de negocio
+porque debe enviarse como multipart/form-data
+y no forma parte del contrato JSON tradicional.
+*/
+export type ProductImageFile = File | null;
 
 /*
 Representa el payload utilizado para
@@ -411,6 +424,59 @@ const buildProductsQueryParams = (
   return searchParams.toString();
 };
 
+/*
+Convierte un valor numérico opcional
+al formato textual requerido por FormData.
+
+Los valores null se envían como texto vacío
+para que backend los normalice correctamente.
+*/
+const serializeNullableNumber = (value: number | null): string =>
+  value === null ? "" : String(value);
+
+/*
+Construye el formulario multipart utilizado
+para crear y actualizar productos.
+
+Responsabilidades:
+
+- serializar campos de negocio;
+- conservar valores opcionales;
+- adjuntar una única imagen bajo el nombre "imagen";
+- delegar al navegador la construcción del boundary.
+
+El nombre del campo debe coincidir con
+upload.single("imagen") configurado en backend.
+*/
+const buildProductFormData = (
+  payload: CreateProductPayload | UpdateProductPayload,
+  imageFile: ProductImageFile = null,
+): FormData => {
+  const formData = new FormData();
+
+  formData.append("nombre", payload.nombre.trim());
+  formData.append("descripcion", payload.descripcion?.trim() ?? "");
+  formData.append("genetica", payload.genetica);
+  formData.append(
+    "porcentaje_thc",
+    serializeNullableNumber(payload.porcentaje_thc),
+  );
+  formData.append(
+    "precio_venta_actual",
+    serializeNullableNumber(payload.precio_venta_actual),
+  );
+
+  if ("tipo" in payload) {
+    formData.append("tipo", payload.tipo);
+  }
+
+  if (imageFile) {
+    formData.append("imagen", imageFile, imageFile.name);
+  }
+
+  return formData;
+};
+
 /* =========================================================
    API DE PRODUCTOS
 ========================================================= */
@@ -524,18 +590,25 @@ export const productsApi = {
   /*
   Registra un nuevo producto.
 
+  Los datos y la imagen opcional se envían
+  mediante multipart/form-data.
+
   La validación final de reglas de negocio
   continúa siendo responsabilidad del backend.
   */
   async createProduct(
     payload: CreateProductPayload,
+    imageFile: ProductImageFile = null,
   ): Promise<Product> {
     const response =
       await httpClient<CreateProductResponse>(
         "/productos",
         {
           method: "POST",
-          body: payload,
+          body: buildProductFormData(
+            payload,
+            imageFile,
+          ),
         },
       );
 
@@ -546,6 +619,9 @@ export const productsApi = {
   Actualiza la información editable
   de un producto existente.
 
+  Permite reemplazar opcionalmente la imagen
+  enviando un archivo multipart.
+
   No modifica el estado lógico.
   La baja lógica se realiza mediante
   updateProductStatus.
@@ -553,13 +629,17 @@ export const productsApi = {
   async updateProduct(
     productId: number,
     payload: UpdateProductPayload,
+    imageFile: ProductImageFile = null,
   ): Promise<Product> {
     const response =
       await httpClient<UpdateProductResponse>(
         `/productos/${productId}`,
         {
           method: "PUT",
-          body: payload,
+          body: buildProductFormData(
+            payload,
+            imageFile,
+          ),
         },
       );
 

@@ -1126,6 +1126,169 @@ export const productsStyles = {
     gridColumn: "1 / -1",
   },
 
+  /* =========================================================
+     CAMPO DE IMAGEN DEL FORMULARIO
+  ========================================================= */
+
+  productImageField: {
+    display: "grid",
+    gap: 1,
+    p: { xs: 1.25, sm: 1.5 },
+    borderRadius: "12px",
+    bgcolor: (theme: Theme) =>
+      alpha(theme.palette.primary.main, 0.035),
+    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+  },
+
+  productImageFieldHeader: {
+    display: "flex",
+    flexDirection: { xs: "column", sm: "row" },
+    alignItems: { xs: "stretch", sm: "center" },
+    justifyContent: "space-between",
+    gap: 1.25,
+  },
+
+  productImageFieldHeading: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 1,
+    minWidth: 0,
+  },
+
+  productImageFieldIcon: {
+    width: 34,
+    height: 34,
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "9px",
+    color: colors.brand.primary,
+    bgcolor: (theme: Theme) =>
+      alpha(theme.palette.primary.main, 0.1),
+  },
+
+  productImageFieldTitle: {
+    color: colors.text.primary,
+    fontSize: 14,
+    fontWeight: 700,
+    lineHeight: 1.35,
+  },
+
+  productImageFieldDescription: {
+    mt: 0.2,
+    color: colors.text.secondary,
+    fontSize: 12,
+    lineHeight: 1.4,
+  },
+
+  productImageFieldActions: {
+    display: "flex",
+    flexDirection: { xs: "column", sm: "row" },
+    alignItems: { xs: "stretch", sm: "center" },
+    gap: 0.75,
+    flexShrink: 0,
+  },
+
+  productImageFieldSelectButton: {
+    minHeight: 40,
+    px: 1.6,
+    borderRadius: "8px",
+    color: colors.brand.primary,
+    borderColor: (theme: Theme) =>
+      alpha(theme.palette.primary.main, 0.35),
+    fontWeight: 700,
+    textTransform: "none",
+    whiteSpace: "nowrap",
+
+    "&:hover": {
+      borderColor: colors.brand.primary,
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.primary.main, 0.06),
+    },
+
+    "&:focus-visible": {
+      outline: (theme: Theme) =>
+        `3px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+      outlineOffset: 2,
+    },
+  },
+
+  productImageFieldHiddenInput: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    p: 0,
+    m: -1,
+    overflow: "hidden",
+    clip: "rect(0 0 0 0)",
+    whiteSpace: "nowrap",
+    border: 0,
+  },
+
+  productImageFieldClearButton: {
+    minHeight: 40,
+    px: 1.25,
+    borderRadius: "8px",
+    color: colors.state.error,
+    fontWeight: 700,
+    textTransform: "none",
+    whiteSpace: "nowrap",
+
+    "&:hover": {
+      bgcolor: (theme: Theme) =>
+        alpha(theme.palette.error.main, 0.07),
+    },
+
+    "&:focus-visible": {
+      outline: (theme: Theme) =>
+        `3px solid ${alpha(theme.palette.error.main, 0.22)}`,
+      outlineOffset: 2,
+    },
+  },
+
+  productImageFieldStatus: {
+    minWidth: 0,
+    p: 1,
+    borderRadius: "9px",
+    bgcolor: colors.background.surface,
+    border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+  },
+
+  productImageFieldStatusError: {
+    minWidth: 0,
+    p: 1,
+    borderRadius: "9px",
+    bgcolor: (theme: Theme) =>
+      alpha(theme.palette.error.main, 0.045),
+    border: (theme: Theme) =>
+      `1px solid ${alpha(theme.palette.error.main, 0.35)}`,
+  },
+
+  productImageFieldFileName: {
+    color: colors.text.primary,
+    fontSize: 13,
+    fontWeight: 700,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+
+  productImageFieldFileMeta: {
+    mt: 0.2,
+    color: colors.text.secondary,
+    fontSize: 12,
+    lineHeight: 1.4,
+  },
+
+  productImageFieldHelperText: {
+    mx: 0,
+    mt: 0,
+    color: colors.text.secondary,
+    fontSize: 12,
+    lineHeight: 1.4,
+  },
+
   productFormField: {
     "& .MuiOutlinedInput-root": {
       minHeight: 42,
